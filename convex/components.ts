@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { componentFilesValidator } from "./validators";
 
 export const list = query({
   args: {},
@@ -40,24 +41,7 @@ export const create = mutation({
     name: v.string(),
     title: v.string(),
     description: v.string(),
-    files: v.array(
-      v.object({
-        id: v.string(),
-        path: v.string(),
-        content: v.string(),
-        type: v.union(
-          v.literal("component"),
-          v.literal("hook"),
-          v.literal("util"),
-          v.literal("style")
-        ),
-        language: v.union(
-          v.literal("typescript"),
-          v.literal("css"),
-          v.literal("json")
-        ),
-      })
-    ),
+    files: componentFilesValidator,
     dependencies: v.array(v.string()),
     registryDependencies: v.array(v.string()),
   },
@@ -72,26 +56,7 @@ export const update = mutation({
     name: v.optional(v.string()),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
-    files: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          path: v.string(),
-          content: v.string(),
-          type: v.union(
-            v.literal("component"),
-            v.literal("hook"),
-            v.literal("util"),
-            v.literal("style")
-          ),
-          language: v.union(
-            v.literal("typescript"),
-            v.literal("css"),
-            v.literal("json")
-          ),
-        })
-      )
-    ),
+    files: v.optional(componentFilesValidator),
     dependencies: v.optional(v.array(v.string())),
     registryDependencies: v.optional(v.array(v.string())),
   },

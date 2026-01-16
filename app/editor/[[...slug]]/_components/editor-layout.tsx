@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { v4 as uuid } from "uuid";
+import { IconX } from "@tabler/icons-react";
 import { Toolbar } from "./toolbar";
 import { FileTree } from "./file-tree";
 import { MonacoEditor } from "./monaco-editor";
@@ -10,6 +11,7 @@ import { PreviewPanel } from "./preview-panel";
 import { ComponentMetaForm } from "./component-meta-form";
 import { DependencyManager } from "./dependency-manager";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { useEditorStore } from "@/stores/editor-store";
 import { useComponentsStore } from "@/stores/components-store";
 import { useUIStore } from "@/stores/ui-store";
@@ -18,6 +20,7 @@ import type { SavedComponent } from "@/types/component";
 export function EditorLayout() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const previewVisible = useUIStore((state) => state.previewVisible);
 
   const {
@@ -34,12 +37,14 @@ export function EditorLayout() {
   const { addComponent, updateComponent } = useComponentsStore();
 
   const handleSave = useCallback(async () => {
+    setError(null);
+
     if (!name.trim()) {
-      alert("Please enter a component name");
+      setError("Please enter a component name");
       return;
     }
     if (!title.trim()) {
-      alert("Please enter a component title");
+      setError("Please enter a component title");
       return;
     }
 
@@ -95,9 +100,9 @@ export function EditorLayout() {
 
       setMetadata({ isDirty: false } as never);
       router.push("/");
-    } catch (error) {
-      console.error("Failed to save:", error);
-      alert("Failed to save component");
+    } catch (err) {
+      console.error("Failed to save:", err);
+      setError("Failed to save component. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -117,6 +122,19 @@ export function EditorLayout() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+      {error && (
+        <div className="flex items-center justify-between gap-2 border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
+          <span>{error}</span>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => setError(null)}
+            className="text-red-600 hover:text-red-700 dark:text-red-400"
+          >
+            <IconX className="size-4" />
+          </Button>
+        </div>
+      )}
       <Toolbar onSave={handleSave} isSaving={isSaving} />
 
       <div className="flex flex-1 overflow-hidden">

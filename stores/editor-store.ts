@@ -129,17 +129,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     }),
 }));
 
-// Helper to get filename from path
-export function getFileName(path: string): string {
-  return path.split("/").pop() || path;
-}
-
-// Helper to get directory from path
-export function getDirectory(path: string): string {
-  const lastSlash = path.lastIndexOf("/");
-  return lastSlash > 0 ? path.substring(0, lastSlash) : "";
-}
-
 // Helper to build folder tree from flat file list
 export interface FolderNode {
   name: string;
