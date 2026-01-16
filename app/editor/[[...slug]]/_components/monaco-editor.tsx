@@ -74,7 +74,7 @@ export function MonacoEditor({ onSave }: MonacoEditorProps) {
   return (
     <Editor
       height="100%"
-      language={getLanguage(activeFile.name)}
+      language={getLanguage(activeFile.path)}
       value={activeFile.content}
       theme={getMonacoTheme()}
       onChange={handleChange}

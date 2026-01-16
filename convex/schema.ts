@@ -9,7 +9,7 @@ export default defineSchema({
     files: v.array(
       v.object({
         id: v.string(),
-        name: v.string(),
+        path: v.string(),
         content: v.string(),
         type: v.union(
           v.literal("component"),

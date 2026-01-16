@@ -5,25 +5,94 @@ import {
   IconFile,
   IconFileTypeCss,
   IconFileTypeTs,
+  IconFolder,
+  IconFolderOpen,
   IconPlus,
   IconTrash,
   IconPencil,
   IconCheck,
   IconX,
+  IconChevronRight,
+  IconChevronDown,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { useEditorStore } from "@/stores/editor-store";
+import {
+  useEditorStore,
+  buildFolderTree,
+  type FolderNode,
+} from "@/stores/editor-store";
+
+// Reusable inline input for add/edit operations
+function InlineInput({
+  value,
+  onChange,
+  onConfirm,
+  onCancel,
+  placeholder,
+  icon: Icon,
+  className,
+  style,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+  placeholder: string;
+  icon: React.ComponentType<{ className?: string }>;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div className={cn("flex items-center gap-1 py-1 pr-2", className)} style={style}>
+      <Icon className="size-4 shrink-0 text-muted-foreground" />
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") onConfirm();
+          if (e.key === "Escape") onCancel();
+        }}
+        placeholder={placeholder}
+        className="h-6 flex-1 border-0 bg-muted p-1 text-sm focus-visible:ring-0"
+        autoFocus
+      />
+      <Button variant="ghost" size="icon-xs" onClick={onConfirm}>
+        <IconCheck className="size-3" />
+      </Button>
+      <Button variant="ghost" size="icon-xs" onClick={onCancel}>
+        <IconX className="size-3" />
+      </Button>
+    </div>
+  );
+}
 
 export function FileTree() {
-  const { files, activeFileId, setActiveFile, addFile, removeFile, renameFile } =
+  const { files, activeFileId, setActiveFile, addFile, removeFile, renamePath } =
     useEditorStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [isAdding, setIsAdding] = useState(false);
+  const [addingInPath, setAddingInPath] = useState<string | null>(null);
   const [newFileName, setNewFileName] = useState("");
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    new Set(["components", "components/ui"])
+  );
+
+  const tree = buildFolderTree(files);
+
+  const toggleFolder = (path: string) => {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  };
 
   const getFileIcon = (name: string) => {
     if (name.endsWith(".css")) return IconFileTypeCss;
@@ -31,15 +100,17 @@ export function FileTree() {
     return IconFile;
   };
 
-  const handleStartEdit = (id: string, currentName: string) => {
-    setEditingId(id);
-    setEditValue(currentName);
+  const handleStartEdit = (file: { id: string; path: string }) => {
+    setEditingId(file.id);
+    setEditValue(file.path); // Edit full path to allow moving between folders
   };
 
   const handleSaveEdit = (id: string) => {
-    if (editValue.trim()) {
-      renameFile(id, editValue.trim());
+    if (!editValue.trim()) {
+      handleCancelEdit();
+      return;
     }
+    renamePath(id, editValue.trim());
     setEditingId(null);
     setEditValue("");
   };
@@ -49,21 +120,153 @@ export function FileTree() {
     setEditValue("");
   };
 
-  const handleAddFile = () => {
-    if (newFileName.trim()) {
-      let fileName = newFileName.trim();
-      if (!fileName.includes(".")) {
-        fileName += ".tsx";
-      }
-      addFile({ name: fileName });
-      setIsAdding(false);
-      setNewFileName("");
+  const handleStartAdd = (parentPath: string) => {
+    setAddingInPath(parentPath);
+    setNewFileName("");
+    if (parentPath) {
+      setExpandedFolders((prev) => new Set([...prev, parentPath]));
     }
   };
 
-  const handleCancelAdd = () => {
-    setIsAdding(false);
+  const handleConfirmAdd = () => {
+    if (addingInPath === null || !newFileName.trim()) return;
+
+    let name = newFileName.trim();
+    if (!name.includes(".")) {
+      name += ".tsx";
+    }
+    const fullPath = addingInPath ? `${addingInPath}/${name}` : name;
+    addFile(fullPath);
+    setAddingInPath(null);
     setNewFileName("");
+  };
+
+  const handleCancelAdd = () => {
+    setAddingInPath(null);
+    setNewFileName("");
+  };
+
+  const renderAddInput = (parentPath: string, paddingLeft: number) => {
+    if (addingInPath !== parentPath) return null;
+
+    const isRoot = parentPath === "";
+    return (
+      <InlineInput
+        value={newFileName}
+        onChange={setNewFileName}
+        onConfirm={handleConfirmAdd}
+        onCancel={handleCancelAdd}
+        placeholder={isRoot ? "components/ui/button.tsx" : "filename.tsx"}
+        icon={IconFile}
+        className={isRoot ? "px-2" : undefined}
+        style={{ paddingLeft: isRoot ? undefined : paddingLeft }}
+      />
+    );
+  };
+
+  const renderNode = (node: FolderNode, depth: number = 0): React.ReactNode => {
+    const isExpanded = expandedFolders.has(node.path);
+    const isActive = node.file?.id === activeFileId;
+    const isEditing = node.file && editingId === node.file.id;
+    const paddingLeft = depth * 12 + 8;
+
+    if (node.type === "folder") {
+      const FolderIcon = isExpanded ? IconFolderOpen : IconFolder;
+      const ChevronIcon = isExpanded ? IconChevronDown : IconChevronRight;
+
+      return (
+        <div key={node.path}>
+          <div
+            className="group flex items-center gap-1 py-1 pr-2 text-sm hover:bg-muted cursor-pointer"
+            style={{ paddingLeft }}
+            onClick={() => toggleFolder(node.path)}
+          >
+            <ChevronIcon className="size-3.5 shrink-0 text-muted-foreground" />
+            <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
+            <span className="flex-1 truncate">{node.name}</span>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="opacity-0 group-hover:opacity-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStartAdd(node.path);
+              }}
+              title="New file"
+            >
+              <IconPlus className="size-3" />
+            </Button>
+          </div>
+
+          {isExpanded && (
+            <div>
+              {renderAddInput(node.path, paddingLeft + 12)}
+              {node.children?.map((child) => renderNode(child, depth + 1))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // File node
+    const Icon = getFileIcon(node.name);
+
+    if (isEditing && node.file) {
+      return (
+        <InlineInput
+          key={node.file.id}
+          value={editValue}
+          onChange={setEditValue}
+          onConfirm={() => handleSaveEdit(node.file!.id)}
+          onCancel={handleCancelEdit}
+          placeholder="components/ui/filename.tsx"
+          icon={Icon}
+          className="bg-muted"
+          style={{ paddingLeft }}
+        />
+      );
+    }
+
+    return (
+      <div
+        key={node.file?.id || node.path}
+        className={cn(
+          "group flex items-center gap-1 py-1 pr-2 text-sm cursor-pointer",
+          isActive ? "bg-accent text-accent-foreground" : "hover:bg-muted"
+        )}
+        style={{ paddingLeft }}
+        onClick={() => node.file && setActiveFile(node.file.id)}
+      >
+        <Icon className="size-4 shrink-0 text-muted-foreground" />
+        <span className="flex-1 truncate font-mono text-xs">{node.name}</span>
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (node.file) handleStartEdit(node.file);
+            }}
+            title="Rename"
+          >
+            <IconPencil className="size-3" />
+          </Button>
+          {files.length > 1 && node.file && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                removeFile(node.file!.id);
+              }}
+              title="Delete"
+            >
+              <IconTrash className="size-3" />
+            </Button>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -75,125 +278,17 @@ export function FileTree() {
         <Button
           variant="ghost"
           size="icon-xs"
-          onClick={() => setIsAdding(true)}
+          onClick={() => handleStartAdd("")}
+          title="New file"
         >
           <IconPlus className="size-3.5" />
         </Button>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="space-y-0.5 p-2">
-          {isAdding && (
-            <div className="flex items-center gap-1 rounded-md bg-muted px-2 py-1">
-              <Input
-                value={newFileName}
-                onChange={(e) => setNewFileName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddFile();
-                  if (e.key === "Escape") handleCancelAdd();
-                }}
-                placeholder="filename.tsx"
-                className="h-6 border-0 bg-transparent p-0 text-sm focus-visible:ring-0"
-                autoFocus
-              />
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={handleAddFile}
-              >
-                <IconCheck className="size-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={handleCancelAdd}
-              >
-                <IconX className="size-3" />
-              </Button>
-            </div>
-          )}
-
-          {files.map((file) => {
-            const Icon = getFileIcon(file.name);
-            const isEditing = editingId === file.id;
-
-            return (
-              <div
-                key={file.id}
-                className={cn(
-                  "group flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors",
-                  activeFileId === file.id
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-muted"
-                )}
-              >
-                <Icon className="size-4 shrink-0 text-muted-foreground" />
-
-                {isEditing ? (
-                  <div className="flex flex-1 items-center gap-1">
-                    <Input
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleSaveEdit(file.id);
-                        if (e.key === "Escape") handleCancelEdit();
-                      }}
-                      className="h-6 flex-1 border-0 bg-transparent p-0 text-sm focus-visible:ring-0"
-                      autoFocus
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={() => handleSaveEdit(file.id)}
-                    >
-                      <IconCheck className="size-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={handleCancelEdit}
-                    >
-                      <IconX className="size-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      className="flex-1 truncate text-left"
-                      onClick={() => setActiveFile(file.id)}
-                    >
-                      {file.name}
-                    </button>
-
-                    <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartEdit(file.id, file.name);
-                        }}
-                      >
-                        <IconPencil className="size-3" />
-                      </Button>
-                      {files.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeFile(file.id);
-                          }}
-                        >
-                          <IconTrash className="size-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            );
-          })}
+        <div className="py-1">
+          {renderAddInput("", 8)}
+          {tree.map((node) => renderNode(node, 0))}
         </div>
       </ScrollArea>
     </div>

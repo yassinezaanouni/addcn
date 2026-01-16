@@ -15,7 +15,7 @@ export function PreviewPanel() {
   const theme = useUIStore((state) => state.theme);
 
   // Find the main component file
-  const mainFile = files.find((f) => f.name.endsWith(".tsx")) || files[0];
+  const mainFile = files.find((f) => f.path.endsWith(".tsx")) || files[0];
 
   // Transform the code for react-live
   const transformedCode = useMemo(() => {

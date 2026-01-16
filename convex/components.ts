@@ -43,7 +43,7 @@ export const create = mutation({
     files: v.array(
       v.object({
         id: v.string(),
-        name: v.string(),
+        path: v.string(),
         content: v.string(),
         type: v.union(
           v.literal("component"),
@@ -76,7 +76,7 @@ export const update = mutation({
       v.array(
         v.object({
           id: v.string(),
-          name: v.string(),
+          path: v.string(),
           content: v.string(),
           type: v.union(
             v.literal("component"),
@@ -98,7 +98,7 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     const filtered = Object.fromEntries(
-      Object.entries(updates).filter(([_, v]) => v !== undefined)
+      Object.entries(updates).filter(([, value]) => value !== undefined)
     );
     await ctx.db.patch(id, filtered);
     return await ctx.db.get(id);
