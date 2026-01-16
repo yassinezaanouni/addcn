@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { LiveProvider, LivePreview, LiveError } from "react-live";
 import { useEditorStore } from "@/stores/editor-store";
-import { useUIStore } from "@/stores/ui-store";
 
 // Scope of available components/utilities for the preview
 const scope = {
@@ -12,7 +11,6 @@ const scope = {
 
 export function PreviewPanel() {
   const { files } = useEditorStore();
-  const theme = useUIStore((state) => state.theme);
 
   // Find the main component file
   const mainFile = files.find((f) => f.path.endsWith(".tsx")) || files[0];
@@ -44,15 +42,6 @@ export function PreviewPanel() {
 
     return code.trim();
   }, [mainFile]);
-
-  const isDark = useMemo(() => {
-    if (theme === "dark") return true;
-    if (theme === "light") return false;
-    if (typeof window !== "undefined") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches;
-    }
-    return false;
-  }, [theme]);
 
   if (files.length === 0 || !mainFile) {
     return (

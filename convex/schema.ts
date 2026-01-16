@@ -1,29 +1,13 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { componentFilesValidator } from "./validators";
 
 export default defineSchema({
   components: defineTable({
     name: v.string(),
     title: v.string(),
     description: v.string(),
-    files: v.array(
-      v.object({
-        id: v.string(),
-        path: v.string(),
-        content: v.string(),
-        type: v.union(
-          v.literal("component"),
-          v.literal("hook"),
-          v.literal("util"),
-          v.literal("style")
-        ),
-        language: v.union(
-          v.literal("typescript"),
-          v.literal("css"),
-          v.literal("json")
-        ),
-      })
-    ),
+    files: componentFilesValidator,
     dependencies: v.array(v.string()),
     registryDependencies: v.array(v.string()),
   })

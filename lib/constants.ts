@@ -13,17 +13,4 @@ export const DEFAULT_FILE_CONTENT = `function Component() {
 export default Component;
 `;
 
-export const SUPPORTED_LANGUAGES = {
-  typescript: [".tsx", ".ts"],
-  css: [".css"],
-  json: [".json"],
-} as const;
-
-export const FILE_TYPES = {
-  component: "component",
-  hook: "hook",
-  util: "util",
-  style: "style",
-} as const;
-
 export const REGISTRY_SCHEMA_URL = "https://ui.shadcn.com/schema/registry-item.json";

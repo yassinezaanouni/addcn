@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import { useUIStore } from "@/stores/ui-store";
 import { useEditorStore } from "@/stores/editor-store";
+import { getMonacoTheme } from "@/lib/theme";
 
 interface MonacoEditorProps {
   onSave?: () => void;
@@ -14,17 +15,6 @@ export function MonacoEditor({ onSave }: MonacoEditorProps) {
   const { files, activeFileId, updateFileContent } = useEditorStore();
 
   const activeFile = files.find((f) => f.id === activeFileId);
-
-  const getMonacoTheme = () => {
-    if (theme === "dark") return "vs-dark";
-    if (theme === "light") return "light";
-    if (typeof window !== "undefined") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "vs-dark"
-        : "light";
-    }
-    return "light";
-  };
 
   const getLanguage = (filename: string) => {
     if (filename.endsWith(".tsx") || filename.endsWith(".ts")) return "typescript";
@@ -76,7 +66,7 @@ export function MonacoEditor({ onSave }: MonacoEditorProps) {
       height="100%"
       language={getLanguage(activeFile.path)}
       value={activeFile.content}
-      theme={getMonacoTheme()}
+      theme={getMonacoTheme(theme)}
       onChange={handleChange}
       onMount={handleEditorMount}
       options={{
