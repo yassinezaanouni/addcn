@@ -3,32 +3,57 @@ import type { RegistryItem, RegistryFile, RegistryFileType } from "@/types/regis
 import { REGISTRY_SCHEMA_URL } from "./constants";
 
 /**
- * Maps internal file type to shadcn registry file type
+ * Get the filename from a path
  */
-function getRegistryFileType(file: ComponentFile): RegistryFileType {
-  switch (file.type) {
-    case "hook":
-      return "registry:hook";
-    case "util":
-      return "registry:lib";
-    case "style":
-      return "registry:style";
-    case "component":
-    default:
-      // Use registry:ui for components in components/ui path
-      if (file.path.startsWith("components/ui/")) {
-        return "registry:ui";
-      }
-      return "registry:component";
+function getFileName(path: string): string {
+  return path.split("/").pop() || path;
+}
+
+/**
+ * Maps internal file type to shadcn registry file type and determines if target is needed
+ */
+function getRegistryFileInfo(file: ComponentFile): { type: RegistryFileType; target?: string } {
+  // For standard shadcn paths, use appropriate types (shadcn resolves based on user config)
+  if (file.path.startsWith("components/ui/")) {
+    return { type: "registry:ui" };
   }
+  if (file.path.startsWith("hooks/") || file.type === "hook") {
+    return { type: "registry:hook" };
+  }
+  if (file.path.startsWith("lib/") || file.path.startsWith("utils/") || file.type === "util") {
+    return { type: "registry:lib" };
+  }
+  if (file.type === "style" || file.path.endsWith(".css")) {
+    return { type: "registry:style" };
+  }
+
+  // For custom paths, use registry:file with explicit target
+  // Use ~/ prefix to indicate project root (per shadcn docs)
+  return {
+    type: "registry:file",
+    target: `~/${file.path}`,
+  };
 }
 
 export function componentToRegistry(component: SavedComponent): RegistryItem {
-  const files: RegistryFile[] = component.files.map((file) => ({
-    path: file.path,
-    type: getRegistryFileType(file),
-    content: file.content,
-  }));
+  const files: RegistryFile[] = component.files.map((file) => {
+    const { type, target } = getRegistryFileInfo(file);
+
+    const registryFile: RegistryFile = {
+      // For standard types, just use filename - shadcn resolves the directory
+      // For registry:file, use full path
+      path: type === "registry:file" ? file.path : getFileName(file.path),
+      type,
+      content: file.content,
+    };
+
+    // Only include target for registry:file type
+    if (target) {
+      registryFile.target = target;
+    }
+
+    return registryFile;
+  });
 
   return {
     $schema: REGISTRY_SCHEMA_URL as "https://ui.shadcn.com/schema/registry-item.json",

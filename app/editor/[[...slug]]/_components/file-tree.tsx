@@ -25,6 +25,13 @@ import {
   type FolderNode,
 } from "@/stores/editor-store";
 
+const PATH_PRESETS = [
+  { label: "components/ui", path: "components/ui" },
+  { label: "hooks", path: "hooks" },
+  { label: "lib", path: "lib" },
+  { label: "app", path: "app" },
+] as const;
+
 // Reusable inline input for add/edit operations
 function InlineInput({
   value,
@@ -76,6 +83,7 @@ export function FileTree() {
   const [editValue, setEditValue] = useState("");
   const [addingInPath, setAddingInPath] = useState<string | null>(null);
   const [newFileName, setNewFileName] = useState("");
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(["components", "components/ui"])
   );
@@ -123,6 +131,7 @@ export function FileTree() {
   const handleStartAdd = (parentPath: string) => {
     setAddingInPath(parentPath);
     setNewFileName("");
+    setSelectedPreset(null);
     if (parentPath) {
       setExpandedFolders((prev) => new Set([...prev, parentPath]));
     }
@@ -135,31 +144,78 @@ export function FileTree() {
     if (!name.includes(".")) {
       name += ".tsx";
     }
-    const fullPath = addingInPath ? `${addingInPath}/${name}` : name;
+
+    let fullPath: string;
+    if (addingInPath) {
+      // Adding inside a folder
+      fullPath = `${addingInPath}/${name}`;
+    } else if (selectedPreset) {
+      // Adding at root with a preset selected
+      fullPath = `${selectedPreset}/${name}`;
+    } else {
+      // Adding at root without preset (user typed full path)
+      fullPath = name;
+    }
+
     addFile(fullPath);
     setAddingInPath(null);
     setNewFileName("");
+    setSelectedPreset(null);
   };
 
   const handleCancelAdd = () => {
     setAddingInPath(null);
     setNewFileName("");
+    setSelectedPreset(null);
   };
 
   const renderAddInput = (parentPath: string, paddingLeft: number) => {
     if (addingInPath !== parentPath) return null;
 
     const isRoot = parentPath === "";
+
+    // Show preset buttons only at root level
+    if (isRoot) {
+      return (
+        <div className="px-2 py-1">
+          <div className="mb-1 flex flex-wrap gap-1">
+            {PATH_PRESETS.map((preset) => (
+              <Button
+                key={preset.path}
+                variant={selectedPreset === preset.path ? "secondary" : "ghost"}
+                size="xs"
+                className="h-5 px-1.5 text-[10px] font-normal"
+                onClick={() =>
+                  setSelectedPreset(
+                    selectedPreset === preset.path ? null : preset.path
+                  )
+                }
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+          <InlineInput
+            value={newFileName}
+            onChange={setNewFileName}
+            onConfirm={handleConfirmAdd}
+            onCancel={handleCancelAdd}
+            placeholder={selectedPreset ? "filename.tsx" : "path/to/file.tsx"}
+            icon={IconFile}
+          />
+        </div>
+      );
+    }
+
     return (
       <InlineInput
         value={newFileName}
         onChange={setNewFileName}
         onConfirm={handleConfirmAdd}
         onCancel={handleCancelAdd}
-        placeholder={isRoot ? "components/ui/button.tsx" : "filename.tsx"}
+        placeholder="filename.tsx"
         icon={IconFile}
-        className={isRoot ? "px-2" : undefined}
-        style={{ paddingLeft: isRoot ? undefined : paddingLeft }}
+        style={{ paddingLeft }}
       />
     );
   };

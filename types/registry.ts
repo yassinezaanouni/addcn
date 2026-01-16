@@ -4,12 +4,14 @@ export type RegistryFileType =
   | "registry:hook"
   | "registry:lib"
   | "registry:block"
-  | "registry:style";
+  | "registry:style"
+  | "registry:file";
 
 export interface RegistryFile {
   path: string;
   type: RegistryFileType;
   content: string;
+  target?: string; // Optional: explicit output path (only for registry:file type)
 }
 
 export type RegistryItemType =
