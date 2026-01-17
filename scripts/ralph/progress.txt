@@ -394,3 +394,18 @@
   - toKebabCase pattern: lowercase → remove invalid chars → spaces to hyphens → collapse multiple hyphens → trim hyphens
 ---
 
+## 2026-01-17 - US-025
+- Implemented member management functions in convex/organizations.ts
+- Added getMembers query: fetches org members with user details (username, email, avatarUrl)
+- Added getMembership helper function for reusable membership lookups
+- Implemented addMember mutation: admin/owner only, validates target user exists, prevents duplicate membership
+- Implemented removeMember mutation: admin/owner only, prevents removing last owner, only owners can remove admins/owners
+- Implemented updateMemberRole mutation: owner only, prevents demoting last owner
+- Files changed: convex/organizations.ts (modified), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Extract getMembership helper for reusable by_orgId_userId index queries
+  - Permission hierarchy: owner > admin > member - admins can't remove admins, only owners can
+  - Always count owners before removing/demoting to prevent orphaned orgs
+  - Return structured objects from member queries: include _id, role, joinedAt, invitedBy + nested user object
+---
+

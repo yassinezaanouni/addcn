@@ -402,8 +402,8 @@
         "Typecheck passes"
       ],
       "priority": 25,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added getMembers query (returns members with user details), addMember mutation (admin/owner only, validates user exists and not already member), removeMember mutation (admin/owner only, prevents removing last owner, owners can remove admins), updateMemberRole mutation (owner only, prevents demoting last owner)."
     },
     {
       "id": "US-026",
