@@ -369,8 +369,8 @@
         "Verify in browser"
       ],
       "priority": 23,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created orgs page at app/(dashboard)/dashboard/orgs/page.tsx with OrgList component. Uses TanStack Query with convexQuery(api.organizations.getMyOrgs, {}). OrgCard displays org avatar, name, slug, and role badge (owner/admin/member). Links to org detail page. Create Organization button links to /dashboard/orgs/new."
     },
     {
       "id": "US-024",
@@ -387,8 +387,8 @@
         "Verify in browser"
       ],
       "priority": 24,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created org creation page at app/(dashboard)/dashboard/orgs/new/page.tsx with name and slug fields. Auto-generates slug from name using toKebabCase function. Validates slug format client-side before submission. Uses useMutation with useConvexMutation for form submission. Redirects to org detail page on success."
     },
     {
       "id": "US-025",

@@ -359,3 +359,38 @@
   - Owner check pattern: query membership, check `role !== "owner"` throws error
 ---
 
+## 2026-01-17 - US-023
+- Created organization list page at app/(dashboard)/dashboard/orgs/page.tsx
+- Created OrgList component at app/(dashboard)/dashboard/orgs/_components/org-list.tsx
+- Used useQuery with convexQuery(api.organizations.getMyOrgs, {}) for fetching user's organizations
+- Implemented OrgCardSkeleton and OrgListSkeleton for loading state
+- Added empty state with Empty component and IconBuilding icon
+- OrgCard displays org avatar, name, slug (@slug), and role badge (owner/admin/member)
+- Role badge variants: owner=default, admin=secondary, member=outline
+- Cards link to /dashboard/orgs/{slug} for org detail pages
+- Create Organization button links to /dashboard/orgs/new
+- Files changed: app/(dashboard)/dashboard/orgs/page.tsx (new), app/(dashboard)/dashboard/orgs/_components/org-list.tsx (new)
+- **Learnings for future iterations:**
+  - Dashboard pages use /dashboard/* paths under app/(dashboard)/dashboard/ directory
+  - Role badge variant pattern: getRoleBadgeVariant helper function for consistent styling
+  - Avatar component works with rounded-lg for non-circular org avatars
+  - OrgWithRole type extends Doc<"organizations"> with role field for typed org cards
+---
+
+## 2026-01-17 - US-024
+- Created organization creation page at app/(dashboard)/dashboard/orgs/new/page.tsx
+- Form with name and slug input fields using shadcn Card, Input, Label, Button components
+- Implemented toKebabCase function for auto-generating slug from name
+- Slug auto-updates as user types name (unless manually edited, tracked via slugManuallyEdited state)
+- Client-side validateSlug function mirrors server-side validation rules
+- Uses useMutation with useConvexMutation(api.organizations.create) for form submission
+- Redirects to /dashboard/orgs/{slug} on success with toast notification
+- Cancel button uses router.back() to return to previous page
+- Files changed: app/(dashboard)/dashboard/orgs/new/page.tsx (new)
+- **Learnings for future iterations:**
+  - Use useEffect with dependency on name + slugManuallyEdited flag for auto-slug generation
+  - Track manual edits with boolean state to stop auto-generation when user customizes slug
+  - Use existing slug state in onSuccess callback instead of trying to infer type from mutation return
+  - toKebabCase pattern: lowercase → remove invalid chars → spaces to hyphens → collapse multiple hyphens → trim hyphens
+---
+
