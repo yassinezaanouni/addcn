@@ -166,8 +166,8 @@
         "Typecheck passes"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created app/api/auth/[...all]/route.ts with handler import from lib/auth-server. Exported GET and POST handlers."
     },
     {
       "id": "US-012",
@@ -181,8 +181,8 @@
         "Typecheck passes"
       ],
       "priority": 12,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Updated components/providers/convex-client-provider.tsx with ConvexQueryClient, QueryClient, ConvexBetterAuthProvider, and initialToken prop."
     },
     {
       "id": "US-013",

@@ -22,6 +22,9 @@
 - authComponent.registerRoutes(http, createAuth, { cors: true }) for Better Auth route registration
 - Auth client: lib/auth-client.ts with createAuthClient from better-auth/react + convexClient plugin
 - Auth server: lib/auth-server.ts with convexBetterAuthNextJs from @convex-dev/better-auth/nextjs
+- Auth API route: app/api/auth/[...all]/route.ts exports GET, POST from handler
+- ConvexClientProvider: components/providers/convex-client-provider.tsx with ConvexBetterAuthProvider + QueryClientProvider
+- TanStack Query setup: ConvexQueryClient connects to QueryClient via queryKeyHashFn and queryFn
 
 ---
 
@@ -152,5 +155,31 @@
   - handler is used in API routes for auth endpoints (GET, POST)
   - preloadAuthQuery is for RSC data preloading with auth
   - fetchAuthQuery/Mutation/Action are for server-side Convex calls with auth token
+---
+
+## 2026-01-17 - US-011
+- Created app/api/auth/[...all]/route.ts for Next.js auth catch-all route
+- Imported handler from lib/auth-server
+- Exported GET and POST handlers from the imported handler
+- Files changed: app/api/auth/[...all]/route.ts (new)
+- **Learnings for future iterations:**
+  - Next.js catch-all routes use [...param] syntax in directory names
+  - handler from lib/auth-server provides both GET and POST handlers
+  - Simple destructuring export: `export const { GET, POST } = handler`
+---
+
+## 2026-01-17 - US-012
+- Updated ConvexClientProvider at components/providers/convex-client-provider.tsx
+- Added ConvexQueryClient and QueryClient for TanStack Query integration
+- Connected convexQueryClient to queryClient with convexQueryClient.connect(queryClient)
+- Wrapped children with ConvexBetterAuthProvider (from @convex-dev/better-auth/react) and QueryClientProvider
+- Added initialToken prop for SSR auth token hydration
+- Imported authClient from lib/auth-client for Better Auth integration
+- Files changed: components/providers/convex-client-provider.tsx (modified)
+- **Learnings for future iterations:**
+  - ConvexQueryClient takes convex client, then connect() to QueryClient
+  - QueryClient needs queryKeyHashFn and queryFn from convexQueryClient
+  - ConvexBetterAuthProvider wraps QueryClientProvider (auth outside, queries inside)
+  - initialToken prop allows passing SSR token for hydration
 ---
 
