@@ -435,8 +435,8 @@
         "Verify in browser"
       ],
       "priority": 27,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created org settings page at app/(dashboard)/dashboard/orgs/[slug]/settings/page.tsx with MemberList, InviteForm, and PendingInvites components. Member list shows role badges (owner/admin/member), remove button with confirmation dialog, and role change dialog (owner only). Invite form has email input + role dropdown. Pending invites show expiry time and cancel option. Also created org detail page at [slug]/page.tsx with settings link."
     },
     {
       "id": "US-028",

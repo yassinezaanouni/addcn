@@ -426,3 +426,19 @@
   - getPendingInvites useful for org settings page to show/cancel invites
 ---
 
+## 2026-01-17 - US-027
+- Created org settings page at app/(dashboard)/dashboard/orgs/[slug]/settings/page.tsx
+- Created MemberList component with role badges, remove button with confirmation, role change dialog (owner only)
+- Created InviteForm component with email input and role dropdown (Select component)
+- Created PendingInvites component with expiry countdown and cancel button
+- Also created org detail page at app/(dashboard)/dashboard/orgs/[slug]/page.tsx with settings link
+- Added shadcn Select component for role dropdown
+- Files changed: app/(dashboard)/dashboard/orgs/[slug]/page.tsx (new), app/(dashboard)/dashboard/orgs/[slug]/settings/page.tsx (new), app/(dashboard)/dashboard/orgs/[slug]/settings/_components/member-list.tsx (new), app/(dashboard)/dashboard/orgs/[slug]/settings/_components/invite-form.tsx (new), app/(dashboard)/dashboard/orgs/[slug]/settings/_components/pending-invites.tsx (new), components/ui/select.tsx (new)
+- **Learnings for future iterations:**
+  - Settings pages should check user role before rendering (canAccessSettings = admin || owner)
+  - Use formatTimeRemaining helper for human-readable countdown (days/hours remaining)
+  - Sort members by role hierarchy (owner, admin, member) for better UX
+  - Permission checks for UI actions: canRemove depends on current user role vs target role
+  - Only owners can change roles, admins can only remove members
+---
+
