@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
 import type * as components_ from "../components.js";
 import type * as lib_namespace from "../lib/namespace.js";
 import type * as lib_permissions from "../lib/permissions.js";
@@ -21,6 +22,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
   components: typeof components_;
   "lib/namespace": typeof lib_namespace;
   "lib/permissions": typeof lib_permissions;

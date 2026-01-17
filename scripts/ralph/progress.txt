@@ -15,6 +15,8 @@
 - Use Doc<"tableName"> from "../_generated/dataModel" for document types
 - Discriminated unions with `type` field for multi-variant patterns
 - Permission helpers in `convex/lib/permissions.ts` - use {allowed, reason} for error messages
+- Better Auth setup: convex.config.ts (defineApp + app.use), auth.config.ts (AuthConfig with providers)
+- Better Auth server: auth.ts exports authComponent (createClient), createAuth function, getCurrentUser query
 
 ---
 
@@ -63,5 +65,47 @@
   - Return structured objects {allowed, reason} for permission checks that need error messages
   - Extract shared DB queries into private helper functions
   - Use compound index by_orgId_userId for efficient membership lookups
+---
+
+## 2026-01-17 - US-005
+- Installed Better Auth dependencies for Convex integration
+- Ran: pnpm add convex@latest @convex-dev/better-auth
+- Ran: pnpm add better-auth@1.4.9 --save-exact
+- Ran: pnpm add @tanstack/react-query @convex-dev/react-query
+- Verified packages in package.json: @convex-dev/better-auth, better-auth@1.4.9, @tanstack/react-query, @convex-dev/react-query
+- Files changed: package.json, pnpm-lock.yaml
+- **Learnings for future iterations:**
+  - better-call peer dependency warning about zod@^4.0.0 can be ignored (works with zod 3.x)
+  - Use --save-exact flag for pinning specific versions
+---
+
+## 2026-01-17 - US-006
+- Created convex/convex.config.ts to register Better Auth Convex component
+- Used defineApp() and app.use(betterAuth) pattern from @convex-dev/better-auth
+- Created convex/auth.config.ts with getAuthConfigProvider for Convex auth integration
+- Files changed: convex/convex.config.ts (new), convex/auth.config.ts (new)
+- **Learnings for future iterations:**
+  - Better Auth Convex component uses defineApp/app.use pattern in convex.config.ts
+  - auth.config.ts exports AuthConfig with providers array containing getAuthConfigProvider()
+  - The _generated/api.d.ts file auto-updates with betterAuth component types
+---
+
+## 2026-01-17 - US-007
+- Created convex/auth.ts with Better Auth server instance
+- Configured authComponent using createClient<DataModel>(components.betterAuth)
+- Implemented createAuth function with:
+  - baseURL from SITE_URL env var
+  - database adapter from authComponent.adapter(ctx)
+  - emailAndPassword enabled (no email verification required)
+  - GitHub socialProvider with GITHUB_CLIENT_ID/SECRET env vars
+  - Google socialProvider with GOOGLE_CLIENT_ID/SECRET env vars
+  - convex plugin with authConfig for Convex compatibility
+- Exported getCurrentUser query using authComponent.getAuthUser(ctx)
+- Files changed: convex/auth.ts (new)
+- **Learnings for future iterations:**
+  - Use `better-auth/minimal` import for smaller bundle size
+  - GenericCtx type comes from @convex-dev/better-auth
+  - authComponent.getAuthUser(ctx) returns the current user from Better Auth session
+  - Environment variables needed: SITE_URL, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 ---
 
