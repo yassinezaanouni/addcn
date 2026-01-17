@@ -493,3 +493,22 @@
   - getByNamespaceAndName query pattern: resolve namespace first, then query by appropriate index
 ---
 
+## 2026-01-17 - US-031
+- Created user settings page with profile update form
+- Main settings page at app/(dashboard)/dashboard/settings/page.tsx redirects to profile
+- Profile page at app/(dashboard)/dashboard/settings/profile/page.tsx with:
+  - Avatar preview with live update as URL changes
+  - Username field with @ prefix display and client-side validation
+  - Avatar URL field for custom avatar images
+  - hasChanges tracking to prevent unnecessary submissions
+  - Success toast on profile update
+- Uses TanStack Query with convexQuery for fetching user data
+- Uses useMutation with useConvexMutation for updateMe mutation
+- Files changed: app/(dashboard)/dashboard/settings/page.tsx (new), app/(dashboard)/dashboard/settings/profile/page.tsx (new)
+- **Learnings for future iterations:**
+  - Use useEffect to populate form fields from query data
+  - Track hasChanges by comparing current form values to original data
+  - Use toast.info for "no changes" feedback, toast.success for successful updates
+  - Avatar preview: show form value if changed, fallback to user data from query
+---
+

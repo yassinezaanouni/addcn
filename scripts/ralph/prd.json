@@ -507,8 +507,8 @@
         "Verify in browser"
       ],
       "priority": 31,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created settings pages at app/(dashboard)/dashboard/settings/. Main page redirects to /profile. Profile page has form with username (validated), avatar URL fields. Uses TanStack Query + useConvexMutation. Shows success toast via sonner. Prevents submission when no changes."
     },
     {
       "id": "US-032",
