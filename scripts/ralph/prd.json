@@ -300,8 +300,8 @@
         "Verify in browser"
       ],
       "priority": 19,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created dashboard layout with sidebar navigation (Dashboard, Components, Organizations, Settings links), header with user avatar dropdown (profile info, settings link, sign out), auth state handling using authClient.useSession() and TanStack Query for user data, redirects to login if not authenticated. Added avatar and dropdown-menu shadcn components with asChild support for base-ui."
     },
     {
       "id": "US-020",
@@ -318,8 +318,8 @@
         "Verify in browser"
       ],
       "priority": 20,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created component-list.tsx with TanStack Query fetching via convexQuery(api.components.getMyComponents, {}). Uses Card, Badge, Skeleton, and Empty components. Shows loading skeleton, empty state with icon, or grid of component cards with title, description, public/private badge, and download count."
     },
     {
       "id": "US-021",

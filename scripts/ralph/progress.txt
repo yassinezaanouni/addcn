@@ -34,6 +34,9 @@
 - Use internalQuery/internalMutation for functions only callable by HTTP actions (not exposed to client)
 - HTTP actions: use httpAction from "_generated/server", ctx.runQuery/runMutation for internal calls
 - HTTP route params: {param} syntax but parse manually from request.url (not auto-injected)
+- shadcn components use base-ui instead of radix-ui - use `render` prop instead of `asChild` for composition
+- Dashboard routes: app/(dashboard)/ group with /dashboard/* paths, separate from marketing at /
+- Auth state in client components: authClient.useSession() for session, useQuery(convexQuery(api.users.getMe, {})) for user profile
 
 ---
 
@@ -288,5 +291,40 @@
   - Don't await fire-and-forget mutations (like download counting)
   - URL path parameters in http.route use {param} syntax but aren't auto-parsed - parse manually from request.url
   - Add Content-Type: application/json to CORS headers for JSON endpoints
+---
+
+## 2026-01-17 - US-019
+- Created dashboard layout at app/(dashboard)/layout.tsx
+- Added sidebar with navigation links: Dashboard, Components, Organizations, Settings
+- Implemented header with user avatar dropdown menu (profile info, settings link, sign out button)
+- Used authClient.useSession() for auth state and useQuery(convexQuery(api.users.getMe, {})) for user profile
+- Added loading state with skeleton components
+- Redirects to /login if not authenticated, to /onboarding if no username set
+- Added shadcn avatar and dropdown-menu components
+- Fixed base-ui dropdown-menu component to support asChild via render prop pattern
+- Dashboard accessible at /dashboard, not / (marketing page at /)
+- Files changed: app/(dashboard)/layout.tsx (new), app/(dashboard)/dashboard/page.tsx (new), components/ui/avatar.tsx (new), components/ui/dropdown-menu.tsx (new)
+- **Learnings for future iterations:**
+  - shadcn components use base-ui, not radix-ui - asChild doesn't exist, use render prop
+  - To implement asChild pattern in base-ui: add asChild prop, use render={asChild ? children : undefined}
+  - Route groups can conflict if both have page.tsx at root - use nested paths like /dashboard
+  - authClient.useSession() returns { data: session, isPending } for session state
+  - Combine session check with user profile query for proper auth + onboarding flow
+---
+
+## 2026-01-17 - US-020
+- Created dashboard component list UI at app/(dashboard)/dashboard/page.tsx
+- Created ComponentList component at app/(dashboard)/dashboard/_components/component-list.tsx
+- Used useQuery with convexQuery(api.components.getMyComponents, {}) for fetching user's components
+- Implemented ComponentCardSkeleton and ComponentListSkeleton for loading state
+- Added empty state with Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription components
+- Component cards display title, description (line-clamp-2), public/private badge, and download count
+- Used IconPackage for empty state icon and IconDownload for download count
+- Files changed: app/(dashboard)/dashboard/page.tsx (modified), app/(dashboard)/dashboard/_components/component-list.tsx (new)
+- **Learnings for future iterations:**
+  - Use Card with size="sm" prop for compact card layouts
+  - Badge variant="default" for public, variant="secondary" for private visibility
+  - line-clamp-2 class truncates text to 2 lines with ellipsis
+  - Empty component is a div container, compose with EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription
 ---
 
