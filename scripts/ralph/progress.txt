@@ -512,3 +512,24 @@
   - Avatar preview: show form value if changed, fallback to user data from query
 ---
 
+## 2026-01-17 - US-032
+- Created OrgSwitcher component at components/org-switcher.tsx
+- Component shows dropdown with "Personal" and list of user's orgs from getMyOrgs query
+- Context stored in URL query parameter (?context=personal or ?context=orgId)
+- Added getMyComponentsFiltered query to convex/components.ts
+  - Accepts optional context param: "personal" | Id<"organizations">
+  - Filters components by owner type based on context
+  - If no context, returns all components (personal + orgs)
+- Updated ComponentList to use context from URL and filtered query
+- Updated ComponentCard to accept namespace prop (username or org slug)
+- Added getNamespace helper to determine correct namespace for each component
+- OrgSwitcher added to dashboard header (visible on desktop, hidden on mobile)
+- Files changed: components/org-switcher.tsx (new), convex/components.ts (modified), app/(dashboard)/layout.tsx (modified), app/(dashboard)/dashboard/_components/component-list.tsx (modified)
+- **Learnings for future iterations:**
+  - useSearchParams() for reading URL query params in client components
+  - Store context in URL for shareable state and browser history support
+  - OrgContext type: "personal" | Id<"organizations"> for type-safe context handling
+  - When querying Convex with union types, TypeScript requires explicit type assertion for Id types
+  - Component namespace comes from component.userId → user.username or component.orgId → org.slug
+---
+
