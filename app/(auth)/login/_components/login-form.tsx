@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { IconBrandGithub, IconBrandGoogle } from "@tabler/icons-react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -14,15 +14,18 @@ import {
 } from "@/components/ui/card";
 
 export function LoginForm() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState<"github" | "google" | null>(null);
+
+  // Get callback URL from query params, default to onboarding
+  const callbackUrl = searchParams.get("callbackUrl") || "/onboarding";
 
   const handleGitHubSignIn = async () => {
     setIsLoading("github");
     try {
       await authClient.signIn.social({
         provider: "github",
-        callbackURL: "/onboarding",
+        callbackURL: callbackUrl,
       });
     } catch {
       setIsLoading(null);
@@ -34,7 +37,7 @@ export function LoginForm() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/onboarding",
+        callbackURL: callbackUrl,
       });
     } catch {
       setIsLoading(null);
