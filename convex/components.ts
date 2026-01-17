@@ -7,6 +7,7 @@ import {
   canEditComponent,
   canTransferComponent,
 } from "./lib/permissions";
+import { resolveNamespace } from "./lib/namespace";
 
 /**
  * Get current user from auth and our users table.
@@ -413,5 +414,49 @@ export const getPublicByUserId = query({
     return components
       .filter((c) => c.isPublic)
       .sort((a, b) => b.updatedAt - a.updatedAt);
+  },
+});
+
+/**
+ * Get a public component by namespace and name.
+ * Used on component detail pages.
+ * Returns null if not found or private.
+ */
+export const getByNamespaceAndName = query({
+  args: {
+    namespace: v.string(),
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const owner = await resolveNamespace(ctx, args.namespace);
+
+    if (!owner) {
+      return null;
+    }
+
+    let component = null;
+
+    if (owner.type === "user") {
+      component = await ctx.db
+        .query("components")
+        .withIndex("by_userId_name", (q) =>
+          q.eq("userId", owner.user._id).eq("name", args.name)
+        )
+        .unique();
+    } else {
+      component = await ctx.db
+        .query("components")
+        .withIndex("by_orgId_name", (q) =>
+          q.eq("orgId", owner.org._id).eq("name", args.name)
+        )
+        .unique();
+    }
+
+    // Only return public components
+    if (!component || !component.isPublic) {
+      return null;
+    }
+
+    return component;
   },
 });
