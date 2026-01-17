@@ -442,3 +442,19 @@
   - Only owners can change roles, admins can only remove members
 ---
 
+## 2026-01-17 - US-028
+- Created invite acceptance page at app/invite/[token]/page.tsx
+- Displays invite details: org name/avatar, inviter username, role badge
+- Handles auth states: redirects to login if not authenticated, with callbackUrl for return
+- Updated login form to support callbackUrl query parameter for post-auth redirect
+- Accept invite functionality with success toast and redirect to org detail page
+- Error UI for invalid/expired tokens with "Go to Dashboard" button
+- Loading state with skeleton components
+- Files changed: app/invite/[token]/page.tsx (new), app/(auth)/login/_components/login-form.tsx (modified)
+- **Learnings for future iterations:**
+  - Use useSearchParams() from next/navigation to read query parameters in client components
+  - When mutation result type is unknown, use existing data from query instead of relying on mutation return type
+  - Escape apostrophes in JSX with &apos; entity to avoid ESLint react/no-unescaped-entities error
+  - Pattern for auth redirect with callback: encode return URL and pass as callbackUrl query param
+---
+

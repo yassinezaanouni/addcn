@@ -454,8 +454,8 @@
         "Verify in browser"
       ],
       "priority": 28,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created app/invite/[token]/page.tsx with invite details display (org name, avatar, inviter, role badge), auth state handling (redirects to login if not authenticated with callbackUrl), accept invite functionality with success toast and redirect to org page, error UI for invalid/expired tokens. Updated login form to support callbackUrl query parameter for post-auth redirect."
     },
     {
       "id": "US-029",
