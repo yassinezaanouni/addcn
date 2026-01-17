@@ -18,6 +18,24 @@
 - Better Auth setup: convex.config.ts (defineApp + app.use), auth.config.ts (AuthConfig with providers)
 - Better Auth server: auth.ts exports authComponent (createClient), createAuth function, getCurrentUser query
 
+- HTTP router in convex/http.ts - use httpRouter() and export default http
+- authComponent.registerRoutes(http, createAuth, { cors: true }) for Better Auth route registration
+- Auth client: lib/auth-client.ts with createAuthClient from better-auth/react + convexClient plugin
+- Auth server: lib/auth-server.ts with convexBetterAuthNextJs from @convex-dev/better-auth/nextjs
+
+---
+
+## 2026-01-17 - US-008
+- Created convex/http.ts with HTTP router for auth and registry endpoints
+- Imported authComponent and createAuth from ./auth
+- Registered Better Auth routes with authComponent.registerRoutes(http, createAuth, { cors: true })
+- Added REGISTRY_CORS_HEADERS constant for future registry endpoints
+- Files changed: convex/http.ts (new), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Use httpRouter() from "convex/server" to create HTTP router
+  - authComponent.registerRoutes takes http, createAuth function, and options object
+  - { cors: true } option enables CORS for client-side framework compatibility
+  - CORS headers constant defined with "as const" for strict typing
 ---
 
 ## 2026-01-17 - US-002
@@ -107,5 +125,32 @@
   - GenericCtx type comes from @convex-dev/better-auth
   - authComponent.getAuthUser(ctx) returns the current user from Better Auth session
   - Environment variables needed: SITE_URL, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+---
+
+## 2026-01-17 - US-009
+- Created lib/auth-client.ts for Better Auth frontend client
+- Used createAuthClient from "better-auth/react"
+- Added convexClient plugin from "@convex-dev/better-auth/client/plugins"
+- Configured baseURL from NEXT_PUBLIC_SITE_URL env var
+- Exported authClient for use in React components
+- Files changed: lib/auth-client.ts (new)
+- **Learnings for future iterations:**
+  - Use "use client" directive at top of file since it uses React hooks
+  - convexClient() plugin enables Convex-specific auth integration on client side
+  - baseURL uses NEXT_PUBLIC_ prefix for client-side access
+---
+
+## 2026-01-17 - US-010
+- Created lib/auth-server.ts with Next.js server auth utilities
+- Used convexBetterAuthNextJs from "@convex-dev/better-auth/nextjs"
+- Exported handler (for API route), preloadAuthQuery (for RSC preloading), isAuthenticated, getToken
+- Exported fetchAuthQuery, fetchAuthMutation, fetchAuthAction for server-side Convex operations
+- Configured with NEXT_PUBLIC_CONVEX_URL and NEXT_PUBLIC_CONVEX_SITE_URL env vars
+- Files changed: lib/auth-server.ts (new)
+- **Learnings for future iterations:**
+  - convexBetterAuthNextJs provides all server-side auth utilities for Next.js
+  - handler is used in API routes for auth endpoints (GET, POST)
+  - preloadAuthQuery is for RSC data preloading with auth
+  - fetchAuthQuery/Mutation/Action are for server-side Convex calls with auth token
 ---
 
