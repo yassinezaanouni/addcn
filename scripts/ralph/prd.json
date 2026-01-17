@@ -471,8 +471,8 @@
         "Verify in browser"
       ],
       "priority": 29,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created public profile page at app/[username]/page.tsx. Displays user avatar, username, join date. Lists public components only via getPublicByUserId query. Shows 'User not found' empty state for invalid usernames. Component cards link to /{username}/{component} for detail page."
     },
     {
       "id": "US-030",

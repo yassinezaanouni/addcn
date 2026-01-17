@@ -458,3 +458,19 @@
   - Pattern for auth redirect with callback: encode return URL and pass as callbackUrl query param
 ---
 
+## 2026-01-17 - US-029
+- Created public profile page at app/[username]/page.tsx
+- Added getPublicByUserId query to convex/components.ts for fetching user's public components
+- Displays user avatar, username with @ prefix, and join date
+- Lists public components in a grid with title, description, public badge, and download count
+- Shows "User not found" empty state for invalid usernames using Empty component
+- Component cards link to /{username}/{component} for detail page (US-030)
+- Uses TanStack Query with conditional query pattern for components (only fetch when user exists)
+- Files changed: app/[username]/page.tsx (new), convex/components.ts (modified)
+- **Learnings for future iterations:**
+  - For conditional queries with Convex + TanStack Query, use pattern: `useQuery({ ...convexQuery(api.x, args), enabled: !!condition })`
+  - When args depend on a previous query result, use ternary with "skip" as second arg: `convexQuery(api.x, userId ? { userId } : "skip")`
+  - Public pages don't need auth state but should handle loading/empty states gracefully
+  - Dynamic routes at app root level like [username] work alongside route groups
+---
+
