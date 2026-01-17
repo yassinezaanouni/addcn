@@ -3,5 +3,65 @@
 # Branch: ralph/multi-user-namespaces
 # Started: 2026-01-17
 
+## Codebase Patterns
+- Validators are kept in `convex/validators.ts` and imported into schema
+- Use `v.optional()` for nullable fields in Convex schema
+- Compound indexes follow pattern `by_field1_field2`
+- Timestamps use `v.number()` storing `Date.now()` values
+- Organization membership roles: owner, admin, member
+- Utility functions go in `convex/lib/` directory
+- Use `as const` for readonly arrays to enable type inference
+- Import QueryCtx/MutationCtx from "../_generated/server" for typing
+- Use Doc<"tableName"> from "../_generated/dataModel" for document types
+- Discriminated unions with `type` field for multi-variant patterns
+- Permission helpers in `convex/lib/permissions.ts` - use {allowed, reason} for error messages
+
+---
+
+## 2026-01-17 - US-002
+- Created validation helpers in convex/lib/validation.ts
+- Added RESERVED_NAMES constant with common reserved slugs (admin, api, app, etc.)
+- Implemented isValidUsername with validation rules: 3-39 chars, lowercase alphanumeric + hyphens, no consecutive hyphens, no start/end hyphen, not reserved
+- Exported isValidOrgSlug as alias since org slugs follow same rules
+- Files changed: convex/lib/validation.ts (new)
+- **Learnings for future iterations:**
+  - Use `as const` for constant arrays to get literal types for includes() check
+  - Validation functions are pure TypeScript, no Convex-specific code needed
+---
+
+## 2026-01-17 - US-001
+- Implemented full Convex schema with users, organizations, orgMembers, invites tables
+- Updated components table with multi-user fields (userId, orgId, createdBy, isPublic, downloads, timestamps)
+- Files changed: convex/schema.ts, convex/components.ts
+- **Learnings for future iterations:**
+  - componentFileValidator already exists in validators.ts - no need to recreate
+  - When schema changes, existing mutations may need updates to pass typecheck
+  - Both userId and orgId are optional on components (one should be set based on owner type)
+---
+
+## 2026-01-17 - US-003
+- Created namespace resolution helper in convex/lib/namespace.ts
+- Defined NamespaceOwner discriminated union type with "user" | "org" variants
+- Implemented resolveNamespace function that takes QueryCtx and namespace string
+- Function strips @ prefix, checks users table first (by_username index), then organizations (by_slug index)
+- Files changed: convex/lib/namespace.ts (new)
+- **Learnings for future iterations:**
+  - Import QueryCtx from "../_generated/server" for typing Convex database context
+  - Use Doc<"tableName"> for document types from dataModel
+  - Discriminated unions with `type` field work well for multi-owner patterns
+---
+
+## 2026-01-17 - US-004
+- Created permissions helper in convex/lib/permissions.ts
+- Implemented canAccessComponent: checks isPublic, personal owner match, or org membership
+- Implemented canEditComponent: personal owner or org admin/owner role
+- Implemented canPublishComponent: delegates to canEditComponent
+- Implemented canTransferComponent: returns {allowed, reason} for better error handling
+- Helper getOrgMembership extracted for reuse
+- Files changed: convex/lib/permissions.ts (new)
+- **Learnings for future iterations:**
+  - Return structured objects {allowed, reason} for permission checks that need error messages
+  - Extract shared DB queries into private helper functions
+  - Use compound index by_orgId_userId for efficient membership lookups
 ---
 

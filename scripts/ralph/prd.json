@@ -17,8 +17,8 @@
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Schema created. componentFileValidator already existed in validators.ts."
     },
     {
       "id": "US-002",
@@ -32,8 +32,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created validation.ts with RESERVED_NAMES, isValidUsername (validates length, charset, no consecutive hyphens, no start/end hyphen, reserved names), and isValidOrgSlug alias."
     },
     {
       "id": "US-003",
@@ -47,8 +47,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created namespace.ts with NamespaceOwner discriminated union type and resolveNamespace function that strips @ prefix and checks users then organizations."
     },
     {
       "id": "US-004",
@@ -63,8 +63,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created permissions.ts with canAccessComponent (checks public, owner, org member), canEditComponent (owner or admin), canPublishComponent (alias), and canTransferComponent (returns object with allowed + reason)."
     },
     {
       "id": "US-005",
