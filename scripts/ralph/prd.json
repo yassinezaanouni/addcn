@@ -1,0 +1,531 @@
+{
+  "project": "addcn",
+  "branchName": "ralph/multi-user-namespaces",
+  "description": "Transform addcn from a local dev tool into a multi-user registry platform with namespaced URLs, authentication, organizations, and component sharing, no fallbacks this's should be like a new project production ready no fallbacks",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create Convex schema with all tables",
+      "description": "As a developer, I need the database schema defined for users, organizations, members, invites, and components.",
+      "acceptanceCriteria": [
+        "Create convex/schema.ts with users table (username, email, avatarUrl, externalId, createdAt)",
+        "Add organizations table (name, slug, avatarUrl, createdAt) with by_slug index",
+        "Add orgMembers table (orgId, userId, role, invitedBy, joinedAt) with indexes",
+        "Add invites table (orgId, email, role, invitedBy, token, expiresAt, createdAt) with indexes",
+        "Update components table with userId, orgId, createdBy, isPublic, downloads fields",
+        "Add componentFileValidator as reusable validator",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Create validation helpers",
+      "description": "As a developer, I need shared validation logic for usernames and org slugs.",
+      "acceptanceCriteria": [
+        "Create convex/lib/validation.ts",
+        "Add RESERVED_NAMES constant array",
+        "Implement isValidUsername function (3-39 chars, lowercase alphanumeric + hyphens, no consecutive hyphens)",
+        "Export isValidOrgSlug as alias to isValidUsername",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Create namespace resolution helper",
+      "description": "As a developer, I need to resolve namespace strings to user or org owners.",
+      "acceptanceCriteria": [
+        "Create convex/lib/namespace.ts",
+        "Define NamespaceOwner type union (user | org)",
+        "Implement resolveNamespace function that checks users first, then organizations",
+        "Handle @ prefix removal",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Create permissions helpers",
+      "description": "As a developer, I need permission checking functions for component access.",
+      "acceptanceCriteria": [
+        "Create convex/lib/permissions.ts",
+        "Implement canAccessComponent (public check, owner check, org member check)",
+        "Implement canEditComponent (owner or org admin/owner)",
+        "Implement canPublishComponent (same as edit)",
+        "Implement canTransferComponent (owner + target org member + no name conflict)",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Install Better Auth dependencies",
+      "description": "As a developer, I need to install the required packages for Better Auth + Convex.",
+      "acceptanceCriteria": [
+        "Run: pnpm add convex@latest @convex-dev/better-auth",
+        "Run: pnpm add better-auth@1.4.9 --save-exact",
+        "Run: pnpm add @tanstack/react-query @convex-dev/react-query",
+        "Verify packages in package.json",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Register Better Auth Convex component",
+      "description": "As a developer, I need to configure Convex to use the Better Auth component.",
+      "acceptanceCriteria": [
+        "Create convex/convex.config.ts with defineApp and app.use(betterAuth)",
+        "Create convex/auth.config.ts with getAuthConfigProvider",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Create Better Auth server instance",
+      "description": "As a developer, I need the Better Auth server configuration with OAuth providers.",
+      "acceptanceCriteria": [
+        "Create convex/auth.ts with createClient and createAuth",
+        "Configure emailAndPassword (enabled, no verification required)",
+        "Configure GitHub socialProvider",
+        "Configure Google socialProvider",
+        "Add convex plugin to betterAuth",
+        "Export getCurrentUser query",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Update HTTP router with auth routes",
+      "description": "As a developer, I need the HTTP router to handle auth and registry endpoints.",
+      "acceptanceCriteria": [
+        "Update convex/http.ts to import authComponent and createAuth",
+        "Call authComponent.registerRoutes(http, createAuth)",
+        "Add CORS headers constant for registry endpoints",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Create auth client for frontend",
+      "description": "As a developer, I need the Better Auth client for React components.",
+      "acceptanceCriteria": [
+        "Create lib/auth-client.ts",
+        "Use createAuthClient from better-auth/react",
+        "Add convexClient plugin",
+        "Export authClient",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Create Next.js server auth utilities",
+      "description": "As a developer, I need server-side auth utilities for Next.js.",
+      "acceptanceCriteria": [
+        "Create lib/auth-server.ts",
+        "Use convexBetterAuthNextJs from @convex-dev/better-auth/nextjs",
+        "Export handler, preloadAuthQuery, isAuthenticated, getToken",
+        "Export fetchAuthQuery, fetchAuthMutation, fetchAuthAction",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Create Next.js API route for auth",
+      "description": "As a developer, I need the catch-all API route for auth handlers.",
+      "acceptanceCriteria": [
+        "Create app/api/auth/[...all]/route.ts",
+        "Import handler from lib/auth-server",
+        "Export GET and POST from handler",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Update ConvexClientProvider with TanStack Query",
+      "description": "As a developer, I need the provider to support auth and TanStack Query.",
+      "acceptanceCriteria": [
+        "Update app/ConvexClientProvider.tsx (or create if needed)",
+        "Add ConvexReactClient, QueryClient, ConvexQueryClient setup",
+        "Wrap with ConvexBetterAuthProvider and QueryClientProvider",
+        "Accept initialToken prop",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Implement user Convex functions",
+      "description": "As a developer, I need CRUD functions for user management.",
+      "acceptanceCriteria": [
+        "Create convex/users.ts",
+        "Implement getMe query (get current user from identity)",
+        "Implement updateMe mutation (username, avatarUrl)",
+        "Implement setUsername mutation with validation",
+        "Implement getByUsername query (public profile only)",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Create login page UI",
+      "description": "As a user, I want to log in with GitHub or Google.",
+      "acceptanceCriteria": [
+        "Create app/(auth)/login/page.tsx",
+        "Create app/(auth)/login/_components/login-form.tsx",
+        "Add GitHub OAuth button using authClient.signIn.social",
+        "Add Google OAuth button using authClient.signIn.social",
+        "Style with shadcn Card component",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Create onboarding page with username form",
+      "description": "As a new user, I want to choose my username after OAuth signup.",
+      "acceptanceCriteria": [
+        "Create app/(auth)/onboarding/page.tsx",
+        "Create app/(auth)/onboarding/_components/username-form.tsx",
+        "Check if user already has username, redirect to dashboard if so",
+        "Validate username format before submission",
+        "Call setUsername mutation on submit",
+        "Redirect to dashboard on success",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Implement component Convex functions",
+      "description": "As a developer, I need CRUD functions for components with permission checks.",
+      "acceptanceCriteria": [
+        "Create/update convex/components.ts",
+        "Implement getMyComponents query (personal + org components)",
+        "Implement create mutation with userId/orgId logic",
+        "Implement get query",
+        "Implement update mutation with permission check",
+        "Implement remove mutation with permission check",
+        "Implement transfer mutation (personal to org)",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Create registry internal functions",
+      "description": "As a developer, I need internal Convex functions for the registry HTTP action.",
+      "acceptanceCriteria": [
+        "Create convex/registry.ts",
+        "Implement getPublicComponent internalQuery using resolveNamespace",
+        "Implement incrementDownloads internalMutation",
+        "Create componentToRegistryJson helper function",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Add registry HTTP action endpoint",
+      "description": "As a CLI user, I want to install components via namespaced URLs.",
+      "acceptanceCriteria": [
+        "Update convex/http.ts with /r/{namespace}/{name}.json route",
+        "Parse namespace and name from URL path",
+        "Call internal.registry.getPublicComponent",
+        "Return 404 with JSON error if not found",
+        "Fire incrementDownloads mutation (fire and forget)",
+        "Return registry JSON with CORS headers",
+        "Add OPTIONS handler for CORS preflight",
+        "Typecheck passes"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Create dashboard layout",
+      "description": "As a user, I want a dashboard layout with navigation.",
+      "acceptanceCriteria": [
+        "Create app/(dashboard)/layout.tsx",
+        "Add sidebar with navigation links (Dashboard, Components, Organizations, Settings)",
+        "Add header with user avatar and sign out button",
+        "Use Authenticated/Unauthenticated/AuthLoading from convex/react",
+        "Redirect to login if not authenticated",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "title": "Create dashboard component list UI",
+      "description": "As a user, I want to see all my components on the dashboard.",
+      "acceptanceCriteria": [
+        "Create app/(dashboard)/page.tsx",
+        "Create app/(dashboard)/_components/component-list.tsx",
+        "Fetch components using TanStack Query with convexQuery",
+        "Handle loading state with skeleton",
+        "Handle empty state with Empty component",
+        "Display component cards with name, description, public/private badge",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 20,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "Add publish/unpublish toggle to components",
+      "description": "As a user, I want to toggle component visibility between public and private.",
+      "acceptanceCriteria": [
+        "Add visibility toggle button/switch to component card",
+        "Show confirmation dialog when publishing (explains URL will be public)",
+        "Call update mutation with isPublic field",
+        "Show toast on success/error",
+        "Badge updates to reflect new state",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "Implement organization Convex functions",
+      "description": "As a developer, I need CRUD functions for organizations.",
+      "acceptanceCriteria": [
+        "Create convex/organizations.ts",
+        "Implement getMyOrgs query (orgs where user is member, with role)",
+        "Implement create mutation (validates slug, adds creator as owner)",
+        "Implement getBySlug query",
+        "Implement remove mutation (owner only)",
+        "Typecheck passes"
+      ],
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Create organization list page",
+      "description": "As a user, I want to see my organizations.",
+      "acceptanceCriteria": [
+        "Create app/orgs/page.tsx",
+        "Create app/orgs/_components/org-card.tsx",
+        "Fetch orgs using TanStack Query",
+        "Display org cards with name, slug, role badge",
+        "Add 'Create Organization' button",
+        "Handle empty state",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "Create organization creation page",
+      "description": "As a user, I want to create a new organization.",
+      "acceptanceCriteria": [
+        "Create app/orgs/new/page.tsx",
+        "Add form with name and slug fields",
+        "Auto-generate slug from name (kebab-case)",
+        "Validate slug format before submission",
+        "Call create mutation",
+        "Redirect to org page on success",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 24,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "Implement member management functions",
+      "description": "As a developer, I need functions to manage org members.",
+      "acceptanceCriteria": [
+        "Add getMembers query to convex/organizations.ts",
+        "Implement addMember mutation (admin/owner only)",
+        "Implement removeMember mutation (admin/owner only, prevent removing last owner)",
+        "Implement updateMemberRole mutation (owner only)",
+        "Typecheck passes"
+      ],
+      "priority": 25,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "title": "Implement invite functions",
+      "description": "As a developer, I need functions to create and accept invites.",
+      "acceptanceCriteria": [
+        "Add createInvite mutation (generates token, sets 7-day expiry)",
+        "Add getInviteByToken query",
+        "Add acceptInvite mutation (validates token, creates member, deletes invite)",
+        "Add cancelInvite mutation",
+        "Typecheck passes"
+      ],
+      "priority": 26,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "title": "Create org settings page with member list",
+      "description": "As an org admin, I want to manage organization settings and members.",
+      "acceptanceCriteria": [
+        "Create app/orgs/[slug]/settings/page.tsx",
+        "Create app/orgs/_components/member-list.tsx",
+        "Display member list with role badges",
+        "Add invite form (email + role dropdown)",
+        "Add remove member button with confirmation",
+        "Show pending invites with cancel option",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 27,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-028",
+      "title": "Create invite acceptance page",
+      "description": "As an invited user, I want to accept an organization invite.",
+      "acceptanceCriteria": [
+        "Create app/invite/[token]/page.tsx",
+        "Fetch invite by token",
+        "Show org name and role being offered",
+        "If logged in: show accept button, call acceptInvite mutation",
+        "If not logged in: redirect to login with return URL",
+        "Handle expired/invalid token with error message",
+        "Redirect to org page on success",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 28,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-029",
+      "title": "Create public profile page",
+      "description": "As a visitor, I want to view a user's public profile and components.",
+      "acceptanceCriteria": [
+        "Create app/[username]/page.tsx",
+        "Fetch user by username with getByUsername",
+        "Display username, avatar, join date",
+        "List public components only",
+        "Show 404 if user not found",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 29,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-030",
+      "title": "Create component detail page",
+      "description": "As a visitor, I want to view component details and install instructions.",
+      "acceptanceCriteria": [
+        "Create app/[username]/[component]/page.tsx",
+        "Fetch component by namespace and name",
+        "Display title, description, download count",
+        "Show install command with copy button",
+        "Display file list with code preview",
+        "Show 404 if not found or private",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 30,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-031",
+      "title": "Create user settings page",
+      "description": "As a user, I want to update my profile settings.",
+      "acceptanceCriteria": [
+        "Create app/settings/page.tsx",
+        "Create app/settings/profile/page.tsx",
+        "Add form for updating username (with validation)",
+        "Add avatar URL field",
+        "Call updateMe mutation on submit",
+        "Show success toast",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 31,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-032",
+      "title": "Add org context selector to dashboard",
+      "description": "As a user, I want to switch between personal and org contexts.",
+      "acceptanceCriteria": [
+        "Create components/org-switcher.tsx",
+        "Show dropdown with 'Personal' and list of user's orgs",
+        "Store selected context in URL or state",
+        "Filter component list based on selected context",
+        "Show selected context in header",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 32,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

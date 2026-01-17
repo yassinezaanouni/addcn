@@ -64,14 +64,20 @@ export function EditorLayout() {
           registryDependencies,
           updatedAt: now,
         };
-        updateComponent(componentId, updated);
 
-        // Sync to API
-        await fetch("/api/registry", {
+        // Sync to API first to validate
+        const response = await fetch("/api/registry", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: componentId, ...updated }),
         });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to save component");
+        }
+
+        updateComponent(componentId, updated);
       } else {
         // Create new component
         const newComponent: SavedComponent = {
@@ -85,16 +91,20 @@ export function EditorLayout() {
           createdAt: now,
           updatedAt: now,
         };
-        addComponent(newComponent);
 
-        // Sync to API
-        await fetch("/api/registry", {
+        // Sync to API first to validate
+        const response = await fetch("/api/registry", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newComponent),
         });
 
-        // Update editor state with the new ID
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to save component");
+        }
+
+        addComponent(newComponent);
         setMetadata({ componentId: newComponent.id } as never);
       }
 
@@ -102,7 +112,7 @@ export function EditorLayout() {
       router.push("/");
     } catch (err) {
       console.error("Failed to save:", err);
-      setError("Failed to save component. Please try again.");
+      setError(err instanceof Error ? err.message : "Failed to save component");
     } finally {
       setIsSaving(false);
     }

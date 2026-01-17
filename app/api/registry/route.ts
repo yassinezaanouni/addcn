@@ -3,6 +3,7 @@ import type { SavedComponent } from "@/types/component";
 import {
   saveServerComponent,
   getServerComponents,
+  getServerComponentByName,
   deleteServerComponent,
 } from "@/lib/server-storage";
 
@@ -14,6 +15,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Component must have id and name" },
         { status: 400 }
+      );
+    }
+
+    // Check for duplicate name (different component with same name)
+    const existing = await getServerComponentByName(component.name);
+    if (existing && existing.id !== component.id) {
+      return NextResponse.json(
+        { error: `A component named "${component.name}" already exists` },
+        { status: 409 }
       );
     }
 
