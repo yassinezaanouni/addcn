@@ -197,8 +197,8 @@
         "Typecheck passes"
       ],
       "priority": 13,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created convex/users.ts with getMe (links Better Auth user via externalId), updateMe (validates username format + conflicts), setUsername (creates or updates profile), getByUsername (returns public info only)."
     },
     {
       "id": "US-014",
@@ -214,8 +214,8 @@
         "Verify in browser"
       ],
       "priority": 14,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created login page with LoginForm component. Uses Tabler icons for GitHub/Google, shadcn Card/Button components, and authClient.signIn.social for OAuth."
     },
     {
       "id": "US-015",
@@ -232,8 +232,8 @@
         "Verify in browser"
       ],
       "priority": 15,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created onboarding page with UsernameForm component. Uses TanStack Query with convexQuery for getMe, useMutation with useConvexMutation for setUsername. Validates username client-side before submission. Redirects to dashboard on success or if user already has username."
     },
     {
       "id": "US-016",
@@ -250,8 +250,8 @@
         "Typecheck passes"
       ],
       "priority": 16,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created component CRUD functions with permission checks. getMyComponents fetches personal + org components. create handles userId/orgId logic with name conflict checks. get/getByName/search check access permissions. update/remove require edit permissions. transfer uses canTransferComponent helper."
     },
     {
       "id": "US-017",
@@ -265,8 +265,8 @@
         "Typecheck passes"
       ],
       "priority": 17,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created convex/registry.ts with getPublicComponent internalQuery (uses resolveNamespace to find user/org, queries components by userId_name or orgId_name, only returns public components), incrementDownloads internalMutation (increments downloads field), and componentToRegistryJson helper (converts Convex Doc to shadcn registry JSON format with proper file type mapping)."
     },
     {
       "id": "US-018",
@@ -283,8 +283,8 @@
         "Typecheck passes"
       ],
       "priority": 18,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added HTTP action endpoint at /r/{namespace}/{name}.json. Uses httpAction to handle GET requests, parses namespace/name from URL path, calls internal.registry.getPublicComponent, returns 404 JSON for missing components, fires incrementDownloads fire-and-forget, returns registry JSON with CORS headers. Added OPTIONS handler for CORS preflight."
     },
     {
       "id": "US-019",

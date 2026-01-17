@@ -25,6 +25,15 @@
 - Auth API route: app/api/auth/[...all]/route.ts exports GET, POST from handler
 - ConvexClientProvider: components/providers/convex-client-provider.tsx with ConvexBetterAuthProvider + QueryClientProvider
 - TanStack Query setup: ConvexQueryClient connects to QueryClient via queryKeyHashFn and queryFn
+- Better Auth to app user linking: authComponent.getAuthUser(ctx)._id → users.externalId
+- Use safeGetAuthUser for nullable auth checks, getAuthUser when auth is required (throws)
+- Auth pages: app/(auth)/ route group, use authClient.signIn.social for OAuth buttons
+- Use @tabler/icons-react for icons (IconBrandGithub, IconBrandGoogle, etc.)
+- TanStack Query patterns: useQuery(convexQuery(api.x.y, {})), useMutation with useConvexMutation(api.x.y)
+- Client-side validation mirrors server validation for UX (validate before submit)
+- Use internalQuery/internalMutation for functions only callable by HTTP actions (not exposed to client)
+- HTTP actions: use httpAction from "_generated/server", ctx.runQuery/runMutation for internal calls
+- HTTP route params: {param} syntax but parse manually from request.url (not auto-injected)
 
 ---
 
@@ -181,5 +190,103 @@
   - QueryClient needs queryKeyHashFn and queryFn from convexQueryClient
   - ConvexBetterAuthProvider wraps QueryClientProvider (auth outside, queries inside)
   - initialToken prop allows passing SSR token for hydration
+---
+
+## 2026-01-17 - US-013
+- Created convex/users.ts with user CRUD functions
+- Implemented getMe query: looks up users table by externalId matching Better Auth user._id
+- Implemented updateMe mutation: validates username format, checks for conflicts with existing users and orgs
+- Implemented setUsername mutation: for onboarding, creates new profile or updates existing one
+- Implemented getByUsername query: returns public profile info only (_id, username, avatarUrl, createdAt)
+- Files changed: convex/users.ts (new), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Better Auth user `_id` maps to our users table `externalId` field
+  - Use authComponent.safeGetAuthUser(ctx) for nullable user, getAuthUser(ctx) throws if not authenticated
+  - Check both users table (by_username) and organizations table (by_slug) for username conflicts
+  - Better Auth user has `image` field (nullable string), map to our `avatarUrl` with ?? undefined
+---
+
+## 2026-01-17 - US-014
+- Created login page UI at app/(auth)/login/page.tsx
+- Created LoginForm component at app/(auth)/login/_components/login-form.tsx
+- Added GitHub OAuth button using authClient.signIn.social with provider: "github"
+- Added Google OAuth button using authClient.signIn.social with provider: "google"
+- Used shadcn Card component for layout, Button with outline variant for OAuth buttons
+- Used Tabler icons (IconBrandGithub, IconBrandGoogle) for button icons
+- callbackURL set to "/onboarding" for post-OAuth redirect
+- Files changed: app/(auth)/login/page.tsx (new), app/(auth)/login/_components/login-form.tsx (new)
+- **Learnings for future iterations:**
+  - Use @tabler/icons-react for icons (already installed in project)
+  - authClient.signIn.social takes { provider, callbackURL } object
+  - Use useState for loading state management with provider type to show correct loading state
+  - Auth route groups use (auth) folder naming convention
+---
+
+## 2026-01-17 - US-015
+- Created onboarding page at app/(auth)/onboarding/page.tsx
+- Created UsernameForm component at app/(auth)/onboarding/_components/username-form.tsx
+- Used useQuery with convexQuery(api.users.getMe, {}) to check if user has username
+- useEffect redirects to "/" if user already has username
+- Client-side validation mirrors server rules: 3-39 chars, lowercase alphanumeric + hyphens, no consecutive hyphens
+- useMutation with useConvexMutation(api.users.setUsername) for form submission
+- Redirects to "/" on successful username set
+- Added shadcn Label component (was missing from UI library)
+- Files changed: app/(auth)/onboarding/page.tsx (new), app/(auth)/onboarding/_components/username-form.tsx (new), components/ui/label.tsx (new)
+- **Learnings for future iterations:**
+  - Use convexQuery(api.x.y, {}) wrapper for TanStack Query integration with Convex
+  - useMutation paired with useConvexMutation for mutations
+  - Client-side validation should mirror server-side for better UX
+  - Check for missing shadcn components and add with `pnpm dlx shadcn@latest add <component>`
+---
+
+## 2026-01-17 - US-016
+- Updated convex/components.ts with full CRUD functions and permission checks
+- Implemented getMyComponents query: fetches personal components + components from orgs user is member of
+- Implemented create mutation: handles orgId (org component) vs no orgId (personal component), checks name conflicts
+- Implemented get query: checks access permissions via canAccessComponent helper
+- Implemented update mutation: requires canEditComponent permission, validates name conflicts on rename
+- Implemented remove mutation: requires canEditComponent permission
+- Implemented transfer mutation: uses canTransferComponent helper, moves personal component to org
+- Kept legacy list query for backwards compatibility (returns public components only)
+- Also kept getByName and search queries with access permission checks
+- Files changed: convex/components.ts (modified)
+- **Learnings for future iterations:**
+  - Use QueryCtx | MutationCtx union type for helper functions that work in both contexts
+  - Helper functions getCurrentUser and requireCurrentUser pattern for auth-aware functions
+  - When transferring component, set userId to undefined and orgId to target org
+  - Name conflict checks use compound indexes (by_userId_name, by_orgId_name)
+---
+
+## 2026-01-17 - US-017
+- Created convex/registry.ts with internal functions for HTTP action endpoint
+- Implemented getPublicComponent internalQuery: uses resolveNamespace to find user/org owner, queries components by userId_name or orgId_name index, only returns public components
+- Implemented incrementDownloads internalMutation: increments the downloads field on a component
+- Created componentToRegistryJson helper function: converts Convex Doc<"components"> to shadcn registry JSON format
+- File type mapping logic: components/ui/ → registry:ui, hooks/ → registry:hook, lib/utils/ → registry:lib, .css → registry:style, custom → registry:file with target
+- Files changed: convex/registry.ts (new), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Use internalQuery/internalMutation from "_generated/server" for functions only called by HTTP actions
+  - Export helper functions (like componentToRegistryJson) as regular functions for use in HTTP actions
+  - When converting to registry JSON, use getFileName helper to extract filename from path for standard types
+  - Only registry:file type needs target field (uses ~/ prefix for project root)
+---
+
+## 2026-01-17 - US-018
+- Added registry HTTP action endpoint at /r/{namespace}/{name}.json
+- Used httpAction from "_generated/server" to create the handler
+- Parses namespace and name from URL path using split and decodeURIComponent
+- Calls internal.registry.getPublicComponent to fetch component
+- Returns 404 JSON response with error message if component not found
+- Fires incrementDownloads mutation without await (fire and forget)
+- Returns registry JSON with REGISTRY_CORS_HEADERS
+- Added OPTIONS handler for CORS preflight with 204 No Content response
+- Files changed: convex/http.ts (modified)
+- **Learnings for future iterations:**
+  - Use httpAction from "_generated/server" for HTTP route handlers
+  - Import internal from "_generated/api" for internal function references
+  - ctx.runQuery/runMutation for calling Convex functions from HTTP actions
+  - Don't await fire-and-forget mutations (like download counting)
+  - URL path parameters in http.route use {param} syntax but aren't auto-parsed - parse manually from request.url
+  - Add Content-Type: application/json to CORS headers for JSON endpoints
 ---
 
