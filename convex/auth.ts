@@ -5,6 +5,7 @@ import { type DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { betterAuth } from "better-auth/minimal";
 import authConfig from "./auth.config";
+import { JWT_EXPIRATION_SECONDS } from "../lib/constants";
 
 const siteUrl = process.env.SITE_URL!;
 
@@ -32,7 +33,12 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     },
     plugins: [
       // The Convex plugin is required for Convex compatibility
-      convex({ authConfig }),
+      convex({
+        authConfig,
+        jwt: {
+          expirationSeconds: JWT_EXPIRATION_SECONDS,
+        },
+      }),
     ],
   });
 };

@@ -189,3 +189,82 @@ export const incrementDownloads = internalMutation({
     });
   },
 });
+
+/**
+ * Get a component with authentication context.
+ * Returns component if:
+ * - Component is public, OR
+ * - User is authenticated AND has access (owner or org member)
+ */
+export const getComponentWithAuth = internalQuery({
+  args: {
+    namespace: v.string(),
+    name: v.string(),
+    userId: v.union(v.id("users"), v.null()),
+  },
+  handler: async (ctx, args) => {
+    const owner = await resolveNamespace(ctx, args.namespace);
+
+    if (!owner) {
+      return null;
+    }
+
+    let component: Doc<"components"> | null = null;
+
+    if (owner.type === "user") {
+      component = await ctx.db
+        .query("components")
+        .withIndex("by_userId_name", (q) =>
+          q.eq("userId", owner.user._id).eq("name", args.name)
+        )
+        .unique();
+    } else {
+      component = await ctx.db
+        .query("components")
+        .withIndex("by_orgId_name", (q) =>
+          q.eq("orgId", owner.org._id).eq("name", args.name)
+        )
+        .unique();
+    }
+
+    if (!component) {
+      return null;
+    }
+
+    // Public components are always accessible
+    if (component.isPublic) {
+      return component;
+    }
+
+    // Private component - need authentication
+    if (!args.userId) {
+      return null;
+    }
+
+    // Check access permissions
+    // Personal component: user must be owner
+    if (component.userId) {
+      if (component.userId !== args.userId) {
+        return null;
+      }
+      return component;
+    }
+
+    // Org component: user must be a member
+    if (component.orgId) {
+      const membership = await ctx.db
+        .query("orgMembers")
+        .withIndex("by_orgId_userId", (q) =>
+          q.eq("orgId", component.orgId!).eq("userId", args.userId!)
+        )
+        .unique();
+
+      if (!membership) {
+        return null;
+      }
+      return component;
+    }
+
+    return null;
+  },
+});

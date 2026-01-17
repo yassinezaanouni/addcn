@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { components } from "./_generated/api";
+import { internalQuery, mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { isValidUsername } from "./lib/validation";
 
@@ -178,5 +179,79 @@ export const getByUsername = query({
       avatarUrl: user.avatarUrl,
       createdAt: user.createdAt,
     };
+  },
+});
+
+/**
+ * Validate a JWT token from Better Auth and return the user ID.
+ * Used by HTTP action for authenticated registry access.
+ *
+ * The JWT contains a sessionId - we validate the session exists and is not expired,
+ * then return the corresponding user ID from our users table.
+ */
+export const validateAuthToken = internalQuery({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      // Decode JWT payload (base64url encoded, second part of JWT)
+      const parts = args.token.split(".");
+      if (parts.length !== 3) {
+        return null;
+      }
+
+      // Decode the payload (handle base64url encoding)
+      const payloadBase64 = parts[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+      const payloadJson = atob(payloadBase64);
+      const payload = JSON.parse(payloadJson);
+
+      // Extract sessionId from JWT payload
+      const sessionId = payload.sessionId;
+      if (!sessionId) {
+        return null;
+      }
+
+      // Validate session exists and is not expired using Better Auth adapter
+      const session = await ctx.runQuery(
+        components.betterAuth.adapter.findOne,
+        {
+          model: "session",
+          where: [{ field: "_id", operator: "eq", value: sessionId }],
+        }
+      );
+
+      if (!session) {
+        return null;
+      }
+
+      // Check if session is expired
+      if (session.expiresAt && session.expiresAt < Date.now()) {
+        return null;
+      }
+
+      // Get the Better Auth user ID from the session
+      const authUserId = session.userId;
+      if (!authUserId) {
+        return null;
+      }
+
+      // Look up our user by Better Auth user ID (stored as externalId)
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_externalId", (q) => q.eq("externalId", authUserId))
+        .unique();
+
+      if (!user) {
+        return null;
+      }
+
+      return user._id;
+    } catch {
+      // Invalid token format or decoding error
+      return null;
+    }
   },
 });

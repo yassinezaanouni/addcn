@@ -6,6 +6,8 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { useOrgContext } from "@/components/org-switcher";
+import { useRegistryToken } from "@/hooks/use-registry-token";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import {
   Card,
   CardHeader,
@@ -31,7 +33,15 @@ import {
   EmptyDescription,
   EmptyMedia,
 } from "@/components/ui/empty";
-import { IconPackage, IconDownload, IconEye, IconEyeOff, IconPencil } from "@tabler/icons-react";
+import {
+  IconPackage,
+  IconDownload,
+  IconEye,
+  IconEyeOff,
+  IconPencil,
+  IconCopy,
+  IconCheck,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -63,18 +73,22 @@ function ComponentListSkeleton() {
 function ComponentCard({
   component,
   namespace,
+  registryToken,
 }: {
   component: Doc<"components">;
   namespace: string | undefined;
+  registryToken: string | null;
 }) {
   const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
   const updateMutationFn = useConvexMutation(api.components.update);
   const updateMutation = useMutation({
     mutationFn: updateMutationFn,
     onError: (error) => {
       toast.error("Failed to update visibility", {
-        description: error instanceof Error ? error.message : "An error occurred",
+        description:
+          error instanceof Error ? error.message : "An error occurred",
       });
     },
   });
@@ -113,9 +127,26 @@ function ComponentCard({
   };
 
   // Build the registry URL for the component
-  const registryUrl = namespace
+  // Add token for private components
+  const baseUrl = namespace
     ? `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL}/r/${namespace}/${component.name}.json`
     : null;
+
+  const registryUrl =
+    baseUrl && !component.isPublic && registryToken
+      ? `${baseUrl}?token=${registryToken}`
+      : baseUrl;
+
+  const installCommand = registryUrl
+    ? `npx shadcn@latest add "${registryUrl}"`
+    : null;
+
+  const handleCopyCommand = () => {
+    if (installCommand) {
+      copy(installCommand);
+      toast.success("Command copied to clipboard");
+    }
+  };
 
   return (
     <>
@@ -128,40 +159,60 @@ function ComponentCard({
             </CardDescription>
           )}
         </CardHeader>
-        <CardContent className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Badge variant={component.isPublic ? "default" : "secondary"}>
-              {component.isPublic ? "Public" : "Private"}
-            </Badge>
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <IconDownload className="size-3" />
-              {component.downloads ?? 0}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Link href={`/dashboard/editor/${component._id}`}>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Badge variant={component.isPublic ? "default" : "secondary"}>
+                {component.isPublic ? "Public" : "Private"}
+              </Badge>
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <IconDownload className="size-3" />
+                {component.downloads ?? 0}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Link href={`/dashboard/editor/${component._id}`}>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  title="Edit component"
+                >
+                  <IconPencil className="size-4" />
+                </Button>
+              </Link>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                title="Edit component"
+                onClick={handleVisibilityToggle}
+                disabled={updateMutation.isPending}
+                title={component.isPublic ? "Make private" : "Make public"}
               >
-                <IconPencil className="size-4" />
+                {component.isPublic ? (
+                  <IconEyeOff className="size-4" />
+                ) : (
+                  <IconEye className="size-4" />
+                )}
               </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={handleVisibilityToggle}
-              disabled={updateMutation.isPending}
-              title={component.isPublic ? "Make private" : "Make public"}
-            >
-              {component.isPublic ? (
-                <IconEyeOff className="size-4" />
-              ) : (
-                <IconEye className="size-4" />
-              )}
-            </Button>
+            </div>
           </div>
+
+          {/* Install command */}
+          {installCommand && (
+            <div
+              className="group relative rounded-md bg-muted px-3 py-2 font-mono text-xs cursor-pointer hover:bg-muted/80 transition-colors"
+              onClick={handleCopyCommand}
+              title="Click to copy"
+            >
+              <span className="block truncate pr-6">{installCommand}</span>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground group-hover:text-foreground">
+                {copied ? (
+                  <IconCheck className="size-3.5" />
+                ) : (
+                  <IconCopy className="size-3.5" />
+                )}
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -170,13 +221,13 @@ function ComponentCard({
           <DialogHeader>
             <DialogTitle>Publish Component</DialogTitle>
             <DialogDescription>
-              Publishing this component will make it publicly accessible. Anyone with the
-              link will be able to install it using the shadcn CLI.
+              Publishing this component will make it publicly accessible. Anyone
+              with the link will be able to install it using the shadcn CLI.
             </DialogDescription>
           </DialogHeader>
-          {registryUrl && (
+          {baseUrl && (
             <div className="rounded-md bg-muted p-3 font-mono text-sm break-all">
-              npx shadcn@latest add {registryUrl}
+              npx shadcn@latest add &quot;{baseUrl}&quot;
             </div>
           )}
           <DialogFooter showCloseButton>
@@ -195,13 +246,16 @@ function ComponentCard({
 
 export function ComponentList() {
   const context = useOrgContext();
+  const { token: registryToken } = useRegistryToken();
 
   // Convert OrgContext to query-compatible format
   const queryContext: "personal" | Id<"organizations"> | undefined =
     context === "personal" ? "personal" : context;
 
   const { data: components, isLoading: componentsLoading } = useQuery(
-    convexQuery(api.components.getMyComponentsFiltered, { context: queryContext })
+    convexQuery(api.components.getMyComponentsFiltered, {
+      context: queryContext,
+    })
   );
 
   const { data: user } = useQuery(convexQuery(api.users.getMe, {}));
@@ -246,6 +300,7 @@ export function ComponentList() {
           key={component._id}
           component={component}
           namespace={getNamespace(component)}
+          registryToken={registryToken}
         />
       ))}
     </div>

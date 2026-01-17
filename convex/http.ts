@@ -13,17 +13,18 @@ authComponent.registerRoutes(http, createAuth, { cors: true });
 const REGISTRY_CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Content-Type": "application/json",
 } as const;
 
 /**
  * Registry endpoint for shadcn CLI
  * URL format: /r/{namespace}/{name}.json
+ * Optional auth: /r/{namespace}/{name}.json?token={registryToken}
  *
  * Examples:
- *   /r/johndoe/button.json (user namespace)
- *   /r/acme-corp/button.json (org namespace)
+ *   /r/johndoe/button.json (user namespace, public)
+ *   /r/acme-corp/button.json?token=abc123 (org namespace, authenticated)
  */
 http.route({
   pathPrefix: "/r/",
@@ -51,17 +52,32 @@ http.route({
     const namespace = decodeURIComponent(parts[0]);
     const name = parts[1].replace(/\.json$/, "");
 
-    // Fetch the public component
-    const component = await ctx.runQuery(internal.registry.getPublicComponent, {
-      namespace,
-      name,
-    });
+    // Check for authentication token in query params (Better Auth JWT)
+    const token = url.searchParams.get("token");
+    let userId = null;
+
+    if (token) {
+      // Validate JWT and get user ID
+      userId = await ctx.runQuery(internal.users.validateAuthToken, {
+        token,
+      });
+    }
+
+    // Fetch component with auth context
+    const component = await ctx.runQuery(
+      internal.registry.getComponentWithAuth,
+      {
+        namespace,
+        name,
+        userId,
+      }
+    );
 
     if (!component) {
       return new Response(
         JSON.stringify({
           error: "Component not found",
-          message: `No public component found at ${namespace}/${name}`,
+          message: `No component found at ${namespace}/${name}`,
         }),
         {
           status: 404,
