@@ -489,8 +489,8 @@
         "Verify in browser"
       ],
       "priority": 30,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created component detail page at app/[username]/[component]/page.tsx. Added getByNamespaceAndName query to convex/components.ts. Page displays component info (title, description, download count), install command with copy button, dependencies/registry dependencies sections, and tabbed file preview with syntax highlighting. Shows 404 empty state for not found or private components. Added shadcn tabs component."
     },
     {
       "id": "US-031",

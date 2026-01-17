@@ -474,3 +474,22 @@
   - Dynamic routes at app root level like [username] work alongside route groups
 ---
 
+## 2026-01-17 - US-030
+- Created component detail page at app/[username]/[component]/page.tsx
+- Added getByNamespaceAndName query to convex/components.ts (uses resolveNamespace for user/org lookup)
+- Page displays: breadcrumb navigation, title, description, public badge, download count, dependencies
+- Install command section with copy button using navigator.clipboard API
+- Dependencies section shows npm packages, Registry Dependencies section shows shadcn components
+- File preview with tabbed interface showing each file with syntax highlighting
+- Added CopyButton component with copied state feedback
+- Added shadcn Tabs component for file navigation
+- Shows NotFound empty state for missing or private components
+- Files changed: app/[username]/[component]/page.tsx (new), convex/components.ts (modified), components/ui/tabs.tsx (new)
+- **Learnings for future iterations:**
+  - Nested dynamic routes use [param] folders: app/[username]/[component]/page.tsx
+  - Use useState for copy feedback with setTimeout to reset state
+  - Tabs component works well for file preview - set value/onValueChange for controlled tabs
+  - CopyButton pattern: async clipboard.writeText, set copied true, setTimeout to reset
+  - getByNamespaceAndName query pattern: resolve namespace first, then query by appropriate index
+---
+
