@@ -328,3 +328,34 @@
   - Empty component is a div container, compose with EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription
 ---
 
+## 2026-01-17 - US-021
+- Added publish/unpublish toggle to component cards with eye/eye-off icons
+- Created confirmation dialog when publishing that shows the registry install URL
+- Implemented update mutation call with isPublic field toggle
+- Added sonner toast notifications for success/error feedback
+- Badge dynamically updates to reflect current visibility state (Public/Private)
+- Installed sonner package and created components/ui/sonner.tsx wrapper
+- Added Toaster to app/layout.tsx for toast notifications
+- Files changed: app/(dashboard)/dashboard/_components/component-list.tsx (modified), app/layout.tsx (modified), components/ui/sonner.tsx (new), package.json, pnpm-lock.yaml
+- **Learnings for future iterations:**
+  - Use sonner for toast notifications: install with `pnpm add sonner`, create wrapper component, add Toaster to root layout
+  - TanStack Query mutations: call useConvexMutation outside useMutation config, use mutate with inline onSuccess callback
+  - Dialog component from base-ui uses open/onOpenChange props for controlled state
+  - Build registry URL with NEXT_PUBLIC_CONVEX_SITE_URL environment variable
+---
+
+## 2026-01-17 - US-022
+- Created convex/organizations.ts with organization CRUD functions
+- Implemented getMyOrgs query: fetches user memberships via by_userId index, returns orgs with role attached
+- Implemented create mutation: validates slug with isValidOrgSlug, checks conflicts with orgs (by_slug) and users (by_username), inserts org and adds creator as owner in orgMembers
+- Implemented getBySlug query: simple public lookup by slug index
+- Implemented remove mutation: verifies owner role via by_orgId_userId index, deletes all members, invites, and org
+- Used helper functions safeGetCurrentUser/requireCurrentUser pattern from existing codebase
+- Files changed: convex/organizations.ts (new), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Use Promise.all for parallel org fetches when mapping memberships to full org details
+  - Type filter with type predicate `(org): org is Doc<"organizations"> & { role: ... }` for nulls
+  - Cascade delete pattern: delete related records (members, invites) before parent record
+  - Owner check pattern: query membership, check `role !== "owner"` throws error
+---
+

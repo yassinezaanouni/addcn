@@ -335,8 +335,8 @@
         "Verify in browser"
       ],
       "priority": 21,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added visibility toggle button (eye/eye-off icons) to component cards. Shows confirmation dialog when publishing with install URL preview. Uses sonner for toast notifications. Badge updates on visibility change."
     },
     {
       "id": "US-022",
@@ -351,8 +351,8 @@
         "Typecheck passes"
       ],
       "priority": 22,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created convex/organizations.ts with getMyOrgs (fetches user memberships, returns orgs with role), create (validates slug, checks conflicts with orgs and users, creates org and adds creator as owner), getBySlug (public query), and remove (owner only, deletes members, invites, and org)."
     },
     {
       "id": "US-023",

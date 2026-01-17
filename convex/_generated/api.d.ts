@@ -14,6 +14,7 @@ import type * as http from "../http.js";
 import type * as lib_namespace from "../lib/namespace.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_validation from "../lib/validation.js";
+import type * as organizations from "../organizations.js";
 import type * as registry from "../registry.js";
 import type * as users from "../users.js";
 import type * as validators from "../validators.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   "lib/namespace": typeof lib_namespace;
   "lib/permissions": typeof lib_permissions;
   "lib/validation": typeof lib_validation;
+  organizations: typeof organizations;
   registry: typeof registry;
   users: typeof users;
   validators: typeof validators;
