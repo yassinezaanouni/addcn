@@ -44,9 +44,19 @@ export const create = mutation({
     files: componentFilesValidator,
     dependencies: v.array(v.string()),
     registryDependencies: v.array(v.string()),
+    userId: v.optional(v.id("users")),
+    orgId: v.optional(v.id("organizations")),
+    createdBy: v.id("users"),
+    isPublic: v.boolean(),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("components", args);
+    const now = Date.now();
+    return await ctx.db.insert("components", {
+      ...args,
+      downloads: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
   },
 });
 
@@ -59,13 +69,14 @@ export const update = mutation({
     files: v.optional(componentFilesValidator),
     dependencies: v.optional(v.array(v.string())),
     registryDependencies: v.optional(v.array(v.string())),
+    isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([, value]) => value !== undefined)
     );
-    await ctx.db.patch(id, filtered);
+    await ctx.db.patch(id, { ...filtered, updatedAt: Date.now() });
     return await ctx.db.get(id);
   },
 });
