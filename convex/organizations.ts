@@ -205,3 +205,229 @@ export const remove = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Get all members of an organization.
+ * Returns members with their user details.
+ */
+export const getMembers = query({
+  args: {
+    orgId: v.id("organizations"),
+  },
+  handler: async (ctx, args) => {
+    // Check if org exists
+    const org = await ctx.db.get(args.orgId);
+    if (!org) {
+      throw new ConvexError("Organization not found");
+    }
+
+    // Get all members for this org
+    const members = await ctx.db
+      .query("orgMembers")
+      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .collect();
+
+    // Fetch user details for each member
+    const membersWithUser = await Promise.all(
+      members.map(async (member) => {
+        const user = await ctx.db.get(member.userId);
+        if (!user) {
+          return null;
+        }
+        return {
+          _id: member._id,
+          role: member.role,
+          joinedAt: member.joinedAt,
+          invitedBy: member.invitedBy,
+          user: {
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            avatarUrl: user.avatarUrl,
+          },
+        };
+      })
+    );
+
+    // Filter out any null values (deleted users)
+    return membersWithUser.filter((m) => m !== null);
+  },
+});
+
+/**
+ * Helper to get the current user's membership in an org.
+ */
+async function getMembership(
+  ctx: QueryCtx | MutationCtx,
+  orgId: Id<"organizations">,
+  userId: Id<"users">
+) {
+  return ctx.db
+    .query("orgMembers")
+    .withIndex("by_orgId_userId", (q) => q.eq("orgId", orgId).eq("userId", userId))
+    .unique();
+}
+
+/**
+ * Add a new member to an organization.
+ * Only admins and owners can add members.
+ */
+export const addMember = mutation({
+  args: {
+    orgId: v.id("organizations"),
+    userId: v.id("users"),
+    role: v.union(v.literal("admin"), v.literal("member")),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
+
+    // Check if org exists
+    const org = await ctx.db.get(args.orgId);
+    if (!org) {
+      throw new ConvexError("Organization not found");
+    }
+
+    // Check if current user is admin or owner
+    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    if (!currentMembership || currentMembership.role === "member") {
+      throw new ConvexError("Only admins and owners can add members");
+    }
+
+    // Check if target user exists
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      throw new ConvexError("User not found");
+    }
+
+    // Check if user is already a member
+    const existingMembership = await getMembership(ctx, args.orgId, args.userId);
+    if (existingMembership) {
+      throw new ConvexError("User is already a member of this organization");
+    }
+
+    // Add the member
+    await ctx.db.insert("orgMembers", {
+      orgId: args.orgId,
+      userId: args.userId,
+      role: args.role,
+      invitedBy: currentUser._id,
+      joinedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Remove a member from an organization.
+ * Only admins and owners can remove members.
+ * Cannot remove the last owner.
+ */
+export const removeMember = mutation({
+  args: {
+    orgId: v.id("organizations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
+
+    // Check if org exists
+    const org = await ctx.db.get(args.orgId);
+    if (!org) {
+      throw new ConvexError("Organization not found");
+    }
+
+    // Check if current user is admin or owner
+    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    if (!currentMembership || currentMembership.role === "member") {
+      throw new ConvexError("Only admins and owners can remove members");
+    }
+
+    // Check if target user is a member
+    const targetMembership = await getMembership(ctx, args.orgId, args.userId);
+    if (!targetMembership) {
+      throw new ConvexError("User is not a member of this organization");
+    }
+
+    // If removing an owner, check if they are the last owner
+    if (targetMembership.role === "owner") {
+      // Only owners can remove owners
+      if (currentMembership.role !== "owner") {
+        throw new ConvexError("Only owners can remove other owners");
+      }
+
+      // Check if this is the last owner
+      const allMembers = await ctx.db
+        .query("orgMembers")
+        .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+        .collect();
+
+      const ownerCount = allMembers.filter((m) => m.role === "owner").length;
+      if (ownerCount <= 1) {
+        throw new ConvexError("Cannot remove the last owner of an organization");
+      }
+    }
+
+    // Admins cannot remove other admins (only owners can)
+    if (targetMembership.role === "admin" && currentMembership.role !== "owner") {
+      throw new ConvexError("Only owners can remove admins");
+    }
+
+    // Remove the member
+    await ctx.db.delete(targetMembership._id);
+
+    return { success: true };
+  },
+});
+
+/**
+ * Update a member's role in an organization.
+ * Only owners can update roles.
+ * Cannot change the role of the last owner.
+ */
+export const updateMemberRole = mutation({
+  args: {
+    orgId: v.id("organizations"),
+    userId: v.id("users"),
+    role: v.union(v.literal("owner"), v.literal("admin"), v.literal("member")),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
+
+    // Check if org exists
+    const org = await ctx.db.get(args.orgId);
+    if (!org) {
+      throw new ConvexError("Organization not found");
+    }
+
+    // Only owners can update roles
+    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    if (!currentMembership || currentMembership.role !== "owner") {
+      throw new ConvexError("Only owners can update member roles");
+    }
+
+    // Check if target user is a member
+    const targetMembership = await getMembership(ctx, args.orgId, args.userId);
+    if (!targetMembership) {
+      throw new ConvexError("User is not a member of this organization");
+    }
+
+    // If demoting an owner, check if they are the last owner
+    if (targetMembership.role === "owner" && args.role !== "owner") {
+      const allMembers = await ctx.db
+        .query("orgMembers")
+        .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+        .collect();
+
+      const ownerCount = allMembers.filter((m) => m.role === "owner").length;
+      if (ownerCount <= 1) {
+        throw new ConvexError("Cannot demote the last owner of an organization");
+      }
+    }
+
+    // Update the role
+    await ctx.db.patch(targetMembership._id, { role: args.role });
+
+    return { success: true };
+  },
+});
