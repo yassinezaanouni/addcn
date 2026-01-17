@@ -396,3 +396,22 @@ export const list = query({
     return components.filter((c) => c.isPublic);
   },
 });
+
+/**
+ * Get public components for a specific user.
+ * Used on public profile pages.
+ */
+export const getPublicByUserId = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const components = await ctx.db
+      .query("components")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    // Filter to only public components and sort by updatedAt desc
+    return components
+      .filter((c) => c.isPublic)
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+  },
+});
