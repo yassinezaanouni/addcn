@@ -1,8 +1,10 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { convexQuery } from "@convex-dev/react-query";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
+import { Doc } from "@/convex/_generated/dataModel";
 import {
   Card,
   CardHeader,
@@ -11,7 +13,16 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Empty,
   EmptyHeader,
@@ -19,7 +30,8 @@ import {
   EmptyDescription,
   EmptyMedia,
 } from "@/components/ui/empty";
-import { IconPackage, IconDownload } from "@tabler/icons-react";
+import { IconPackage, IconDownload, IconEye, IconEyeOff } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 function ComponentCardSkeleton() {
   return (
@@ -46,12 +58,136 @@ function ComponentListSkeleton() {
   );
 }
 
+function ComponentCard({
+  component,
+  username,
+}: {
+  component: Doc<"components">;
+  username: string | undefined;
+}) {
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
+
+  const updateMutationFn = useConvexMutation(api.components.update);
+  const updateMutation = useMutation({
+    mutationFn: updateMutationFn,
+    onError: (error) => {
+      toast.error("Failed to update visibility", {
+        description: error instanceof Error ? error.message : "An error occurred",
+      });
+    },
+  });
+
+  const handleVisibilityToggle = () => {
+    if (!component.isPublic) {
+      // Show confirmation dialog when publishing
+      setShowPublishDialog(true);
+    } else {
+      // Directly unpublish without confirmation
+      updateMutation.mutate(
+        { id: component._id, isPublic: false },
+        {
+          onSuccess: () => {
+            toast.success("Component unpublished", {
+              description: "Your component is now private.",
+            });
+          },
+        }
+      );
+    }
+  };
+
+  const handleConfirmPublish = () => {
+    updateMutation.mutate(
+      { id: component._id, isPublic: true },
+      {
+        onSuccess: () => {
+          toast.success("Component published", {
+            description: "Your component is now publicly accessible.",
+          });
+        },
+      }
+    );
+    setShowPublishDialog(false);
+  };
+
+  // Build the registry URL for the component
+  const registryUrl = username
+    ? `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL}/r/${username}/${component.name}.json`
+    : null;
+
+  return (
+    <>
+      <Card size="sm">
+        <CardHeader>
+          <CardTitle>{component.title || component.name}</CardTitle>
+          {component.description && (
+            <CardDescription className="line-clamp-2">
+              {component.description}
+            </CardDescription>
+          )}
+        </CardHeader>
+        <CardContent className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Badge variant={component.isPublic ? "default" : "secondary"}>
+              {component.isPublic ? "Public" : "Private"}
+            </Badge>
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <IconDownload className="size-3" />
+              {component.downloads ?? 0}
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleVisibilityToggle}
+            disabled={updateMutation.isPending}
+            title={component.isPublic ? "Make private" : "Make public"}
+          >
+            {component.isPublic ? (
+              <IconEyeOff className="size-4" />
+            ) : (
+              <IconEye className="size-4" />
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Dialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Publish Component</DialogTitle>
+            <DialogDescription>
+              Publishing this component will make it publicly accessible. Anyone with the
+              link will be able to install it using the shadcn CLI.
+            </DialogDescription>
+          </DialogHeader>
+          {registryUrl && (
+            <div className="rounded-md bg-muted p-3 font-mono text-sm break-all">
+              npx shadcn@latest add {registryUrl}
+            </div>
+          )}
+          <DialogFooter showCloseButton>
+            <Button
+              onClick={handleConfirmPublish}
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? "Publishing..." : "Publish Component"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 export function ComponentList() {
-  const { data: components, isLoading } = useQuery(
+  const { data: components, isLoading: componentsLoading } = useQuery(
     convexQuery(api.components.getMyComponents, {})
   );
 
-  if (isLoading) {
+  const { data: user } = useQuery(convexQuery(api.users.getMe, {}));
+
+  if (componentsLoading) {
     return <ComponentListSkeleton />;
   }
 
@@ -74,25 +210,11 @@ export function ComponentList() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {components.map((component) => (
-        <Card key={component._id} size="sm">
-          <CardHeader>
-            <CardTitle>{component.title || component.name}</CardTitle>
-            {component.description && (
-              <CardDescription className="line-clamp-2">
-                {component.description}
-              </CardDescription>
-            )}
-          </CardHeader>
-          <CardContent className="flex items-center gap-2">
-            <Badge variant={component.isPublic ? "default" : "secondary"}>
-              {component.isPublic ? "Public" : "Private"}
-            </Badge>
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <IconDownload className="size-3" />
-              {component.downloads ?? 0}
-            </span>
-          </CardContent>
-        </Card>
+        <ComponentCard
+          key={component._id}
+          component={component}
+          username={user?.username}
+        />
       ))}
     </div>
   );
