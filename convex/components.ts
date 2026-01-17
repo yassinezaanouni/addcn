@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 import { componentFilesValidator } from "./validators";
 import { authComponent } from "./auth";
 import {
@@ -382,6 +383,79 @@ export const transfer = mutation({
     });
 
     return await ctx.db.get(args.id);
+  },
+});
+
+/**
+ * Get components filtered by context (personal or org).
+ * If context is "personal", returns only personal components.
+ * If context is an org ID, returns only that org's components.
+ * If no context, returns all components (personal + orgs).
+ */
+export const getMyComponentsFiltered = query({
+  args: {
+    context: v.optional(v.union(v.literal("personal"), v.id("organizations"))),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) {
+      return [];
+    }
+
+    // If context is "personal", only return personal components
+    if (args.context === "personal") {
+      const personalComponents = await ctx.db
+        .query("components")
+        .withIndex("by_userId", (q) => q.eq("userId", user._id))
+        .collect();
+      return personalComponents.sort((a, b) => b.updatedAt - a.updatedAt);
+    }
+
+    // If context is an org ID, only return that org's components
+    if (args.context) {
+      // Verify user is a member of this org
+      const membership = await ctx.db
+        .query("orgMembers")
+        .withIndex("by_orgId_userId", (q) =>
+          q.eq("orgId", args.context as Id<"organizations">).eq("userId", user._id)
+        )
+        .unique();
+
+      if (!membership) {
+        return [];
+      }
+
+      const orgComponents = await ctx.db
+        .query("components")
+        .withIndex("by_orgId", (q) => q.eq("orgId", args.context as Id<"organizations">))
+        .collect();
+      return orgComponents.sort((a, b) => b.updatedAt - a.updatedAt);
+    }
+
+    // No context specified - return all components (personal + orgs)
+    const personalComponents = await ctx.db
+      .query("components")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const memberships = await ctx.db
+      .query("orgMembers")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const orgIds = memberships.map((m) => m.orgId);
+
+    const orgComponents = await Promise.all(
+      orgIds.map((orgId) =>
+        ctx.db
+          .query("components")
+          .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
+          .collect()
+      )
+    );
+
+    const allComponents = [...personalComponents, ...orgComponents.flat()];
+    return allComponents.sort((a, b) => b.updatedAt - a.updatedAt);
   },
 });
 

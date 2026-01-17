@@ -12,6 +12,7 @@ import {
   IconSettings,
   IconLogout,
 } from "@tabler/icons-react";
+import { OrgSwitcher } from "@/components/org-switcher";
 import { api } from "@/convex/_generated/api";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -130,13 +131,18 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="flex flex-1 flex-col">
         {/* Header */}
-        <header className="flex h-14 items-center justify-between border-b border-border px-4 md:justify-end">
+        <header className="flex h-14 items-center justify-between border-b border-border px-4">
           {/* Mobile logo */}
           <Link href="/" className="flex items-center gap-2 md:hidden">
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <span className="text-sm font-bold">A</span>
             </div>
           </Link>
+
+          {/* Context switcher - hidden on mobile, shown on desktop */}
+          <div className="hidden md:block">
+            <OrgSwitcher />
+          </div>
 
           {/* User menu */}
           <DropdownMenu>

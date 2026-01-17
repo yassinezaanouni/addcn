@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
-import { Doc } from "@/convex/_generated/dataModel";
+import { Doc, Id } from "@/convex/_generated/dataModel";
+import { useOrgContext } from "@/components/org-switcher";
 import {
   Card,
   CardHeader,
@@ -60,10 +61,10 @@ function ComponentListSkeleton() {
 
 function ComponentCard({
   component,
-  username,
+  namespace,
 }: {
   component: Doc<"components">;
-  username: string | undefined;
+  namespace: string | undefined;
 }) {
   const [showPublishDialog, setShowPublishDialog] = useState(false);
 
@@ -111,8 +112,8 @@ function ComponentCard({
   };
 
   // Build the registry URL for the component
-  const registryUrl = username
-    ? `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL}/r/${username}/${component.name}.json`
+  const registryUrl = namespace
+    ? `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL}/r/${namespace}/${component.name}.json`
     : null;
 
   return (
@@ -181,11 +182,18 @@ function ComponentCard({
 }
 
 export function ComponentList() {
+  const context = useOrgContext();
+
+  // Convert OrgContext to query-compatible format
+  const queryContext: "personal" | Id<"organizations"> | undefined =
+    context === "personal" ? "personal" : context;
+
   const { data: components, isLoading: componentsLoading } = useQuery(
-    convexQuery(api.components.getMyComponents, {})
+    convexQuery(api.components.getMyComponentsFiltered, { context: queryContext })
   );
 
   const { data: user } = useQuery(convexQuery(api.users.getMe, {}));
+  const { data: orgs } = useQuery(convexQuery(api.organizations.getMyOrgs, {}));
 
   if (componentsLoading) {
     return <ComponentListSkeleton />;
@@ -207,13 +215,25 @@ export function ComponentList() {
     );
   }
 
+  // Helper to get the namespace for a component
+  const getNamespace = (component: Doc<"components">): string | undefined => {
+    if (component.userId) {
+      return user?.username;
+    }
+    if (component.orgId && orgs) {
+      const org = orgs.find((o) => o._id === component.orgId);
+      return org?.slug;
+    }
+    return undefined;
+  };
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {components.map((component) => (
         <ComponentCard
           key={component._id}
           component={component}
-          username={user?.username}
+          namespace={getNamespace(component)}
         />
       ))}
     </div>
