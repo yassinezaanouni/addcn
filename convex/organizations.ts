@@ -431,3 +431,302 @@ export const updateMemberRole = mutation({
     return { success: true };
   },
 });
+
+// --- Invite Management Functions ---
+
+/**
+ * Generate a cryptographically random token for invites.
+ */
+function generateInviteToken(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let token = "";
+  for (let i = 0; i < 32; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+
+/**
+ * Create an invite to an organization.
+ * Only admins and owners can create invites.
+ * Generates a unique token with 7-day expiry.
+ */
+export const createInvite = mutation({
+  args: {
+    orgId: v.id("organizations"),
+    email: v.string(),
+    role: v.union(v.literal("admin"), v.literal("member")),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
+
+    // Check if org exists
+    const org = await ctx.db.get(args.orgId);
+    if (!org) {
+      throw new ConvexError("Organization not found");
+    }
+
+    // Check if current user is admin or owner
+    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    if (!currentMembership || currentMembership.role === "member") {
+      throw new ConvexError("Only admins and owners can create invites");
+    }
+
+    // Check if there's already a pending invite for this email
+    const existingInvites = await ctx.db
+      .query("invites")
+      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .collect();
+
+    const pendingInvite = existingInvites.find(
+      (invite) => invite.email === args.email && invite.expiresAt > Date.now()
+    );
+
+    if (pendingInvite) {
+      throw new ConvexError("An invite for this email already exists");
+    }
+
+    // Check if user with this email is already a member
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .unique();
+
+    if (existingUser) {
+      const existingMembership = await getMembership(ctx, args.orgId, existingUser._id);
+      if (existingMembership) {
+        throw new ConvexError("User is already a member of this organization");
+      }
+    }
+
+    // Generate unique token
+    const token = generateInviteToken();
+
+    // Set expiry to 7 days from now
+    const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
+
+    // Create the invite
+    const inviteId = await ctx.db.insert("invites", {
+      orgId: args.orgId,
+      email: args.email,
+      role: args.role,
+      invitedBy: currentUser._id,
+      token,
+      expiresAt,
+      createdAt: Date.now(),
+    });
+
+    return {
+      _id: inviteId,
+      token,
+      expiresAt,
+    };
+  },
+});
+
+/**
+ * Get an invite by its token.
+ * Returns the invite with org details if valid and not expired.
+ */
+export const getInviteByToken = query({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const invite = await ctx.db
+      .query("invites")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+
+    if (!invite) {
+      return null;
+    }
+
+    // Check if invite has expired
+    if (invite.expiresAt < Date.now()) {
+      return null;
+    }
+
+    // Get org details
+    const org = await ctx.db.get(invite.orgId);
+    if (!org) {
+      return null;
+    }
+
+    // Get inviter details
+    const inviter = await ctx.db.get(invite.invitedBy);
+
+    return {
+      _id: invite._id,
+      email: invite.email,
+      role: invite.role,
+      expiresAt: invite.expiresAt,
+      createdAt: invite.createdAt,
+      org: {
+        _id: org._id,
+        name: org.name,
+        slug: org.slug,
+        avatarUrl: org.avatarUrl,
+      },
+      invitedBy: inviter
+        ? {
+            _id: inviter._id,
+            username: inviter.username,
+            avatarUrl: inviter.avatarUrl,
+          }
+        : null,
+    };
+  },
+});
+
+/**
+ * Accept an invite and become a member of the organization.
+ * Validates the token, creates the membership, and deletes the invite.
+ */
+export const acceptInvite = mutation({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
+
+    // Get the invite
+    const invite = await ctx.db
+      .query("invites")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+
+    if (!invite) {
+      throw new ConvexError("Invite not found");
+    }
+
+    // Check if invite has expired
+    if (invite.expiresAt < Date.now()) {
+      throw new ConvexError("Invite has expired");
+    }
+
+    // Check if org still exists
+    const org = await ctx.db.get(invite.orgId);
+    if (!org) {
+      throw new ConvexError("Organization no longer exists");
+    }
+
+    // Check if user is already a member
+    const existingMembership = await getMembership(ctx, invite.orgId, currentUser._id);
+    if (existingMembership) {
+      // Delete the invite since they're already a member
+      await ctx.db.delete(invite._id);
+      throw new ConvexError("You are already a member of this organization");
+    }
+
+    // Create the membership
+    await ctx.db.insert("orgMembers", {
+      orgId: invite.orgId,
+      userId: currentUser._id,
+      role: invite.role,
+      invitedBy: invite.invitedBy,
+      joinedAt: Date.now(),
+    });
+
+    // Delete the invite
+    await ctx.db.delete(invite._id);
+
+    return {
+      success: true,
+      org: {
+        _id: org._id,
+        name: org.name,
+        slug: org.slug,
+      },
+    };
+  },
+});
+
+/**
+ * Cancel (delete) a pending invite.
+ * Only admins and owners can cancel invites.
+ */
+export const cancelInvite = mutation({
+  args: {
+    inviteId: v.id("invites"),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
+
+    // Get the invite
+    const invite = await ctx.db.get(args.inviteId);
+    if (!invite) {
+      throw new ConvexError("Invite not found");
+    }
+
+    // Check if current user is admin or owner of the org
+    const currentMembership = await getMembership(ctx, invite.orgId, currentUser._id);
+    if (!currentMembership || currentMembership.role === "member") {
+      throw new ConvexError("Only admins and owners can cancel invites");
+    }
+
+    // Delete the invite
+    await ctx.db.delete(invite._id);
+
+    return { success: true };
+  },
+});
+
+/**
+ * Get all pending invites for an organization.
+ * Only admins and owners can view invites.
+ */
+export const getPendingInvites = query({
+  args: {
+    orgId: v.id("organizations"),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await safeGetCurrentUser(ctx);
+    if (!currentUser) {
+      return [];
+    }
+
+    // Check if org exists
+    const org = await ctx.db.get(args.orgId);
+    if (!org) {
+      return [];
+    }
+
+    // Check if current user is admin or owner
+    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    if (!currentMembership || currentMembership.role === "member") {
+      return [];
+    }
+
+    // Get all invites for this org
+    const invites = await ctx.db
+      .query("invites")
+      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .collect();
+
+    // Filter to only pending (non-expired) invites and add inviter details
+    const pendingInvites = await Promise.all(
+      invites
+        .filter((invite) => invite.expiresAt > Date.now())
+        .map(async (invite) => {
+          const inviter = await ctx.db.get(invite.invitedBy);
+          return {
+            _id: invite._id,
+            email: invite.email,
+            role: invite.role,
+            expiresAt: invite.expiresAt,
+            createdAt: invite.createdAt,
+            invitedBy: inviter
+              ? {
+                  _id: inviter._id,
+                  username: inviter.username,
+                  avatarUrl: inviter.avatarUrl,
+                }
+              : null,
+          };
+        })
+    );
+
+    return pendingInvites;
+  },
+});
