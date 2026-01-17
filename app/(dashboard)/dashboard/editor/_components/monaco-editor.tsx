@@ -1,30 +1,49 @@
 "use client";
 
-import { useCallback } from "react";
-import Editor, { type OnMount } from "@monaco-editor/react";
-import { useUIStore } from "@/stores/ui-store";
+import { useRef, useCallback } from "react";
+import Editor, { OnMount, Monaco } from "@monaco-editor/react";
 import { useEditorStore } from "@/stores/editor-store";
-import { getMonacoTheme } from "@/lib/theme";
+import { useUIStore } from "@/stores/ui-store";
+
+type MonacoEditor = Parameters<OnMount>[0];
 
 interface MonacoEditorProps {
   onSave?: () => void;
 }
 
 export function MonacoEditor({ onSave }: MonacoEditorProps) {
-  const theme = useUIStore((state) => state.theme);
+  const editorRef = useRef<MonacoEditor | null>(null);
+
   const { files, activeFileId, updateFileContent } = useEditorStore();
+  const theme = useUIStore((state) => state.theme);
 
   const activeFile = files.find((f) => f.id === activeFileId);
 
-  const getLanguage = (filename: string) => {
-    if (filename.endsWith(".tsx") || filename.endsWith(".ts")) return "typescript";
-    if (filename.endsWith(".css")) return "css";
-    if (filename.endsWith(".json")) return "json";
+  // Determine Monaco theme
+  const getMonacoTheme = () => {
+    if (theme === "dark") return "vs-dark";
+    if (theme === "light") return "light";
+    // System theme
+    if (typeof window !== "undefined") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "vs-dark"
+        : "light";
+    }
+    return "light";
+  };
+
+  // Get language from file extension
+  const getLanguage = (path: string) => {
+    if (path.endsWith(".tsx") || path.endsWith(".ts")) return "typescript";
+    if (path.endsWith(".css")) return "css";
+    if (path.endsWith(".json")) return "json";
     return "typescript";
   };
 
-  const handleEditorMount: OnMount = (editor, monaco) => {
-    // Configure TypeScript/React defaults
+  const handleEditorMount: OnMount = (editor, monaco: Monaco) => {
+    editorRef.current = editor;
+
+    // Configure TypeScript
     monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
       target: monaco.languages.typescript.ScriptTarget.Latest,
       allowNonTsExtensions: true,
@@ -38,7 +57,7 @@ export function MonacoEditor({ onSave }: MonacoEditorProps) {
       typeRoots: ["node_modules/@types"],
     });
 
-    // Add keyboard shortcuts
+    // Add save keyboard shortcut
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       onSave?.();
     });
@@ -55,8 +74,8 @@ export function MonacoEditor({ onSave }: MonacoEditorProps) {
 
   if (!activeFile) {
     return (
-      <div className="flex h-full items-center justify-center bg-muted/30">
-        <p className="text-muted-foreground">No file selected</p>
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        Select a file to edit
       </div>
     );
   }
@@ -66,19 +85,20 @@ export function MonacoEditor({ onSave }: MonacoEditorProps) {
       height="100%"
       language={getLanguage(activeFile.path)}
       value={activeFile.content}
-      theme={getMonacoTheme(theme)}
+      theme={getMonacoTheme()}
       onChange={handleChange}
       onMount={handleEditorMount}
       options={{
-        minimap: { enabled: false },
         fontSize: 14,
+        tabSize: 2,
+        minimap: { enabled: false },
         lineNumbers: "on",
-        scrollBeyondLastLine: false,
         wordWrap: "on",
         automaticLayout: true,
-        tabSize: 2,
         formatOnPaste: true,
         formatOnType: true,
+        scrollBeyondLastLine: false,
+        padding: { top: 16, bottom: 16 },
       }}
     />
   );

@@ -1,28 +1,62 @@
 import { create } from "zustand";
-import type { ComponentFile, SavedComponent } from "@/types/component";
-import { v4 as uuid } from "uuid";
-import { DEFAULT_FILE_CONTENT } from "@/lib/constants";
+import type { ComponentFile } from "@/types/component";
+import type { Id } from "@/convex/_generated/dataModel";
+
+const DEFAULT_FILE_CONTENT = `export default function Component() {
+  return (
+    <div className="p-4 rounded-lg border">
+      <h1 className="text-xl font-bold">Hello World</h1>
+      <p className="text-muted-foreground">Edit this component to get started.</p>
+    </div>
+  );
+}`;
 
 interface EditorState {
-  componentId: string | null;
+  // Convex ID (null for new components)
+  convexId: Id<"components"> | null;
+
+  // Component metadata
   name: string;
   title: string;
   description: string;
+
+  // Files
   files: ComponentFile[];
   activeFileId: string | null;
+
+  // Dependencies
   dependencies: string[];
   registryDependencies: string[];
+
+  // State
   isDirty: boolean;
-  setMetadata: (data: Partial<Pick<EditorState, "name" | "title" | "description" | "componentId" | "isDirty" | "dependencies" | "registryDependencies">>) => void;
-  setActiveFile: (id: string) => void;
-  updateFileContent: (id: string, content: string) => void;
+
+  // Actions
+  setConvexId: (id: Id<"components"> | null) => void;
+  setMetadata: (data: { name?: string; title?: string; description?: string }) => void;
+  setActiveFile: (fileId: string | null) => void;
+  updateFileContent: (fileId: string, content: string) => void;
   addFile: (path: string) => void;
-  removeFile: (id: string) => void;
-  renamePath: (id: string, newPath: string) => void;
+  removeFile: (fileId: string) => void;
+  renamePath: (fileId: string, newPath: string) => void;
+  addDependency: (dep: string) => void;
+  removeDependency: (dep: string) => void;
+  addRegistryDependency: (dep: string) => void;
+  removeRegistryDependency: (dep: string) => void;
+  setIsDirty: (dirty: boolean) => void;
   reset: () => void;
-  loadComponent: (component: SavedComponent) => void;
+  loadComponent: (component: {
+    _id: Id<"components">;
+    name: string;
+    title: string;
+    description: string;
+    files: ComponentFile[];
+    dependencies: string[];
+    registryDependencies: string[];
+  }) => void;
 }
 
+// Helper functions
 function getLanguage(path: string): ComponentFile["language"] {
   if (path.endsWith(".css")) return "css";
   if (path.endsWith(".json")) return "json";
@@ -30,51 +64,65 @@ function getLanguage(path: string): ComponentFile["language"] {
 }
 
 function getFileType(path: string): ComponentFile["type"] {
-  if (path.includes("/hooks/") || path.startsWith("hooks/")) return "hook";
-  if (path.includes("/lib/") || path.startsWith("lib/") || path.includes("/utils/") || path.startsWith("utils/")) return "util";
   if (path.endsWith(".css")) return "style";
+  if (path.includes("/hooks/") || path.startsWith("hooks/")) return "hook";
+  if (path.includes("/lib/") || path.startsWith("lib/")) return "util";
   return "component";
 }
 
-const createDefaultFile = (componentName: string): ComponentFile => ({
-  id: uuid(),
-  path: `components/ui/${componentName || "component"}.tsx`,
-  content: DEFAULT_FILE_CONTENT,
-  type: "component",
-  language: "typescript",
-});
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 9);
+}
+
+function createDefaultFile(): ComponentFile {
+  return {
+    id: generateId(),
+    path: "components/ui/component.tsx",
+    content: DEFAULT_FILE_CONTENT,
+    type: "component",
+    language: "typescript",
+  };
+}
 
 const initialState = {
-  componentId: null,
+  convexId: null,
   name: "",
   title: "",
   description: "",
-  files: [] as ComponentFile[],
+  files: [createDefaultFile()],
   activeFileId: null,
   dependencies: [],
   registryDependencies: [],
   isDirty: false,
 };
 
-export const useEditorStore = create<EditorState>((set, get) => ({
+export const useEditorStore = create<EditorState>()((set) => ({
   ...initialState,
+  activeFileId: initialState.files[0].id,
+
+  setConvexId: (id) => set({ convexId: id }),
 
   setMetadata: (data) =>
-    set((state) => ({ ...state, ...data, isDirty: true })),
+    set(() => ({
+      ...data,
+      isDirty: true,
+    })),
 
-  setActiveFile: (id) => set({ activeFileId: id }),
+  setActiveFile: (fileId) => set({ activeFileId: fileId }),
 
-  updateFileContent: (id, content) =>
+  updateFileContent: (fileId, content) =>
     set((state) => ({
-      files: state.files.map((f) => (f.id === id ? { ...f, content } : f)),
+      files: state.files.map((f) =>
+        f.id === fileId ? { ...f, content } : f
+      ),
       isDirty: true,
     })),
 
   addFile: (path) => {
     const newFile: ComponentFile = {
-      id: uuid(),
+      id: generateId(),
       path,
-      content: "",
+      content: path.endsWith(".css") ? "/* Add your styles here */\n" : DEFAULT_FILE_CONTENT,
       type: getFileType(path),
       language: getLanguage(path),
     };
@@ -85,29 +133,67 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     }));
   },
 
-
-  removeFile: (id) =>
+  removeFile: (fileId) =>
     set((state) => {
-      const newFiles = state.files.filter((f) => f.id !== id);
+      const newFiles = state.files.filter((f) => f.id !== fileId);
       const newActiveId =
-        state.activeFileId === id
-          ? newFiles[0]?.id || null
+        state.activeFileId === fileId
+          ? newFiles[0]?.id ?? null
           : state.activeFileId;
-      return { files: newFiles, activeFileId: newActiveId, isDirty: true };
+      return {
+        files: newFiles,
+        activeFileId: newActiveId,
+        isDirty: true,
+      };
     }),
 
-  renamePath: (id, newPath) =>
+  renamePath: (fileId, newPath) =>
     set((state) => ({
       files: state.files.map((f) =>
-        f.id === id
-          ? { ...f, path: newPath, type: getFileType(newPath), language: getLanguage(newPath) }
+        f.id === fileId
+          ? {
+              ...f,
+              path: newPath,
+              type: getFileType(newPath),
+              language: getLanguage(newPath),
+            }
           : f
       ),
       isDirty: true,
     })),
 
+  addDependency: (dep) =>
+    set((state) => ({
+      dependencies: state.dependencies.includes(dep)
+        ? state.dependencies
+        : [...state.dependencies, dep],
+      isDirty: true,
+    })),
+
+  removeDependency: (dep) =>
+    set((state) => ({
+      dependencies: state.dependencies.filter((d) => d !== dep),
+      isDirty: true,
+    })),
+
+  addRegistryDependency: (dep) =>
+    set((state) => ({
+      registryDependencies: state.registryDependencies.includes(dep)
+        ? state.registryDependencies
+        : [...state.registryDependencies, dep],
+      isDirty: true,
+    })),
+
+  removeRegistryDependency: (dep) =>
+    set((state) => ({
+      registryDependencies: state.registryDependencies.filter((d) => d !== dep),
+      isDirty: true,
+    })),
+
+  setIsDirty: (dirty) => set({ isDirty: dirty }),
+
   reset: () => {
-    const defaultFile = createDefaultFile("component");
+    const defaultFile = createDefaultFile();
     set({
       ...initialState,
       files: [defaultFile],
@@ -115,26 +201,31 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     });
   },
 
-  loadComponent: (component) =>
+  loadComponent: (component) => {
+    const activeFileId = component.files[0]?.id ?? null;
     set({
-      componentId: component.id,
+      convexId: component._id,
       name: component.name,
       title: component.title,
       description: component.description,
       files: component.files,
-      activeFileId: component.files[0]?.id || null,
+      activeFileId,
       dependencies: component.dependencies,
       registryDependencies: component.registryDependencies,
       isDirty: false,
-    }),
+    });
+  },
 }));
 
-// Helper to build folder tree from flat file list
+// Utility to get computed state
+export const useIsNewComponent = () =>
+  useEditorStore((state) => state.convexId === null);
+
+// Utility to build folder tree from flat file list
 export interface FolderNode {
   name: string;
   path: string;
-  type: "folder" | "file";
-  children?: FolderNode[];
+  children: FolderNode[];
   file?: ComponentFile;
 }
 
@@ -144,42 +235,25 @@ export function buildFolderTree(files: ComponentFile[]): FolderNode[] {
   for (const file of files) {
     const parts = file.path.split("/");
     let current = root;
-    let currentPath = "";
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
-      currentPath = currentPath ? `${currentPath}/${part}` : part;
       const isFile = i === parts.length - 1;
+      const path = parts.slice(0, i + 1).join("/");
 
       let node = current.find((n) => n.name === part);
-
       if (!node) {
         node = {
           name: part,
-          path: currentPath,
-          type: isFile ? "file" : "folder",
-          children: isFile ? undefined : [],
+          path,
+          children: [],
           file: isFile ? file : undefined,
         };
         current.push(node);
       }
-
-      if (!isFile && node.children) {
-        current = node.children;
-      }
+      current = node.children;
     }
   }
 
-  // Sort: folders first, then files, alphabetically
-  const sortNodes = (nodes: FolderNode[]): FolderNode[] => {
-    return nodes.sort((a, b) => {
-      if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    }).map((node) => ({
-      ...node,
-      children: node.children ? sortNodes(node.children) : undefined,
-    }));
-  };
-
-  return sortNodes(root);
+  return root;
 }

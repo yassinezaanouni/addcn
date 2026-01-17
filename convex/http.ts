@@ -23,21 +23,33 @@ const REGISTRY_CORS_HEADERS = {
  *
  * Examples:
  *   /r/johndoe/button.json (user namespace)
- *   /r/@johndoe/button.json (user namespace with @ prefix)
  *   /r/acme-corp/button.json (org namespace)
  */
 http.route({
-  path: "/r/{namespace}/{name}.json",
+  pathPrefix: "/r/",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     // Extract namespace and name from URL
-    const url = new URL(request.url);
-    const pathParts = url.pathname.split("/");
     // Path is /r/{namespace}/{name}.json
-    // pathParts = ["", "r", "{namespace}", "{name}.json"]
-    const namespace = decodeURIComponent(pathParts[2]);
-    const nameWithExt = pathParts[3];
-    const name = nameWithExt.replace(/\.json$/, "");
+    const url = new URL(request.url);
+    const pathAfterPrefix = url.pathname.slice("/r/".length); // "namespace/name.json"
+    const parts = pathAfterPrefix.split("/");
+
+    if (parts.length !== 2 || !parts[1].endsWith(".json")) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid path",
+          message: "Expected format: /r/{namespace}/{name}.json",
+        }),
+        {
+          status: 400,
+          headers: REGISTRY_CORS_HEADERS,
+        }
+      );
+    }
+
+    const namespace = decodeURIComponent(parts[0]);
+    const name = parts[1].replace(/\.json$/, "");
 
     // Fetch the public component
     const component = await ctx.runQuery(internal.registry.getPublicComponent, {
@@ -49,7 +61,7 @@ http.route({
       return new Response(
         JSON.stringify({
           error: "Component not found",
-          message: `No public component found at @${namespace}/${name}`,
+          message: `No public component found at ${namespace}/${name}`,
         }),
         {
           status: 404,
@@ -75,7 +87,7 @@ http.route({
 
 // CORS preflight handler for registry endpoint
 http.route({
-  path: "/r/{namespace}/{name}.json",
+  pathPrefix: "/r/",
   method: "OPTIONS",
   handler: httpAction(async () => {
     return new Response(null, {

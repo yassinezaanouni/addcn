@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { IconPlus, IconBrandGithub } from "@tabler/icons-react";
+import { IconBrandGithub } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { APP_NAME } from "@/lib/constants";
@@ -18,11 +18,8 @@ export function Header() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <Link href="/editor">
-            <Button size="sm">
-              <IconPlus className="size-4" />
-              New Component
-            </Button>
+          <Link href="/dashboard">
+            <Button size="sm">Dashboard</Button>
           </Link>
           <ThemeToggle />
           <a

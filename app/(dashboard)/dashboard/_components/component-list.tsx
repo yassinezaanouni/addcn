@@ -31,7 +31,8 @@ import {
   EmptyDescription,
   EmptyMedia,
 } from "@/components/ui/empty";
-import { IconPackage, IconDownload, IconEye, IconEyeOff } from "@tabler/icons-react";
+import { IconPackage, IconDownload, IconEye, IconEyeOff, IconPencil } from "@tabler/icons-react";
+import Link from "next/link";
 import { toast } from "sonner";
 
 function ComponentCardSkeleton() {
@@ -137,19 +138,30 @@ function ComponentCard({
               {component.downloads ?? 0}
             </span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={handleVisibilityToggle}
-            disabled={updateMutation.isPending}
-            title={component.isPublic ? "Make private" : "Make public"}
-          >
-            {component.isPublic ? (
-              <IconEyeOff className="size-4" />
-            ) : (
-              <IconEye className="size-4" />
-            )}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Link href={`/dashboard/editor/${component._id}`}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                title="Edit component"
+              >
+                <IconPencil className="size-4" />
+              </Button>
+            </Link>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleVisibilityToggle}
+              disabled={updateMutation.isPending}
+              title={component.isPublic ? "Make private" : "Make public"}
+            >
+              {component.isPublic ? (
+                <IconEyeOff className="size-4" />
+              ) : (
+                <IconEye className="size-4" />
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

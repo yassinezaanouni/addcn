@@ -1,39 +1,40 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useEditorStore } from "@/stores/editor-store";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+// Convert to kebab-case
+function toKebabCase(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 export function ComponentMetaForm() {
   const { name, title, description, setMetadata } = useEditorStore();
 
-  const handleNameChange = (value: string) => {
-    // Convert to kebab-case
-    const kebabCase = value
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-    setMetadata({ name: kebabCase });
-  };
-
   return (
-    <div className="space-y-4 border-b border-border p-4">
+    <div className="space-y-4 p-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Name</label>
+        <Label htmlFor="name">Name</Label>
         <Input
+          id="name"
           value={name}
-          onChange={(e) => handleNameChange(e.target.value)}
+          onChange={(e) => setMetadata({ name: toKebabCase(e.target.value) })}
           placeholder="my-component"
-          className="font-mono text-sm"
         />
         <p className="text-xs text-muted-foreground">
-          Used for the registry (kebab-case)
+          Used in the registry URL
         </p>
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Title</label>
+        <Label htmlFor="title">Title</Label>
         <Input
+          id="title"
           value={title}
           onChange={(e) => setMetadata({ title: e.target.value })}
           placeholder="My Component"
@@ -41,13 +42,13 @@ export function ComponentMetaForm() {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Description</label>
+        <Label htmlFor="description">Description</Label>
         <Textarea
+          id="description"
           value={description}
           onChange={(e) => setMetadata({ description: e.target.value })}
-          placeholder="A brief description of your component"
-          rows={2}
-          className="resize-none"
+          placeholder="A description of your component..."
+          rows={3}
         />
       </div>
     </div>

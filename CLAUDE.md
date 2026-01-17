@@ -1,15 +1,15 @@
 # Project: addcn - shadcn Component Registry Builder
 
-A local dev tool for creating and serving custom shadcn/ui registry components.
+A multi-user platform for creating and serving custom shadcn/ui registry components.
 
 ## Tech Stack
 
 - Next.js 16 (App Router)
 - TypeScript
 - Tailwind CSS
-- Zustand (state management)
-- Convex (database - for future production use)
-- Monaco Editor (code editing)
+- Convex (database + backend)
+- TanStack Query (data fetching)
+- Better Auth (authentication)
 
 ## Key Concepts
 
@@ -29,12 +29,18 @@ Standard paths (components/ui, hooks, lib) don't need `target` - shadcn CLI reso
 
 ### File Structure
 
-- `app/editor/` - Editor UI with Monaco
-- `app/r/[name]/` - Registry JSON API endpoint
-- `lib/registry.ts` - Converts components to registry format
-- `lib/server-storage.ts` - Local JSON file storage
-- `stores/editor-store.ts` - Zustand store for editor state
+- `app/(marketing)/` - Landing page
+- `app/(dashboard)/` - User dashboard (components, orgs, settings)
+- `app/(auth)/` - Login and onboarding
+- `convex/` - Backend functions, schema, auth
+- `convex/lib/` - Shared backend utilities (permissions, validation)
 - `types/` - TypeScript interfaces
+
+### URL Format
+
+Registry components are served at: `/r/{namespace}/{name}.json`
+- Namespace is either a username or organization slug
+- Example: `https://addcn.dev/r/johndoe/my-button.json`
 
 ## Code Principles
 
@@ -47,7 +53,7 @@ Don't default to conventional patterns. Understand how each technology actually 
 - No REST API routes for data operations - use Convex queries/mutations directly
 - Client calls `useQuery(api.users.getMe)`, not `fetch('/api/users/me')`
 - See https://docs.convex.dev/client/nextjs/app-router/ for more details
-- use convex with tanstack query https://docs.convex.dev/client/tanstack/tanstack-query/
+- Use Convex with TanStack Query https://docs.convex.dev/client/tanstack/tanstack-query/
 - See `.claude/docs/architecture/` for Convex patterns
 
 **General rule:** Before implementing, ask "how does this technology expect me to do this?" not "how is this conventionally done?" Check official docs, not assumptions.
@@ -75,15 +81,15 @@ This is a new project. Don't add:
 ## Commands
 
 ```bash
-pnpm dev           # Start dev server
+pnpm dev           # Start dev server (runs Next.js + Convex)
 pnpm build         # Build for production
 pnpm tsc --noEmit  # Type check
 
-# Test registry
-curl http://localhost:3000/r/[component-name].json
+# Test registry (replace namespace/name)
+curl https://your-deployment.convex.site/r/username/component.json
 
 # Install component
-pnpm dlx shadcn@latest add http://localhost:3000/r/[name].json
+pnpm dlx shadcn@latest add https://your-deployment.convex.site/r/username/component.json
 ```
 
 ## Reference Docs
