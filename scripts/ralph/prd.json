@@ -417,8 +417,8 @@
         "Typecheck passes"
       ],
       "priority": 26,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added createInvite mutation (admin/owner only, generates 32-char token, 7-day expiry, checks for existing pending invites and existing members), getInviteByToken query (returns invite with org and inviter details, null if expired or not found), acceptInvite mutation (validates token, creates membership, deletes invite), cancelInvite mutation (admin/owner only), and getPendingInvites query for org settings page."
     },
     {
       "id": "US-027",

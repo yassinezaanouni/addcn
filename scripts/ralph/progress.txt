@@ -409,3 +409,20 @@
   - Return structured objects from member queries: include _id, role, joinedAt, invitedBy + nested user object
 ---
 
+## 2026-01-17 - US-026
+- Implemented invite functions in convex/organizations.ts
+- Added generateInviteToken helper: generates 32-char alphanumeric token
+- Implemented createInvite mutation: admin/owner only, checks for existing pending invites, checks if user already member, sets 7-day expiry
+- Implemented getInviteByToken query: returns invite with org and inviter details, null if expired or not found
+- Implemented acceptInvite mutation: validates token, checks expiry, creates membership with invite.role, deletes invite
+- Implemented cancelInvite mutation: admin/owner only, deletes the invite
+- Implemented getPendingInvites query: returns all non-expired invites for an org (admin/owner only)
+- Files changed: convex/organizations.ts (modified), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Use simple alphanumeric token generation (32 chars) - no crypto API needed for invite tokens
+  - 7-day expiry: Date.now() + 7 * 24 * 60 * 60 * 1000 milliseconds
+  - Always check both pending invite existence AND existing membership before creating invite
+  - Query returns null for expired invites (soft expiry) rather than deleting them
+  - getPendingInvites useful for org settings page to show/cancel invites
+---
+
