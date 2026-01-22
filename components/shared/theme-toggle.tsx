@@ -1,46 +1,34 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { IconSun, IconMoon, IconDeviceDesktop } from "@tabler/icons-react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { useUIStore } from "@/stores/ui-store";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useUIStore();
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
 
+  // Avoid hydration mismatch by only rendering after mount
   useEffect(() => {
-    const root = document.documentElement;
-    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-    if (theme === "dark" || (theme === "system" && systemDark)) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }, [theme]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => {
-      if (theme === "system") {
-        const root = document.documentElement;
-        if (mediaQuery.matches) {
-          root.classList.add("dark");
-        } else {
-          root.classList.remove("dark");
-        }
-      }
-    };
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [theme]);
+    setMounted(true);
+  }, []);
 
   const cycleTheme = () => {
     if (theme === "light") setTheme("dark");
     else if (theme === "dark") setTheme("system");
     else setTheme("light");
   };
+
+  // Render placeholder during SSR to avoid hydration mismatch
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" disabled>
+        <span className="size-4" />
+        <span className="sr-only">Toggle theme</span>
+      </Button>
+    );
+  }
 
   return (
     <Button variant="ghost" size="icon" onClick={cycleTheme}>

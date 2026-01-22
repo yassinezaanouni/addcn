@@ -721,7 +721,16 @@ export function PreviewPanel() {
   // Load Tailwind v4 browser CDN for dynamic class support in preview
   useEffect(() => {
     const TAILWIND_CDN_ID = "tailwind-cdn-preview";
+    const TAILWIND_CONFIG_ID = "tailwind-config-preview";
+
     if (document.getElementById(TAILWIND_CDN_ID)) return;
+
+    // Inject Tailwind config to use class-based dark mode (not system preference)
+    const configStyle = document.createElement("style");
+    configStyle.id = TAILWIND_CONFIG_ID;
+    configStyle.setAttribute("type", "text/tailwindcss");
+    configStyle.textContent = `@custom-variant dark (&:is(.dark *));`;
+    document.head.appendChild(configStyle);
 
     const script = document.createElement("script");
     script.id = TAILWIND_CDN_ID;
@@ -785,13 +794,13 @@ export function PreviewPanel() {
           <span className="text-xs text-muted-foreground/70">{mainFile.path.split("/").pop()}</span>
         )}
       </div>
-      <div className="flex-1 overflow-auto bg-white p-4 dark:bg-zinc-950">
+      <div className="flex-1 overflow-auto bg-background p-4">
         {/* Inject CSS from all style files */}
         {combinedCss && (
           <style id={styleId} dangerouslySetInnerHTML={{ __html: combinedCss }} />
         )}
         <LiveProvider code={transformedCode} scope={scope} noInline>
-          <LiveError className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950/50 dark:text-red-400" />
+          <LiveError className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive" />
           <LivePreview />
         </LiveProvider>
       </div>
