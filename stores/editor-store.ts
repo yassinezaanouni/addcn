@@ -141,10 +141,22 @@ export const useEditorStore = create<EditorState>()((set) => ({
     })),
 
   addFile: (path) => {
+    let content = "";
+    if (path.endsWith(".css")) {
+      content = "/* Add your styles here */\n";
+    } else if (path.endsWith(".tsx")) {
+      content = `export default function Component() {
+  return <></>;
+}
+`;
+    } else if (path.endsWith(".ts")) {
+      content = "";
+    }
+
     const newFile: ComponentFile = {
       id: generateId(),
       path,
-      content: path.endsWith(".css") ? "/* Add your styles here */\n" : DEFAULT_FILE_CONTENT,
+      content,
       type: getFileType(path),
       language: getLanguage(path),
     };
