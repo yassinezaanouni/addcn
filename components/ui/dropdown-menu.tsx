@@ -14,18 +14,8 @@ function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
 }
 
-type DropdownMenuTriggerProps = MenuPrimitive.Trigger.Props & {
-  asChild?: boolean
-}
-
-function DropdownMenuTrigger({ asChild, ...props }: DropdownMenuTriggerProps) {
-  return (
-    <MenuPrimitive.Trigger
-      data-slot="dropdown-menu-trigger"
-      render={asChild ? (props.children as React.ReactElement) : undefined}
-      {...props}
-    />
-  )
+function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
+  return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
 }
 
 function DropdownMenuContent({
@@ -83,19 +73,15 @@ function DropdownMenuLabel({
   )
 }
 
-type DropdownMenuItemProps = MenuPrimitive.Item.Props & {
-  inset?: boolean
-  variant?: "default" | "destructive"
-  asChild?: boolean
-}
-
 function DropdownMenuItem({
   className,
   inset,
   variant = "default",
-  asChild,
   ...props
-}: DropdownMenuItemProps) {
+}: MenuPrimitive.Item.Props & {
+  inset?: boolean
+  variant?: "default" | "destructive"
+}) {
   return (
     <MenuPrimitive.Item
       data-slot="dropdown-menu-item"
@@ -105,7 +91,6 @@ function DropdownMenuItem({
         "focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:text-destructive not-data-[variant=destructive]:focus:**:text-accent-foreground gap-2 rounded-sm px-2 py-1.5 text-sm [&_svg:not([class*='size-'])]:size-4 group/dropdown-menu-item relative flex cursor-default items-center outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
-      render={asChild ? (props.children as React.ReactElement) : undefined}
       {...props}
     />
   )
@@ -128,7 +113,7 @@ function DropdownMenuSubTrigger({
       data-slot="dropdown-menu-sub-trigger"
       data-inset={inset}
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground data-open:bg-accent data-open:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground gap-2 rounded-sm px-2 py-1.5 text-sm [&_svg:not([class*='size-'])]:size-4 flex cursor-default items-center outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "focus:bg-accent focus:text-accent-foreground data-open:bg-accent data-open:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground gap-2 rounded-sm px-2 py-1.5 text-sm [&_svg:not([class*='size-'])]:size-4 data-popup-open:bg-accent data-popup-open:text-accent-foreground flex cursor-default items-center outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}
@@ -181,7 +166,8 @@ function DropdownMenuCheckboxItem({
         data-slot="dropdown-menu-checkbox-item-indicator"
       >
         <MenuPrimitive.CheckboxItemIndicator>
-          <IconCheck className="size-4" />
+          <IconCheck
+          />
         </MenuPrimitive.CheckboxItemIndicator>
       </span>
       {children}
@@ -217,7 +203,8 @@ function DropdownMenuRadioItem({
         data-slot="dropdown-menu-radio-item-indicator"
       >
         <MenuPrimitive.RadioItemIndicator>
-          <IconCheck className="size-4" />
+          <IconCheck
+          />
         </MenuPrimitive.RadioItemIndicator>
       </span>
       {children}

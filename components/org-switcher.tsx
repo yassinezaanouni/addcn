@@ -98,12 +98,12 @@ export function OrgSwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center gap-2 px-2">
-          {displayIcon}
-          <span className="text-sm font-medium">{displayName}</span>
-          <IconSelector className="size-4 text-muted-foreground" />
-        </Button>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" className="flex items-center gap-2 px-2" />}
+      >
+        {displayIcon}
+        <span className="text-sm font-medium">{displayName}</span>
+        <IconSelector className="size-4 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
         {/* Personal option */}
