@@ -353,6 +353,7 @@ function getInlineableImports(
   for (const imp of imports) {
     if (imp.path === "react") continue;
     if (!imp.path.startsWith(".") && !imp.path.startsWith("@/")) continue;
+    if (!imp.defaultName) continue; // Only handle default imports for now
 
     const file = resolveFile(imp.path, files, mainFilePath);
     if (file && containsJsx(file.content)) {
@@ -360,19 +361,35 @@ function getInlineableImports(
       let code = file.content;
       // Remove imports
       code = code.replace(/^import\s+.*?;?\s*$/gm, "");
-      // Convert export default to const
-      const defaultMatch = code.match(/export\s+default\s+function\s+(\w+)/);
-      if (defaultMatch) {
-        code = code.replace(/export\s+default\s+function/, "function");
-        inlineable.push({ name: defaultMatch[1], code });
-      } else {
-        // Handle: export default Component or const Component = ...; export default Component
-        const exportDefaultMatch = code.match(/export\s+default\s+(\w+)/);
-        if (exportDefaultMatch && imp.defaultName) {
-          code = code.replace(/export\s+default\s+\w+;?/, "");
-          code = code.replace(/export\s+/g, "");
-          inlineable.push({ name: imp.defaultName, code });
+
+      // Get the original function name
+      const defaultFuncMatch = code.match(/export\s+default\s+function\s+(\w+)/);
+      const arrowFuncMatch = code.match(/export\s+default\s+(\w+)/);
+
+      if (defaultFuncMatch) {
+        const originalName = defaultFuncMatch[1];
+        const importedName = imp.defaultName;
+        // Replace function name with the imported name
+        code = code.replace(
+          /export\s+default\s+function\s+\w+/,
+          `function ${importedName}`
+        );
+        // Also replace any self-references inside the component
+        if (originalName !== importedName) {
+          code = code.replace(new RegExp(`\\b${originalName}\\b`, "g"), importedName);
         }
+        inlineable.push({ name: importedName, code });
+      } else if (arrowFuncMatch) {
+        const originalName = arrowFuncMatch[1];
+        const importedName = imp.defaultName;
+        // Remove export default
+        code = code.replace(/export\s+default\s+\w+;?/, "");
+        code = code.replace(/export\s+/g, "");
+        // Rename the const/function if different
+        if (originalName !== importedName) {
+          code = code.replace(new RegExp(`\\b${originalName}\\b`, "g"), importedName);
+        }
+        inlineable.push({ name: importedName, code });
       }
     }
   }
