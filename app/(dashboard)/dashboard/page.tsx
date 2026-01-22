@@ -13,7 +13,7 @@ export default function DashboardPage() {
             Manage your registry components
           </p>
         </div>
-        <Link href="/dashboard/editor">
+        <Link href="/dashboard/sandbox/new">
           <Button size="sm">
             <IconPlus className="size-4" />
             New Component

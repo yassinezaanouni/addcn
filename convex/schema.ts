@@ -75,4 +75,18 @@ export default defineSchema({
       searchField: "title",
       filterFields: ["name"],
     }),
+
+  // Sandboxes table - for CodeSandbox SDK integration
+  sandboxes: defineTable({
+    userId: v.id("users"),
+    codesandboxId: v.string(), // CodeSandbox instance ID
+    name: v.string(),
+    componentId: v.optional(v.id("components")), // Reference to component being edited
+    status: v.string(), // draft, on_review, published
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_codesandboxId", ["codesandboxId"])
+    .index("by_componentId", ["componentId"]),
 });

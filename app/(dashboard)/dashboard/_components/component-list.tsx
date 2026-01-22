@@ -41,6 +41,7 @@ import {
   IconPencil,
   IconCopy,
   IconCheck,
+  IconTrash,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -67,6 +68,78 @@ function ComponentListSkeleton() {
         <ComponentCardSkeleton key={i} />
       ))}
     </div>
+  );
+}
+
+// Sandbox card for draft sandboxes
+function SandboxCard({
+  sandbox,
+  onDelete,
+}: {
+  sandbox: Doc<"sandboxes">;
+  onDelete: (id: Id<"sandboxes">) => void;
+}) {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleDelete = () => {
+    onDelete(sandbox._id);
+    setShowDeleteDialog(false);
+  };
+
+  // Format the date
+  const createdDate = new Date(sandbox.createdAt).toLocaleDateString();
+
+  return (
+    <>
+      <Card size="sm">
+        <CardHeader>
+          <CardTitle>{sandbox.name}</CardTitle>
+          <CardDescription className="text-xs text-muted-foreground">
+            Created {createdDate}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Badge variant="outline">Draft</Badge>
+            <div className="flex items-center gap-1">
+              <Link href={`/dashboard/sandbox/${sandbox.codesandboxId}`}>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  title="Edit sandbox"
+                >
+                  <IconPencil className="size-4" />
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setShowDeleteDialog(true)}
+                title="Delete sandbox"
+              >
+                <IconTrash className="size-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Sandbox</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this sandbox? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter showCloseButton>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete Sandbox
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -258,14 +331,41 @@ export function ComponentList() {
     })
   );
 
+  // Query sandboxes (drafts without a published component)
+  const { data: sandboxes, isLoading: sandboxesLoading } = useQuery(
+    convexQuery(api.sandboxes.list, {})
+  );
+
   const { data: user } = useQuery(convexQuery(api.users.getMe, {}));
   const { data: orgs } = useQuery(convexQuery(api.organizations.getMyOrgs, {}));
 
-  if (componentsLoading) {
+  // Mutation for deleting sandboxes
+  const deleteSandboxFn = useConvexMutation(api.sandboxes.remove);
+  const deleteSandboxMutation = useMutation({
+    mutationFn: deleteSandboxFn,
+    onSuccess: () => {
+      toast.success("Sandbox deleted");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete sandbox", {
+        description: error instanceof Error ? error.message : "An error occurred",
+      });
+    },
+  });
+
+  const handleDeleteSandbox = (id: Id<"sandboxes">) => {
+    deleteSandboxMutation.mutate({ id });
+  };
+
+  if (componentsLoading || sandboxesLoading) {
     return <ComponentListSkeleton />;
   }
 
-  if (!components || components.length === 0) {
+  // Filter sandboxes to only show drafts (no componentId)
+  const draftSandboxes = sandboxes?.filter((s) => !s.componentId) ?? [];
+  const hasContent = (components && components.length > 0) || draftSandboxes.length > 0;
+
+  if (!hasContent) {
     return (
       <Empty>
         <EmptyHeader>
@@ -295,7 +395,17 @@ export function ComponentList() {
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {components.map((component) => (
+      {/* Draft sandboxes first */}
+      {draftSandboxes.map((sandbox) => (
+        <SandboxCard
+          key={sandbox._id}
+          sandbox={sandbox}
+          onDelete={handleDeleteSandbox}
+        />
+      ))}
+
+      {/* Published components */}
+      {components?.map((component) => (
         <ComponentCard
           key={component._id}
           component={component}
