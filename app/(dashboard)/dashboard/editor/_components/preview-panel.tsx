@@ -1,318 +1,37 @@
 "use client";
 
-import React, {
-  useMemo,
-  useId,
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useContext,
-  useReducer,
-  useMemo as useMemoPrimitive,
-  useLayoutEffect,
-  useImperativeHandle,
-  useDebugValue,
-  useDeferredValue,
-  useTransition,
-  useSyncExternalStore,
-  useInsertionEffect,
-  forwardRef,
-  createContext,
-  Children,
-  cloneElement,
-  isValidElement,
-  Fragment,
-  memo,
-  lazy,
-  Suspense,
-} from "react";
-import { LiveProvider, LivePreview, LiveError } from "react-live";
-import { cva } from "class-variance-authority";
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-// Base UI (all-in-one package)
-import * as BaseUI from "@base-ui/react";
-// Radix UI (separate packages per component)
-import * as RadixSlot from "@radix-ui/react-slot";
-import * as RadixDialog from "@radix-ui/react-dialog";
-import * as RadixDropdownMenu from "@radix-ui/react-dropdown-menu";
-import * as RadixTabs from "@radix-ui/react-tabs";
-import * as RadixPopover from "@radix-ui/react-popover";
-import * as RadixTooltip from "@radix-ui/react-tooltip";
-import * as RadixSelect from "@radix-ui/react-select";
-import * as RadixCheckbox from "@radix-ui/react-checkbox";
-import * as RadixRadioGroup from "@radix-ui/react-radio-group";
-import * as RadixSwitch from "@radix-ui/react-switch";
-import * as RadixLabel from "@radix-ui/react-label";
-import * as RadixSeparator from "@radix-ui/react-separator";
-import * as RadixAvatar from "@radix-ui/react-avatar";
-import * as RadixAccordion from "@radix-ui/react-accordion";
-import * as RadixAlertDialog from "@radix-ui/react-alert-dialog";
-import * as RadixAspectRatio from "@radix-ui/react-aspect-ratio";
-import * as RadixCollapsible from "@radix-ui/react-collapsible";
-import * as RadixContextMenu from "@radix-ui/react-context-menu";
-import * as RadixHoverCard from "@radix-ui/react-hover-card";
-import * as RadixMenubar from "@radix-ui/react-menubar";
-import * as RadixNavigationMenu from "@radix-ui/react-navigation-menu";
-import * as RadixProgress from "@radix-ui/react-progress";
-import * as RadixScrollArea from "@radix-ui/react-scroll-area";
-import * as RadixSlider from "@radix-ui/react-slider";
-import * as RadixToggle from "@radix-ui/react-toggle";
-import * as RadixToggleGroup from "@radix-ui/react-toggle-group";
+import { useMemo, useState, useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
 import { useEditorStore } from "@/stores/editor-store";
 import type { ComponentFile } from "@/types/component";
 
-// Combine all Radix UI exports into a single object
-const RadixUI = {
-  // Slot
-  Slot: RadixSlot.Slot,
-  // Dialog
-  Dialog: RadixDialog.Root,
-  DialogTrigger: RadixDialog.Trigger,
-  DialogPortal: RadixDialog.Portal,
-  DialogOverlay: RadixDialog.Overlay,
-  DialogContent: RadixDialog.Content,
-  DialogTitle: RadixDialog.Title,
-  DialogDescription: RadixDialog.Description,
-  DialogClose: RadixDialog.Close,
-  // DropdownMenu
-  DropdownMenu: RadixDropdownMenu.Root,
-  DropdownMenuTrigger: RadixDropdownMenu.Trigger,
-  DropdownMenuContent: RadixDropdownMenu.Content,
-  DropdownMenuItem: RadixDropdownMenu.Item,
-  DropdownMenuCheckboxItem: RadixDropdownMenu.CheckboxItem,
-  DropdownMenuRadioItem: RadixDropdownMenu.RadioItem,
-  DropdownMenuLabel: RadixDropdownMenu.Label,
-  DropdownMenuSeparator: RadixDropdownMenu.Separator,
-  DropdownMenuGroup: RadixDropdownMenu.Group,
-  DropdownMenuPortal: RadixDropdownMenu.Portal,
-  DropdownMenuSub: RadixDropdownMenu.Sub,
-  DropdownMenuSubContent: RadixDropdownMenu.SubContent,
-  DropdownMenuSubTrigger: RadixDropdownMenu.SubTrigger,
-  DropdownMenuRadioGroup: RadixDropdownMenu.RadioGroup,
-  // Tabs
-  Tabs: RadixTabs.Root,
-  TabsList: RadixTabs.List,
-  TabsTrigger: RadixTabs.Trigger,
-  TabsContent: RadixTabs.Content,
-  // Popover
-  Popover: RadixPopover.Root,
-  PopoverTrigger: RadixPopover.Trigger,
-  PopoverContent: RadixPopover.Content,
-  PopoverAnchor: RadixPopover.Anchor,
-  PopoverPortal: RadixPopover.Portal,
-  // Tooltip
-  Tooltip: RadixTooltip.Root,
-  TooltipTrigger: RadixTooltip.Trigger,
-  TooltipContent: RadixTooltip.Content,
-  TooltipProvider: RadixTooltip.Provider,
-  TooltipPortal: RadixTooltip.Portal,
-  // Select
-  Select: RadixSelect.Root,
-  SelectTrigger: RadixSelect.Trigger,
-  SelectValue: RadixSelect.Value,
-  SelectContent: RadixSelect.Content,
-  SelectItem: RadixSelect.Item,
-  SelectItemText: RadixSelect.ItemText,
-  SelectItemIndicator: RadixSelect.ItemIndicator,
-  SelectGroup: RadixSelect.Group,
-  SelectLabel: RadixSelect.Label,
-  SelectSeparator: RadixSelect.Separator,
-  SelectPortal: RadixSelect.Portal,
-  SelectViewport: RadixSelect.Viewport,
-  // Checkbox
-  Checkbox: RadixCheckbox.Root,
-  CheckboxIndicator: RadixCheckbox.Indicator,
-  // RadioGroup
-  RadioGroup: RadixRadioGroup.Root,
-  RadioGroupItem: RadixRadioGroup.Item,
-  RadioGroupIndicator: RadixRadioGroup.Indicator,
-  // Switch
-  Switch: RadixSwitch.Root,
-  SwitchThumb: RadixSwitch.Thumb,
-  // Label
-  Label: RadixLabel.Root,
-  // Separator
-  Separator: RadixSeparator.Root,
-  // Avatar
-  Avatar: RadixAvatar.Root,
-  AvatarImage: RadixAvatar.Image,
-  AvatarFallback: RadixAvatar.Fallback,
-  // Accordion
-  Accordion: RadixAccordion.Root,
-  AccordionItem: RadixAccordion.Item,
-  AccordionTrigger: RadixAccordion.Trigger,
-  AccordionContent: RadixAccordion.Content,
-  AccordionHeader: RadixAccordion.Header,
-  // AlertDialog
-  AlertDialog: RadixAlertDialog.Root,
-  AlertDialogTrigger: RadixAlertDialog.Trigger,
-  AlertDialogPortal: RadixAlertDialog.Portal,
-  AlertDialogOverlay: RadixAlertDialog.Overlay,
-  AlertDialogContent: RadixAlertDialog.Content,
-  AlertDialogTitle: RadixAlertDialog.Title,
-  AlertDialogDescription: RadixAlertDialog.Description,
-  AlertDialogAction: RadixAlertDialog.Action,
-  AlertDialogCancel: RadixAlertDialog.Cancel,
-  // AspectRatio
-  AspectRatio: RadixAspectRatio.Root,
-  // Collapsible
-  Collapsible: RadixCollapsible.Root,
-  CollapsibleTrigger: RadixCollapsible.Trigger,
-  CollapsibleContent: RadixCollapsible.Content,
-  // ContextMenu
-  ContextMenu: RadixContextMenu.Root,
-  ContextMenuTrigger: RadixContextMenu.Trigger,
-  ContextMenuContent: RadixContextMenu.Content,
-  ContextMenuItem: RadixContextMenu.Item,
-  ContextMenuCheckboxItem: RadixContextMenu.CheckboxItem,
-  ContextMenuRadioItem: RadixContextMenu.RadioItem,
-  ContextMenuLabel: RadixContextMenu.Label,
-  ContextMenuSeparator: RadixContextMenu.Separator,
-  ContextMenuGroup: RadixContextMenu.Group,
-  ContextMenuPortal: RadixContextMenu.Portal,
-  ContextMenuSub: RadixContextMenu.Sub,
-  ContextMenuSubContent: RadixContextMenu.SubContent,
-  ContextMenuSubTrigger: RadixContextMenu.SubTrigger,
-  ContextMenuRadioGroup: RadixContextMenu.RadioGroup,
-  // HoverCard
-  HoverCard: RadixHoverCard.Root,
-  HoverCardTrigger: RadixHoverCard.Trigger,
-  HoverCardContent: RadixHoverCard.Content,
-  HoverCardPortal: RadixHoverCard.Portal,
-  // Menubar
-  Menubar: RadixMenubar.Root,
-  MenubarMenu: RadixMenubar.Menu,
-  MenubarTrigger: RadixMenubar.Trigger,
-  MenubarContent: RadixMenubar.Content,
-  MenubarItem: RadixMenubar.Item,
-  MenubarSeparator: RadixMenubar.Separator,
-  MenubarLabel: RadixMenubar.Label,
-  MenubarCheckboxItem: RadixMenubar.CheckboxItem,
-  MenubarRadioGroup: RadixMenubar.RadioGroup,
-  MenubarRadioItem: RadixMenubar.RadioItem,
-  MenubarPortal: RadixMenubar.Portal,
-  MenubarSub: RadixMenubar.Sub,
-  MenubarSubContent: RadixMenubar.SubContent,
-  MenubarSubTrigger: RadixMenubar.SubTrigger,
-  MenubarGroup: RadixMenubar.Group,
-  // NavigationMenu
-  NavigationMenu: RadixNavigationMenu.Root,
-  NavigationMenuList: RadixNavigationMenu.List,
-  NavigationMenuItem: RadixNavigationMenu.Item,
-  NavigationMenuTrigger: RadixNavigationMenu.Trigger,
-  NavigationMenuContent: RadixNavigationMenu.Content,
-  NavigationMenuLink: RadixNavigationMenu.Link,
-  NavigationMenuIndicator: RadixNavigationMenu.Indicator,
-  NavigationMenuViewport: RadixNavigationMenu.Viewport,
-  // Progress
-  Progress: RadixProgress.Root,
-  ProgressIndicator: RadixProgress.Indicator,
-  // ScrollArea
-  ScrollArea: RadixScrollArea.Root,
-  ScrollAreaViewport: RadixScrollArea.Viewport,
-  ScrollAreaScrollbar: RadixScrollArea.Scrollbar,
-  ScrollAreaThumb: RadixScrollArea.Thumb,
-  ScrollAreaCorner: RadixScrollArea.Corner,
-  // Slider
-  Slider: RadixSlider.Root,
-  SliderTrack: RadixSlider.Track,
-  SliderRange: RadixSlider.Range,
-  SliderThumb: RadixSlider.Thumb,
-  // Toggle
-  Toggle: RadixToggle.Root,
-  // ToggleGroup
-  ToggleGroup: RadixToggleGroup.Root,
-  ToggleGroupItem: RadixToggleGroup.Item,
-};
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
 
-// Common utility: cn (clsx + tailwind-merge)
-function cn(...inputs: Parameters<typeof clsx>) {
-  return twMerge(clsx(inputs));
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
 }
-
-// React scope for react-live - provides React and all hooks
-const reactScope: Record<string, unknown> = {
-  React,
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useContext,
-  useReducer,
-  useMemo: useMemoPrimitive,
-  useLayoutEffect,
-  useImperativeHandle,
-  useDebugValue,
-  useDeferredValue,
-  useTransition,
-  useSyncExternalStore,
-  useInsertionEffect,
-  forwardRef,
-  createContext,
-  Children,
-  cloneElement,
-  isValidElement,
-  Fragment,
-  memo,
-  lazy,
-  Suspense,
-  // Common shadcn utilities
-  cva,
-  cn,
-  clsx,
-  twMerge,
-  // All base-ui primitives (Button, Dialog, Menu, Tabs, etc.)
-  ...BaseUI,
-  // All radix-ui primitives (Dialog, DropdownMenu, Tabs, Slot, etc.)
-  ...RadixUI,
-  // Common aliases used in shadcn components (e.g., import { Button as ButtonPrimitive })
-  ButtonPrimitive: BaseUI.Button,
-  DialogPrimitive: RadixDialog,
-  DropdownMenuPrimitive: RadixDropdownMenu,
-  TabsPrimitive: RadixTabs,
-  PopoverPrimitive: RadixPopover,
-  TooltipPrimitive: RadixTooltip,
-  SelectPrimitive: RadixSelect,
-  CheckboxPrimitive: RadixCheckbox,
-  RadioGroupPrimitive: RadixRadioGroup,
-  SwitchPrimitive: RadixSwitch,
-  LabelPrimitive: RadixLabel,
-  SeparatorPrimitive: RadixSeparator,
-  AvatarPrimitive: RadixAvatar,
-  AccordionPrimitive: RadixAccordion,
-  AlertDialogPrimitive: RadixAlertDialog,
-  CollapsiblePrimitive: RadixCollapsible,
-  ContextMenuPrimitive: RadixContextMenu,
-  HoverCardPrimitive: RadixHoverCard,
-  MenubarPrimitive: RadixMenubar,
-  NavigationMenuPrimitive: RadixNavigationMenu,
-  ProgressPrimitive: RadixProgress,
-  ScrollAreaPrimitive: RadixScrollArea,
-  SliderPrimitive: RadixSlider,
-  TogglePrimitive: RadixToggle,
-  ToggleGroupPrimitive: RadixToggleGroup,
-};
 
 /**
  * Parse imports from code and extract import names and paths
  */
 function parseImports(code: string): Array<{ names: string[]; defaultName?: string; path: string }> {
   const imports: Array<{ names: string[]; defaultName?: string; path: string }> = [];
-
-  // Match various import patterns
   const lines = code.split("\n");
+
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed.startsWith("import ")) continue;
 
-    // Extract the path
     const pathMatch = trimmed.match(/from\s+["']([^"']+)["']/);
     if (!pathMatch) continue;
     const importPath = pathMatch[1];
 
-    // Extract named imports { foo, bar }
     const namedMatch = trimmed.match(/\{([^}]+)\}/);
     const names: string[] = [];
     if (namedMatch) {
@@ -325,11 +44,8 @@ function parseImports(code: string): Array<{ names: string[]; defaultName?: stri
       );
     }
 
-    // Extract default import
     const defaultMatch = trimmed.match(/import\s+(\w+)\s+from/);
     const defaultName = defaultMatch?.[1];
-
-    // Also check for: import DefaultName, { named } from
     const mixedMatch = trimmed.match(/import\s+(\w+)\s*,\s*\{/);
     const mixedDefault = mixedMatch?.[1];
 
@@ -347,15 +63,11 @@ function parseImports(code: string): Array<{ names: string[]; defaultName?: stri
  * Resolve a relative import path based on the current file's location
  */
 function resolveRelativePath(importPath: string, currentFilePath: string): string {
-  // Get the directory of the current file
   const currentDir = currentFilePath.split("/").slice(0, -1).join("/");
 
-  // Handle relative paths
   if (importPath.startsWith("./")) {
-    // Same directory: ./test -> currentDir/test
     return currentDir ? `${currentDir}/${importPath.slice(2)}` : importPath.slice(2);
   } else if (importPath.startsWith("../")) {
-    // Go up directories
     const parts = currentDir.split("/");
     let path = importPath;
     while (path.startsWith("../")) {
@@ -365,7 +77,6 @@ function resolveRelativePath(importPath: string, currentFilePath: string): strin
     return parts.length > 0 ? `${parts.join("/")}/${path}` : path;
   }
 
-  // Not a relative path
   return importPath.replace(/^@\//, "");
 }
 
@@ -373,440 +84,607 @@ function resolveRelativePath(importPath: string, currentFilePath: string): strin
  * Find a file matching the import path
  */
 function resolveFile(importPath: string, files: ComponentFile[], currentFilePath?: string): ComponentFile | null {
-  // Resolve relative path if we have context
   const resolvedPath = currentFilePath
     ? resolveRelativePath(importPath, currentFilePath)
     : importPath.replace(/^\.\.?\//, "").replace(/^@\//, "");
 
-  console.log("[Preview] Resolving import:", importPath, "->", resolvedPath);
-
-  // Try exact match
   let file = files.find((f) => f.path === resolvedPath);
   if (file) return file;
 
-  // Try with extensions
   for (const ext of [".ts", ".tsx", ".js", ".jsx"]) {
     file = files.find((f) => f.path === resolvedPath + ext);
     if (file) return file;
   }
 
-  // Try matching by filename
-  const fileName = resolvedPath.split("/").pop() || resolvedPath;
-
-  // Check if it's a folder import (index file)
   file = files.find((f) =>
     f.path === `${resolvedPath}/index.ts` ||
     f.path === `${resolvedPath}/index.tsx`
   );
   if (file) return file;
 
-  // Try matching by name pattern in same directory
-  const dir = resolvedPath.split("/").slice(0, -1).join("/");
-  if (dir) {
-    file = files.find((f) => {
-      const fDir = f.path.split("/").slice(0, -1).join("/");
-      const fName = f.path.split("/").pop()?.replace(/\.(ts|tsx|js|jsx)$/, "");
-      return fDir === dir && fName === fileName;
-    });
-    if (file) return file;
-  }
-
-  // For imports like '../../hooks', look in hooks folder
-  if (fileName === "hooks" || fileName === "lib" || fileName === "utils") {
-    return null;
-  }
-
   return null;
 }
 
 /**
- * Get all files from a folder (for folder imports like './hooks')
+ * Get all files from a folder
  */
 function getFilesFromFolder(folderName: string, files: ComponentFile[]): ComponentFile[] {
   const folder = folderName.replace(/^\.\.?\//, "").replace(/^@\//, "");
-  return files.filter((f) => f.path.startsWith(folder + "/") || f.path.startsWith(`${folder}/`));
+  return files.filter((f) => f.path.startsWith(folder + "/"));
 }
 
 /**
- * Strip TypeScript type annotations from code for runtime evaluation
+ * Collect all component files that need to be bundled (main + dependencies)
  */
-function stripTypeScript(code: string): string {
-  // Remove type imports
-  code = code.replace(/import\s+type\s+.*?;?\s*$/gm, "");
+function collectAllFiles(
+  mainFile: ComponentFile,
+  allFiles: ComponentFile[],
+  collected: Map<string, ComponentFile> = new Map()
+): Map<string, ComponentFile> {
+  if (collected.has(mainFile.path)) return collected;
+  collected.set(mainFile.path, mainFile);
 
-  // Remove type annotations from function parameters: (ref: Type) -> (ref)
-  code = code.replace(/:\s*[A-Za-z<>[\]|&\s.]+(?=[,)])/g, "");
-
-  // Remove return type annotations: ): Type { -> ) {
-  code = code.replace(/\):\s*[A-Za-z<>[\]|&\s.]+\s*(?=[{=])/g, ") ");
-
-  // Remove generic type parameters: <T> or <T, U>
-  code = code.replace(/<[A-Za-z,\s]+>(?=\s*\()/g, "");
-
-  // Remove type assertions: as Type
-  code = code.replace(/\s+as\s+[A-Za-z<>[\]|&\s.]+/g, "");
-
-  // Remove interface/type declarations
-  code = code.replace(/^(export\s+)?(interface|type)\s+\w+[\s\S]*?(?=\n\n|\nexport|\nfunction|\nconst|$)/gm, "");
-
-  // Remove React.FC type annotations
-  code = code.replace(/:\s*React\.\w+<[^>]*>/g, "");
-
-  // Clean up any leftover type syntax
-  code = code.replace(/\|\s*null/g, "");
-  code = code.replace(/\|\s*undefined/g, "");
-
-  return code;
-}
-
-/**
- * Evaluate a file's code and extract its exports
- * Note: This only works for non-JSX files (hooks, utils, etc.)
- * JSX components should be handled by getInlineableImports
- */
-function evaluateFile(file: ComponentFile, scope: Record<string, unknown>): Record<string, unknown> {
-  const exports: Record<string, unknown> = {};
-
-  // Skip files with JSX - they can't be evaluated with new Function()
-  // They need to be transpiled and will be handled by getInlineableImports
-  if (containsJsx(file.content)) {
-    console.log(`[Preview] Skipping JSX file ${file.path} - will be inlined instead`);
-    return exports;
-  }
-
-  try {
-    // Transform the code for evaluation
-    let code = file.content;
-
-    // Remove import statements
-    code = code.replace(/^import\s+.*?;?\s*$/gm, "");
-
-    // Track what's being exported before stripping types
-    const exportMatches = [...code.matchAll(/export\s+(?:const|function|class)\s+(\w+)/g)];
-    const defaultMatch = code.match(/export\s+default\s+(?:function\s+)?(\w+)/);
-
-    // Strip TypeScript syntax
-    code = stripTypeScript(code);
-
-    // Remove export keywords
-    code = code.replace(/export\s+default\s+/g, "const __default__ = ");
-    code = code.replace(/export\s+/g, "");
-
-    // Create function arguments from scope
-    const scopeKeys = Object.keys(scope);
-    const scopeValues = Object.values(scope);
-
-    // Build the return object
-    const exportNames = exportMatches.map((m) => m[1]).filter(Boolean);
-    const returnObj = exportNames.length > 0 ? exportNames.join(", ") : "";
-    const defaultReturn = defaultMatch ? (returnObj ? `, default: __default__` : `default: __default__`) : "";
-
-    // Build the evaluation function
-    const evalCode = `
-      "use strict";
-      ${code}
-      return { ${returnObj}${defaultReturn} };
-    `;
-
-    console.log("[Preview] Evaluating code:", evalCode.substring(0, 500));
-
-    // Create and execute the function
-    const fn = new Function(...scopeKeys, evalCode);
-    const result = fn(...scopeValues);
-
-    Object.assign(exports, result);
-  } catch (error) {
-    console.warn(`[Preview] Failed to evaluate file ${file.path}:`, error);
-  }
-
-  return exports;
-}
-
-/**
- * Build scope from local imports
- */
-function buildLocalScope(
-  mainCode: string,
-  files: ComponentFile[],
-  mainFilePath: string
-): Record<string, unknown> {
-  const localScope: Record<string, unknown> = {};
-  const imports = parseImports(mainCode);
-
-  // Debug: log available files
-  console.log("[Preview] Main file:", mainFilePath);
-  console.log("[Preview] Available files:", files.map((f) => f.path));
-  console.log("[Preview] Parsed imports:", imports);
+  const imports = parseImports(mainFile.content);
 
   for (const imp of imports) {
-    // Skip react imports (already in scope)
-    if (imp.path === "react") continue;
-
-    // Skip external packages
+    if (imp.path === "react" || imp.path.startsWith("react/")) continue;
     if (!imp.path.startsWith(".") && !imp.path.startsWith("@/")) continue;
 
-    // Resolve the path relative to the main file
-    const resolvedPath = resolveRelativePath(imp.path, mainFilePath);
-    console.log("[Preview] Import path:", imp.path, "-> resolved:", resolvedPath);
+    // Try to resolve single file
+    const file = resolveFile(imp.path, allFiles, mainFile.path);
+    if (file) {
+      collectAllFiles(file, allFiles, collected);
+    }
 
-    // Check if it's a folder import
-    const folderFiles = getFilesFromFolder(resolvedPath, files);
-    console.log("[Preview] Found folder files:", folderFiles.map((f) => f.path));
-
-    if (folderFiles.length > 0) {
-      // Evaluate all files in the folder
-      for (const file of folderFiles) {
-        console.log("[Preview] Evaluating file:", file.path);
-        const fileExports = evaluateFile(file, { ...reactScope, ...localScope });
-        console.log("[Preview] Exports from", file.path, ":", Object.keys(fileExports));
-        Object.assign(localScope, fileExports);
-      }
-    } else {
-      // Try to resolve single file
-      const file = resolveFile(imp.path, files, mainFilePath);
-      console.log("[Preview] Resolved single file:", file?.path);
-      if (file) {
-        const fileExports = evaluateFile(file, { ...reactScope, ...localScope });
-        console.log("[Preview] Exports:", Object.keys(fileExports));
-
-        // Add requested imports to scope
-        for (const name of imp.names) {
-          if (fileExports[name]) {
-            localScope[name] = fileExports[name];
-          }
-        }
-        if (imp.defaultName && fileExports.default) {
-          localScope[imp.defaultName] = fileExports.default;
-        }
-      }
+    // Also check folder imports
+    const resolvedPath = resolveRelativePath(imp.path, mainFile.path);
+    const folderFiles = getFilesFromFolder(resolvedPath, allFiles);
+    for (const f of folderFiles) {
+      collectAllFiles(f, allFiles, collected);
     }
   }
 
-  console.log("[Preview] Final local scope:", Object.keys(localScope));
-  return localScope;
+  return collected;
 }
 
 /**
- * Extract the component name from code
+ * Transform CSS for iframe preview
+ */
+function transformCss(rawCss: string): string {
+  return rawCss
+    // Remove @import statements
+    .replace(/@import\s+["'][^"']+["'];?\s*/g, "")
+    // Remove @custom-variant (handled by CDN config)
+    .replace(/@custom-variant[^;]+;?\s*/g, "")
+    // Remove @theme blocks (we'll define theme in iframe)
+    .replace(/@theme\s+inline\s*\{[\s\S]*?\n\}/g, "");
+}
+
+/**
+ * Extract component name from code
  */
 function getComponentName(code: string): string {
-  const functionMatch = code.match(/(?:function|const)\s+(\w+)\s*(?:=|\()/);
-  return functionMatch?.[1] || "Component";
+  // Look for export default function ComponentName
+  const defaultFuncMatch = code.match(/export\s+default\s+function\s+(\w+)/);
+  if (defaultFuncMatch) return defaultFuncMatch[1];
+
+  // Look for function ComponentName followed by export default
+  const funcMatch = code.match(/function\s+(\w+)\s*\(/);
+  if (funcMatch) return funcMatch[1];
+
+  // Look for const ComponentName =
+  const constMatch = code.match(/(?:export\s+)?const\s+(\w+)\s*=/);
+  if (constMatch) return constMatch[1];
+
+  return "Component";
 }
 
 /**
- * Check if code contains JSX (not TypeScript generics)
- * JSX: <Component />, <div className="x">, </div>
- * Not JSX: useRef<T>(), Array<string>, Record<K, V>
+ * Generate the iframe HTML document
  */
-function containsJsx(code: string): boolean {
-  // Self-closing JSX tags: <Component /> or <div />
-  if (/<[A-Za-z][A-Za-z0-9]*[^<]*\/>/.test(code)) return true;
+function generateIframeHtml(
+  files: Map<string, ComponentFile>,
+  mainFilePath: string,
+  cssContent: string,
+  theme: string
+): string {
+  // Build the component code by combining all files
+  const fileContents: string[] = [];
+  const mainFile = files.get(mainFilePath);
 
-  // JSX closing tags: </Component> or </div>
-  if (/<\/[A-Za-z][A-Za-z0-9]*\s*>/.test(code)) return true;
+  if (!mainFile) return "";
 
-  // JSX tags with attributes: <div className= or <Component prop=
-  if (/<[A-Za-z][A-Za-z0-9]*\s+[a-zA-Z][\w-]*=/.test(code)) return true;
+  // Process files in dependency order (main file last)
+  const processedPaths = new Set<string>();
 
-  // JSX in return statements: return (<div> or return <div>
-  if (/return\s*\(?\s*<[A-Za-z]/.test(code)) return true;
+  function processFile(path: string) {
+    if (processedPaths.has(path)) return;
+    const file = files.get(path);
+    if (!file) return;
 
-  // Opening JSX tag followed by content/whitespace and closing: <div> or <Component>
-  // Exclude generics by checking what comes after >
-  // Generics: <T>( or <string>, JSX: <div>\n or <div> text
-  if (/<[A-Za-z][A-Za-z0-9]*>\s*[^()>,;]/.test(code)) return true;
-
-  return false;
-}
-
-/**
- * Get imported component files that need to be inlined (contain JSX)
- * Handles both default and named imports
- */
-function getInlineableImports(
-  mainCode: string,
-  files: ComponentFile[],
-  mainFilePath: string
-): Array<{ name: string; code: string }> {
-  const inlineable: Array<{ name: string; code: string }> = [];
-  const processedFiles = new Set<string>(); // Avoid duplicates
-  const imports = parseImports(mainCode);
-
-  for (const imp of imports) {
-    if (imp.path === "react") continue;
-    if (!imp.path.startsWith(".") && !imp.path.startsWith("@/")) continue;
-
-    const file = resolveFile(imp.path, files, mainFilePath);
-    if (!file || !containsJsx(file.content)) continue;
-    if (processedFiles.has(file.path)) continue;
-    processedFiles.add(file.path);
-
-    // This is a component file with JSX - needs to be inlined
-    let code = file.content;
-    // Remove imports from the file (we'll handle dependencies separately)
-    code = code.replace(/^import\s+.*?;?\s*$/gm, "");
-
-    // Handle default imports
-    if (imp.defaultName) {
-      const defaultFuncMatch = code.match(/export\s+default\s+function\s+(\w+)/);
-      const arrowFuncMatch = code.match(/export\s+default\s+(\w+)/);
-
-      if (defaultFuncMatch) {
-        const originalName = defaultFuncMatch[1];
-        const importedName = imp.defaultName;
-        // Replace function name with the imported name
-        code = code.replace(
-          /export\s+default\s+function\s+\w+/,
-          `function ${importedName}`
-        );
-        // Also replace any self-references inside the component
-        if (originalName !== importedName) {
-          code = code.replace(new RegExp(`\\b${originalName}\\b`, "g"), importedName);
-        }
-      } else if (arrowFuncMatch) {
-        const originalName = arrowFuncMatch[1];
-        const importedName = imp.defaultName;
-        // Remove export default
-        code = code.replace(/export\s+default\s+\w+;?/, "");
-        // Rename the const/function if different
-        if (originalName !== importedName) {
-          code = code.replace(new RegExp(`\\b${originalName}\\b`, "g"), importedName);
-        }
+    // Process dependencies first
+    const imports = parseImports(file.content);
+    for (const imp of imports) {
+      if (imp.path === "react" || !imp.path.startsWith(".") && !imp.path.startsWith("@/")) continue;
+      const depFile = resolveFile(imp.path, Array.from(files.values()), path);
+      if (depFile && files.has(depFile.path)) {
+        processFile(depFile.path);
       }
     }
 
-    // Handle named imports - remove export keyword but keep the functions/consts
-    // For named exports like "export function Button" or "export const Button"
+    processedPaths.add(path);
+
+    // Transform the code
+    let code = file.content;
+
+    // Remove "use client" directive
+    code = code.replace(/["']use client["'];?/g, "");
+
+    // Remove all import statements (handles single line imports)
+    // Process line by line for better control
+    const lines = code.split('\n');
+    const filteredLines: string[] = [];
+    let inMultilineImport = false;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      // Check if we're starting a multiline import
+      if (trimmed.startsWith('import ') && !trimmed.includes(' from ')) {
+        inMultilineImport = true;
+        continue;
+      }
+
+      // Check if we're ending a multiline import
+      if (inMultilineImport) {
+        if (trimmed.includes(' from ')) {
+          inMultilineImport = false;
+        }
+        continue;
+      }
+
+      // Skip single-line imports
+      if (trimmed.startsWith('import ')) {
+        continue;
+      }
+
+      filteredLines.push(line);
+    }
+
+    code = filteredLines.join('\n');
+
+    // Remove export keywords
     code = code.replace(/export\s+default\s+/g, "");
     code = code.replace(/export\s+/g, "");
 
-    // Strip TypeScript types for evaluation
-    code = stripTypeScript(code);
+    // Strip TypeScript syntax (Babel react preset doesn't handle TS)
+    // Remove type annotations after colons (: Type)
+    code = code.replace(/:\s*[A-Z][a-zA-Z0-9<>,\s\[\]|&]*(?=\s*[=,\)\}\]])/g, "");
+    // Remove generic type parameters on function calls like useRef<Type>(
+    code = code.replace(/(<[A-Z][a-zA-Z0-9<>,\s\[\]|&]*>)(\s*\()/g, "$2");
+    // Remove type assertions (as Type)
+    code = code.replace(/\s+as\s+[A-Z][a-zA-Z0-9<>,\s\[\]|&]*/g, "");
+    // Remove interface and type declarations
+    code = code.replace(/^(interface|type)\s+\w+[\s\S]*?(?=\n\n|\nexport|\nfunction|\nconst|\nclass)/gm, "");
+    // Remove generic type parameters on function declarations
+    code = code.replace(/function\s+(\w+)\s*<[^>]+>/g, "function $1");
+    // Remove React.FC and similar type annotations
+    code = code.replace(/:\s*React\.\w+<[^>]*>/g, "");
+    // Remove standalone type imports that might have been missed
+    code = code.replace(/^type\s+\{[^}]+\}\s*=.*$/gm, "");
 
-    inlineable.push({ name: imp.defaultName || imp.names[0] || "Component", code });
+    fileContents.push(`// File: ${path}\n${code}`);
   }
 
-  return inlineable;
-}
-
-/**
- * Transform code for react-live
- */
-function transformCode(code: string, inlineComponents: Array<{ name: string; code: string }>): string {
-  // Remove imports (react-live doesn't support them natively)
-  let transformed = code.replace(/^import\s+.*?;?\s*$/gm, "");
-
-  // Remove export default
-  transformed = transformed.replace(/export\s+default\s+/, "");
-
-  // Prepend inlined components
-  const inlinedCode = inlineComponents.map((c) => c.code).join("\n\n");
-  if (inlinedCode) {
-    transformed = `${inlinedCode}\n\n${transformed}`;
-  }
-
-  // Get component name and wrap with render call
-  const componentName = getComponentName(code);
-  transformed = `${transformed}\n\nrender(<${componentName} />);`;
-
-  return transformed;
-}
-
-// Debounce hook for delaying CSS processing while typing
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-
-// Global error handler for Tailwind CDN - attach once at module level
-if (typeof window !== "undefined") {
-  const suppressTailwindError = (event: PromiseRejectionEvent | ErrorEvent) => {
-    const message =
-      (event as PromiseRejectionEvent).reason?.message ||
-      (event as ErrorEvent).error?.message ||
-      String((event as PromiseRejectionEvent).reason || (event as ErrorEvent).error);
-
-    if (message?.includes("Cannot apply unknown utility class")) {
-      event.preventDefault();
-      console.log("[Preview] Suppressed Tailwind error:", message);
-      return;
+  // Process all files
+  for (const path of files.keys()) {
+    if (path !== mainFilePath) {
+      processFile(path);
     }
-    console.log("[Preview] Other error:", message);
-  };
+  }
+  // Main file last
+  processFile(mainFilePath);
 
-  window.addEventListener("unhandledrejection", suppressTailwindError as EventListener);
-  window.addEventListener("error", suppressTailwindError as EventListener);
-  console.log("[Preview] Global error handlers attached at module level");
+  const componentName = getComponentName(mainFile.content);
+  const combinedCode = fileContents.join("\n\n");
+
+  return `<!DOCTYPE html>
+<html lang="en" class="${theme}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style type="text/tailwindcss">
+    @custom-variant dark (&:is(.dark *));
+    @theme inline {
+      --color-background: var(--background);
+      --color-foreground: var(--foreground);
+      --color-card: var(--card);
+      --color-card-foreground: var(--card-foreground);
+      --color-popover: var(--popover);
+      --color-popover-foreground: var(--popover-foreground);
+      --color-primary: var(--primary);
+      --color-primary-foreground: var(--primary-foreground);
+      --color-secondary: var(--secondary);
+      --color-secondary-foreground: var(--secondary-foreground);
+      --color-muted: var(--muted);
+      --color-muted-foreground: var(--muted-foreground);
+      --color-accent: var(--accent);
+      --color-accent-foreground: var(--accent-foreground);
+      --color-destructive: var(--destructive);
+      --color-border: var(--border);
+      --color-input: var(--input);
+      --color-ring: var(--ring);
+      --color-chart-1: var(--chart-1);
+      --color-chart-2: var(--chart-2);
+      --color-chart-3: var(--chart-3);
+      --color-chart-4: var(--chart-4);
+      --color-chart-5: var(--chart-5);
+      --color-sidebar: var(--sidebar);
+      --color-sidebar-foreground: var(--sidebar-foreground);
+      --color-sidebar-primary: var(--sidebar-primary);
+      --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+      --color-sidebar-accent: var(--sidebar-accent);
+      --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+      --color-sidebar-border: var(--sidebar-border);
+      --color-sidebar-ring: var(--sidebar-ring);
+      --radius-sm: calc(var(--radius) - 4px);
+      --radius-md: calc(var(--radius) - 2px);
+      --radius-lg: var(--radius);
+      --radius-xl: calc(var(--radius) + 4px);
+    }
+
+    /* shadcn default theme - light mode */
+    :root {
+      --background: oklch(1 0 0);
+      --foreground: oklch(0.145 0 0);
+      --card: oklch(1 0 0);
+      --card-foreground: oklch(0.145 0 0);
+      --popover: oklch(1 0 0);
+      --popover-foreground: oklch(0.145 0 0);
+      --primary: oklch(0.205 0 0);
+      --primary-foreground: oklch(0.985 0 0);
+      --secondary: oklch(0.97 0 0);
+      --secondary-foreground: oklch(0.205 0 0);
+      --muted: oklch(0.97 0 0);
+      --muted-foreground: oklch(0.556 0 0);
+      --accent: oklch(0.205 0 0);
+      --accent-foreground: oklch(0.985 0 0);
+      --destructive: oklch(0.58 0.22 27);
+      --border: oklch(0.922 0 0);
+      --input: oklch(0.922 0 0);
+      --ring: oklch(0.708 0 0);
+      --chart-1: oklch(0.809 0.105 251.813);
+      --chart-2: oklch(0.623 0.214 259.815);
+      --chart-3: oklch(0.546 0.245 262.881);
+      --chart-4: oklch(0.488 0.243 264.376);
+      --chart-5: oklch(0.424 0.199 265.638);
+      --radius: 0.625rem;
+      --sidebar: oklch(0.985 0 0);
+      --sidebar-foreground: oklch(0.145 0 0);
+      --sidebar-primary: oklch(0.205 0 0);
+      --sidebar-primary-foreground: oklch(0.985 0 0);
+      --sidebar-accent: oklch(0.205 0 0);
+      --sidebar-accent-foreground: oklch(0.985 0 0);
+      --sidebar-border: oklch(0.922 0 0);
+      --sidebar-ring: oklch(0.708 0 0);
+    }
+
+    /* shadcn default theme - dark mode */
+    .dark {
+      --background: oklch(0.145 0 0);
+      --foreground: oklch(0.985 0 0);
+      --card: oklch(0.205 0 0);
+      --card-foreground: oklch(0.985 0 0);
+      --popover: oklch(0.205 0 0);
+      --popover-foreground: oklch(0.985 0 0);
+      --primary: oklch(0.87 0 0);
+      --primary-foreground: oklch(0.205 0 0);
+      --secondary: oklch(0.269 0 0);
+      --secondary-foreground: oklch(0.985 0 0);
+      --muted: oklch(0.269 0 0);
+      --muted-foreground: oklch(0.708 0 0);
+      --accent: oklch(0.87 0 0);
+      --accent-foreground: oklch(0.205 0 0);
+      --destructive: oklch(0.704 0.191 22.216);
+      --border: oklch(1 0 0 / 10%);
+      --input: oklch(1 0 0 / 15%);
+      --ring: oklch(0.556 0 0);
+      --chart-1: oklch(0.809 0.105 251.813);
+      --chart-2: oklch(0.623 0.214 259.815);
+      --chart-3: oklch(0.546 0.245 262.881);
+      --chart-4: oklch(0.488 0.243 264.376);
+      --chart-5: oklch(0.424 0.199 265.638);
+      --sidebar: oklch(0.205 0 0);
+      --sidebar-foreground: oklch(0.985 0 0);
+      --sidebar-primary: oklch(0.488 0.243 264.376);
+      --sidebar-primary-foreground: oklch(0.985 0 0);
+      --sidebar-accent: oklch(0.87 0 0);
+      --sidebar-accent-foreground: oklch(0.205 0 0);
+      --sidebar-border: oklch(1 0 0 / 10%);
+      --sidebar-ring: oklch(0.556 0 0);
+    }
+
+    @layer base {
+      * {
+        @apply border-border outline-ring/50;
+      }
+      body {
+        @apply bg-background text-foreground;
+      }
+    }
+  </style>
+  <style type="text/tailwindcss">
+${cssContent}
+  </style>
+  <style>
+    /* Base body styles - colors come from user CSS or theme */
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .error-display {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+      padding: 16px;
+      color: rgb(239, 68, 68);
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">Loading preview...</div>
+  <script>
+    // Global error handler to catch Babel compilation errors
+    window.onerror = function(msg, url, line, col, error) {
+      document.getElementById('root').innerHTML =
+        '<div class="error-display"><strong>Script Error:</strong>\\n' +
+        (error?.message || msg) + '</div>';
+      return true;
+    };
+  </script>
+  <script type="text/babel" data-presets="react">
+    console.log('Babel script starting...');
+
+    // Provide React hooks and utilities globally
+    const { useState, useEffect, useRef, useCallback, useContext, useReducer, useMemo,
+            useLayoutEffect, useImperativeHandle, useDebugValue, useDeferredValue,
+            useTransition, useSyncExternalStore, useInsertionEffect, forwardRef,
+            createContext, Children, cloneElement, isValidElement, Fragment, memo,
+            lazy, Suspense, createElement } = React;
+
+    // cn utility (clsx + tailwind-merge simplified)
+    function cn(...inputs) {
+      return inputs.filter(Boolean).join(' ');
+    }
+
+    // cva stub (simplified)
+    function cva(base, config) {
+      return (props) => {
+        let classes = base || '';
+        if (config?.variants && props) {
+          for (const [key, value] of Object.entries(props)) {
+            if (config.variants[key]?.[value]) {
+              classes += ' ' + config.variants[key][value];
+            }
+          }
+        }
+        if (config?.defaultVariants) {
+          for (const [key, value] of Object.entries(config.defaultVariants)) {
+            if (!props?.[key] && config.variants?.[key]?.[value]) {
+              classes += ' ' + config.variants[key][value];
+            }
+          }
+        }
+        return classes;
+      };
+    }
+
+    // Slot component (simplified) - only pass ref to elements that support it
+    const Slot = forwardRef(({ children, ...props }, ref) => {
+      if (React.isValidElement(children)) {
+        // Only pass ref if the child is a DOM element or forwardRef component
+        const childType = children.type;
+        const isForwardRef = childType?.$$typeof === Symbol.for('react.forward_ref');
+        const isIntrinsic = typeof childType === 'string';
+        const childProps = isForwardRef || isIntrinsic ? { ...props, ref } : props;
+        return React.cloneElement(children, childProps);
+      }
+      return <span {...props} ref={ref}>{children}</span>;
+    });
+
+    // Base UI utilities
+    function mergeProps(...propsList) {
+      return propsList.reduce((acc, props) => ({ ...acc, ...props }), {});
+    }
+
+    function useRender() {
+      return { renderElement: (props) => createElement('span', props) };
+    }
+
+    // Base UI primitive stubs - these are simplified implementations
+    // that provide the basic structure for preview purposes
+
+    const ButtonPrimitive = forwardRef(({ render, disabled, ...props }, ref) => {
+      const Component = render ? 'span' : 'button';
+      return <Component ref={ref} disabled={disabled} {...props} />;
+    });
+    ButtonPrimitive.Props = {};
+
+    const InputPrimitive = forwardRef((props, ref) => <input ref={ref} {...props} />);
+    InputPrimitive.Props = {};
+
+    const SeparatorPrimitive = forwardRef(({ orientation = 'horizontal', ...props }, ref) => (
+      <div ref={ref} role="separator" aria-orientation={orientation} {...props} />
+    ));
+    SeparatorPrimitive.Props = {};
+
+    // Tabs primitive
+    const TabsPrimitive = {
+      Root: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      List: forwardRef((props, ref) => <div ref={ref} role="tablist" {...props} />),
+      Tab: forwardRef(({ value, ...props }, ref) => <button ref={ref} role="tab" {...props} />),
+      Panel: forwardRef(({ value, ...props }, ref) => <div ref={ref} role="tabpanel" {...props} />),
+      Indicator: forwardRef((props, ref) => <span ref={ref} {...props} />),
+    };
+
+    // Dialog/Sheet primitive
+    const DialogPrimitive = {
+      Root: ({ children, open, onOpenChange, ...props }) => open ? <>{children}</> : null,
+      Trigger: forwardRef((props, ref) => <button ref={ref} {...props} />),
+      Portal: ({ children }) => <>{children}</>,
+      Backdrop: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      Popup: forwardRef((props, ref) => <div ref={ref} role="dialog" {...props} />),
+      Title: forwardRef((props, ref) => <h2 ref={ref} {...props} />),
+      Description: forwardRef((props, ref) => <p ref={ref} {...props} />),
+      Close: forwardRef((props, ref) => <button ref={ref} {...props} />),
+    };
+    const SheetPrimitive = DialogPrimitive;
+
+    // Tooltip primitive
+    const TooltipPrimitive = {
+      Provider: ({ children }) => <>{children}</>,
+      Root: ({ children }) => <>{children}</>,
+      Trigger: forwardRef((props, ref) => <span ref={ref} {...props} />),
+      Portal: ({ children }) => <>{children}</>,
+      Positioner: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      Popup: forwardRef((props, ref) => <div ref={ref} role="tooltip" {...props} />),
+      Arrow: forwardRef((props, ref) => <div ref={ref} {...props} />),
+    };
+
+    // Select primitive
+    const SelectPrimitive = {
+      Root: ({ children, value, onValueChange, ...props }) => <div {...props}>{children}</div>,
+      Trigger: forwardRef((props, ref) => <button ref={ref} {...props} />),
+      Value: forwardRef((props, ref) => <span ref={ref} {...props} />),
+      Icon: forwardRef((props, ref) => <span ref={ref} {...props} />),
+      Portal: ({ children }) => <>{children}</>,
+      Backdrop: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      Positioner: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      Popup: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      Arrow: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      Item: forwardRef(({ value, ...props }, ref) => <div ref={ref} role="option" {...props} />),
+      ItemText: forwardRef((props, ref) => <span ref={ref} {...props} />),
+      ItemIndicator: forwardRef((props, ref) => <span ref={ref} {...props} />),
+      Group: forwardRef((props, ref) => <div ref={ref} role="group" {...props} />),
+      GroupLabel: forwardRef((props, ref) => <span ref={ref} {...props} />),
+      Separator: forwardRef((props, ref) => <hr ref={ref} {...props} />),
+      ScrollUpArrow: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      ScrollDownArrow: forwardRef((props, ref) => <div ref={ref} {...props} />),
+    };
+
+    // Menu/DropdownMenu primitive
+    const MenuPrimitive = {
+      Root: ({ children }) => <>{children}</>,
+      Trigger: forwardRef((props, ref) => <button ref={ref} {...props} />),
+      Portal: ({ children }) => <>{children}</>,
+      Backdrop: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      Positioner: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      Popup: forwardRef((props, ref) => <div ref={ref} role="menu" {...props} />),
+      Arrow: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      Item: forwardRef((props, ref) => <div ref={ref} role="menuitem" {...props} />),
+      Group: forwardRef((props, ref) => <div ref={ref} role="group" {...props} />),
+      GroupLabel: forwardRef((props, ref) => <span ref={ref} {...props} />),
+      CheckboxItem: forwardRef(({ checked, onCheckedChange, ...props }, ref) => (
+        <div ref={ref} role="menuitemcheckbox" aria-checked={checked} {...props} />
+      )),
+      RadioGroup: forwardRef((props, ref) => <div ref={ref} role="group" {...props} />),
+      RadioItem: forwardRef(({ value, ...props }, ref) => (
+        <div ref={ref} role="menuitemradio" {...props} />
+      )),
+      ItemIndicator: forwardRef((props, ref) => <span ref={ref} {...props} />),
+      Separator: forwardRef((props, ref) => <hr ref={ref} role="separator" {...props} />),
+      SubmenuTrigger: forwardRef((props, ref) => <div ref={ref} {...props} />),
+    };
+
+    // ScrollArea primitive
+    const ScrollAreaPrimitive = {
+      Root: forwardRef((props, ref) => <div ref={ref} {...props} style={{ overflow: 'auto', ...props.style }} />),
+      Viewport: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      Scrollbar: forwardRef(({ orientation, ...props }, ref) => <div ref={ref} {...props} />),
+      Thumb: forwardRef((props, ref) => <div ref={ref} {...props} />),
+      Corner: forwardRef((props, ref) => <div ref={ref} {...props} />),
+    };
+
+    // Avatar primitive
+    const AvatarPrimitive = {
+      Root: forwardRef((props, ref) => <span ref={ref} {...props} />),
+      Image: forwardRef((props, ref) => <img ref={ref} {...props} />),
+      Fallback: forwardRef((props, ref) => <span ref={ref} {...props} />),
+    };
+
+    // Error boundary component
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+      componentDidCatch(error, errorInfo) {
+        console.error('Preview error:', error, errorInfo);
+      }
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div className="error-display">
+              <strong>Error:</strong>\\n{this.state.error?.message || 'Unknown error'}
+            </div>
+          );
+        }
+        return this.props.children;
+      }
+    }
+
+    try {
+      console.log('Defining user components...');
+
+      // User component code
+${combinedCode.split('\n').map(line => '      ' + line).join('\n')}
+
+      console.log('User components defined, rendering ${componentName}...');
+      console.log('Component exists:', typeof ${componentName});
+
+      // Render the component
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(
+        <ErrorBoundary>
+          <${componentName} />
+        </ErrorBoundary>
+      );
+      console.log('Render called successfully');
+    } catch (error) {
+      document.getElementById('root').innerHTML =
+        '<div class="error-display"><strong>Compilation Error:</strong>\\n' +
+        error.message.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>';
+      console.error('Compilation error:', error);
+    }
+
+    // Listen for theme changes from parent
+    window.addEventListener('message', (event) => {
+      if (event.data?.type === 'theme-change') {
+        document.documentElement.className = event.data.theme;
+      }
+    });
+  </script>
+</body>
+</html>`;
 }
 
 export function PreviewPanel() {
   const files = useEditorStore((state) => state.files);
   const previewFileId = useEditorStore((state) => state.previewFileId);
-  const styleId = useId();
-
-  // Load Tailwind v4 browser CDN for dynamic class support in preview
-  useEffect(() => {
-    const TAILWIND_CDN_ID = "tailwind-cdn-preview";
-    const TAILWIND_CONFIG_ID = "tailwind-config-preview";
-
-    // Skip if already loaded
-    if (document.getElementById(TAILWIND_CDN_ID)) {
-      console.log("[Preview] Tailwind CDN already loaded");
-      return;
-    }
-
-    // Inject Tailwind config to use class-based dark mode and theme variables
-    const configStyle = document.createElement("style");
-    configStyle.id = TAILWIND_CONFIG_ID;
-    configStyle.setAttribute("type", "text/tailwindcss");
-    configStyle.textContent = `
-      @custom-variant dark (&:is(.dark *));
-      @theme inline {
-        --color-background: var(--background);
-        --color-foreground: var(--foreground);
-        --color-card: var(--card);
-        --color-card-foreground: var(--card-foreground);
-        --color-popover: var(--popover);
-        --color-popover-foreground: var(--popover-foreground);
-        --color-primary: var(--primary);
-        --color-primary-foreground: var(--primary-foreground);
-        --color-secondary: var(--secondary);
-        --color-secondary-foreground: var(--secondary-foreground);
-        --color-muted: var(--muted);
-        --color-muted-foreground: var(--muted-foreground);
-        --color-accent: var(--accent);
-        --color-accent-foreground: var(--accent-foreground);
-        --color-destructive: var(--destructive);
-        --color-border: var(--border);
-        --color-input: var(--input);
-        --color-ring: var(--ring);
-        --radius-sm: calc(var(--radius) - 4px);
-        --radius-md: calc(var(--radius) - 2px);
-        --radius-lg: var(--radius);
-        --radius-xl: calc(var(--radius) + 4px);
-      }
-      @layer base {
-        *, *::before, *::after {
-          border-color: var(--color-border);
-        }
-      }
-    `;
-    document.head.appendChild(configStyle);
-
-    const script = document.createElement("script");
-    script.id = TAILWIND_CDN_ID;
-    script.src = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4";
-    document.head.appendChild(script);
-
-    console.log("[Preview] Tailwind CDN loaded");
-  }, []);
+  const { resolvedTheme } = useTheme();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Get the preview file (selected by user or first .tsx file)
   const mainFile = useMemo(() => {
@@ -814,108 +692,58 @@ export function PreviewPanel() {
       const file = files.find((f) => f.id === previewFileId);
       if (file?.path.endsWith(".tsx")) return file;
     }
-    // Fallback to first tsx file
     return files.find((f) => f.path.endsWith(".tsx"));
   }, [files, previewFileId]);
 
-  // Collect and transform CSS from style files for preview scope
-  const combinedCss = useMemo(() => {
+  // Collect all CSS from style files
+  const cssContent = useMemo(() => {
     const rawCss = files
       .filter((f) => f.type === "style" || f.path.endsWith(".css"))
       .map((f) => f.content)
       .join("\n\n");
-
-    // Transform CSS to work within preview scope:
-    // 1. Remove Tailwind/shadcn imports (handled by CDN)
-    // 2. Replace :root with #preview-scope
-    // 3. Replace .dark with #preview-scope.dark
-    // 4. Sanitize @apply directives to remove invalid class names
-    const transformed = rawCss
-      // Remove @import statements
-      .replace(/@import\s+["'][^"']+["'];?\s*/g, "")
-      // Remove @custom-variant (handled by CDN config)
-      .replace(/@custom-variant[^;]+;?\s*/g, "")
-      // Remove @theme blocks (handled by CDN config)
-      .replace(/@theme\s+inline\s*\{[\s\S]*?\n\}/g, "")
-      // Replace :root with #preview-scope
-      .replace(/:root\s*\{/g, "#preview-scope {")
-      // Replace .dark { with #preview-scope.dark {
-      .replace(/^\.dark\s*\{/gm, "#preview-scope.dark {")
-      // Handle @layer base - extract and transform its contents
-      .replace(/@layer\s+base\s*\{([\s\S]*?)\n\}/g, (_, content) => {
-        // Transform selectors inside @layer base to be scoped to preview
-        return content
-          // * selector -> #preview-scope *
-          .replace(/^\s*\*\s*\{/gm, "#preview-scope, #preview-scope *, #preview-scope *::before, #preview-scope *::after {")
-          // body selector -> #preview-scope
-          .replace(/^\s*body\s*\{/gm, "#preview-scope {");
-      })
-      // Sanitize @apply directives - remove invalid class names that would crash the CDN
-      // Valid Tailwind classes: word chars, hyphens, slashes, brackets, colons, dots, percentages
-      // Invalid: empty classes (--), incomplete classes (text-), multiple consecutive hyphens
-      .replace(/@apply\s+([^;]+);/g, (match, classes) => {
-        const validClasses = classes
-          .split(/\s+/)
-          .filter((cls: string) => {
-            // Skip empty strings
-            if (!cls.trim()) return false;
-            // Skip if it has consecutive hyphens (like text--400)
-            if (/--/.test(cls)) return false;
-            // Skip if it ends with a hyphen (incomplete like text-)
-            if (/-$/.test(cls)) return false;
-            // Skip if it's just a hyphen
-            if (cls === "-") return false;
-            return true;
-          })
-          .join(" ");
-
-        // If no valid classes remain, remove the entire @apply
-        if (!validClasses.trim()) {
-          console.log("[Preview] Removed empty @apply directive");
-          return "";
-        }
-        return `@apply ${validClasses};`;
-      });
-
-    return transformed;
+    return transformCss(rawCss);
   }, [files]);
 
-  // Debounce CSS to avoid crashes from incomplete class names while typing
-  const debouncedCss = useDebounce(combinedCss, 500);
-
-  // Generate a simple hash of the CSS content to create unique style IDs
-  // This forces the CDN to treat each change as a completely new element
-  const cssHash = useMemo(() => {
-    let hash = 0;
-    for (let i = 0; i < debouncedCss.length; i++) {
-      const char = debouncedCss.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    console.log("[Preview] CSS changed, new hash:", hash);
-    console.log("[Preview] New CSS (first 200 chars):", debouncedCss.slice(0, 200));
-    return hash;
-  }, [debouncedCss]);
-
-  const dynamicStyleId = `${styleId}-${cssHash}`;
-
-  // Build scope with React hooks + local imports (hooks, utils, etc.)
-  const scope = useMemo(() => {
-    if (!mainFile) return reactScope;
-    const localScope = buildLocalScope(mainFile.content, files, mainFile.path);
-    return { ...reactScope, ...localScope };
+  // Collect all component files
+  const componentFiles = useMemo(() => {
+    if (!mainFile) return new Map<string, ComponentFile>();
+    return collectAllFiles(mainFile, files);
   }, [mainFile, files]);
 
-  // Get components that need to be inlined (contain JSX)
-  const inlineComponents = useMemo(() => {
-    if (!mainFile) return [];
-    return getInlineableImports(mainFile.content, files, mainFile.path);
-  }, [mainFile, files]);
-
-  const transformedCode = useMemo(() => {
+  // Generate iframe HTML
+  const iframeHtml = useMemo(() => {
     if (!mainFile) return "";
-    return transformCode(mainFile.content, inlineComponents);
-  }, [mainFile, inlineComponents]);
+    return generateIframeHtml(
+      componentFiles,
+      mainFile.path,
+      cssContent,
+      resolvedTheme || "light"
+    );
+  }, [mainFile, componentFiles, cssContent, resolvedTheme]);
+
+  // Debounce the iframe content to avoid too many re-renders while typing
+  const debouncedHtml = useDebounce(iframeHtml, 300);
+
+  // Generate a hash of the content to use as iframe key
+  const iframeKey = useMemo(() => {
+    let hash = 0;
+    for (let i = 0; i < debouncedHtml.length; i++) {
+      const char = debouncedHtml.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return hash;
+  }, [debouncedHtml]);
+
+  // Sync theme changes to iframe
+  useEffect(() => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        { type: "theme-change", theme: resolvedTheme || "light" },
+        "*"
+      );
+    }
+  }, [resolvedTheme]);
 
   if (!mainFile) {
     return (
@@ -929,29 +757,19 @@ export function PreviewPanel() {
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b px-3 py-1.5">
         <span className="text-xs font-medium text-muted-foreground">Preview</span>
-        {mainFile && (
-          <span className="text-xs text-muted-foreground/70">{mainFile.path.split("/").pop()}</span>
-        )}
+        <span className="text-xs text-muted-foreground/70">
+          {mainFile.path.split("/").pop()}
+        </span>
       </div>
-      <div className="flex-1 overflow-auto bg-background p-4">
-        {/* Inject transformed user CSS for preview - use text/tailwindcss so CDN processes @apply */}
-        {/* Key + unique ID forces CDN to treat each change as a completely new element */}
-        {debouncedCss && (
-          <style
-            key={dynamicStyleId}
-            id={dynamicStyleId}
-            type="text/tailwindcss"
-            dangerouslySetInnerHTML={{
-              __html: debouncedCss,
-            }}
-          />
-        )}
-        <LiveProvider code={transformedCode} scope={scope} noInline>
-          <LiveError className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive" />
-          <div id="preview-scope">
-            <LivePreview />
-          </div>
-        </LiveProvider>
+      <div className="relative flex-1 overflow-hidden">
+        <iframe
+          ref={iframeRef}
+          key={iframeKey}
+          srcDoc={debouncedHtml}
+          className="h-full w-full border-0"
+          sandbox="allow-scripts"
+          title="Component Preview"
+        />
       </div>
     </div>
   );
