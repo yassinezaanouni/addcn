@@ -713,6 +713,39 @@ function transformCode(code: string, inlineComponents: Array<{ name: string; cod
   return transformed;
 }
 
+// Debounce hook for delaying CSS processing while typing
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Global error handler for Tailwind CDN - attach once at module level
+if (typeof window !== "undefined") {
+  const suppressTailwindError = (event: PromiseRejectionEvent | ErrorEvent) => {
+    const message =
+      (event as PromiseRejectionEvent).reason?.message ||
+      (event as ErrorEvent).error?.message ||
+      String((event as PromiseRejectionEvent).reason || (event as ErrorEvent).error);
+
+    if (message?.includes("Cannot apply unknown utility class")) {
+      event.preventDefault();
+      console.log("[Preview] Suppressed Tailwind error:", message);
+      return;
+    }
+    console.log("[Preview] Other error:", message);
+  };
+
+  window.addEventListener("unhandledrejection", suppressTailwindError as EventListener);
+  window.addEventListener("error", suppressTailwindError as EventListener);
+  console.log("[Preview] Global error handlers attached at module level");
+}
+
 export function PreviewPanel() {
   const files = useEditorStore((state) => state.files);
   const previewFileId = useEditorStore((state) => state.previewFileId);
@@ -723,13 +756,48 @@ export function PreviewPanel() {
     const TAILWIND_CDN_ID = "tailwind-cdn-preview";
     const TAILWIND_CONFIG_ID = "tailwind-config-preview";
 
-    if (document.getElementById(TAILWIND_CDN_ID)) return;
+    // Skip if already loaded
+    if (document.getElementById(TAILWIND_CDN_ID)) {
+      console.log("[Preview] Tailwind CDN already loaded");
+      return;
+    }
 
-    // Inject Tailwind config to use class-based dark mode (not system preference)
+    // Inject Tailwind config to use class-based dark mode and theme variables
     const configStyle = document.createElement("style");
     configStyle.id = TAILWIND_CONFIG_ID;
     configStyle.setAttribute("type", "text/tailwindcss");
-    configStyle.textContent = `@custom-variant dark (&:is(.dark *));`;
+    configStyle.textContent = `
+      @custom-variant dark (&:is(.dark *));
+      @theme inline {
+        --color-background: var(--background);
+        --color-foreground: var(--foreground);
+        --color-card: var(--card);
+        --color-card-foreground: var(--card-foreground);
+        --color-popover: var(--popover);
+        --color-popover-foreground: var(--popover-foreground);
+        --color-primary: var(--primary);
+        --color-primary-foreground: var(--primary-foreground);
+        --color-secondary: var(--secondary);
+        --color-secondary-foreground: var(--secondary-foreground);
+        --color-muted: var(--muted);
+        --color-muted-foreground: var(--muted-foreground);
+        --color-accent: var(--accent);
+        --color-accent-foreground: var(--accent-foreground);
+        --color-destructive: var(--destructive);
+        --color-border: var(--border);
+        --color-input: var(--input);
+        --color-ring: var(--ring);
+        --radius-sm: calc(var(--radius) - 4px);
+        --radius-md: calc(var(--radius) - 2px);
+        --radius-lg: var(--radius);
+        --radius-xl: calc(var(--radius) + 4px);
+      }
+      @layer base {
+        *, *::before, *::after {
+          border-color: var(--color-border);
+        }
+      }
+    `;
     document.head.appendChild(configStyle);
 
     const script = document.createElement("script");
@@ -737,9 +805,7 @@ export function PreviewPanel() {
     script.src = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4";
     document.head.appendChild(script);
 
-    return () => {
-      // Don't remove on unmount - other previews may need it
-    };
+    console.log("[Preview] Tailwind CDN loaded");
   }, []);
 
   // Get the preview file (selected by user or first .tsx file)
@@ -752,13 +818,86 @@ export function PreviewPanel() {
     return files.find((f) => f.path.endsWith(".tsx"));
   }, [files, previewFileId]);
 
-  // Collect all CSS from style files
+  // Collect and transform CSS from style files for preview scope
   const combinedCss = useMemo(() => {
-    return files
+    const rawCss = files
       .filter((f) => f.type === "style" || f.path.endsWith(".css"))
       .map((f) => f.content)
       .join("\n\n");
+
+    // Transform CSS to work within preview scope:
+    // 1. Remove Tailwind/shadcn imports (handled by CDN)
+    // 2. Replace :root with #preview-scope
+    // 3. Replace .dark with #preview-scope.dark
+    // 4. Sanitize @apply directives to remove invalid class names
+    const transformed = rawCss
+      // Remove @import statements
+      .replace(/@import\s+["'][^"']+["'];?\s*/g, "")
+      // Remove @custom-variant (handled by CDN config)
+      .replace(/@custom-variant[^;]+;?\s*/g, "")
+      // Remove @theme blocks (handled by CDN config)
+      .replace(/@theme\s+inline\s*\{[\s\S]*?\n\}/g, "")
+      // Replace :root with #preview-scope
+      .replace(/:root\s*\{/g, "#preview-scope {")
+      // Replace .dark { with #preview-scope.dark {
+      .replace(/^\.dark\s*\{/gm, "#preview-scope.dark {")
+      // Handle @layer base - extract and transform its contents
+      .replace(/@layer\s+base\s*\{([\s\S]*?)\n\}/g, (_, content) => {
+        // Transform selectors inside @layer base to be scoped to preview
+        return content
+          // * selector -> #preview-scope *
+          .replace(/^\s*\*\s*\{/gm, "#preview-scope, #preview-scope *, #preview-scope *::before, #preview-scope *::after {")
+          // body selector -> #preview-scope
+          .replace(/^\s*body\s*\{/gm, "#preview-scope {");
+      })
+      // Sanitize @apply directives - remove invalid class names that would crash the CDN
+      // Valid Tailwind classes: word chars, hyphens, slashes, brackets, colons, dots, percentages
+      // Invalid: empty classes (--), incomplete classes (text-), multiple consecutive hyphens
+      .replace(/@apply\s+([^;]+);/g, (match, classes) => {
+        const validClasses = classes
+          .split(/\s+/)
+          .filter((cls: string) => {
+            // Skip empty strings
+            if (!cls.trim()) return false;
+            // Skip if it has consecutive hyphens (like text--400)
+            if (/--/.test(cls)) return false;
+            // Skip if it ends with a hyphen (incomplete like text-)
+            if (/-$/.test(cls)) return false;
+            // Skip if it's just a hyphen
+            if (cls === "-") return false;
+            return true;
+          })
+          .join(" ");
+
+        // If no valid classes remain, remove the entire @apply
+        if (!validClasses.trim()) {
+          console.log("[Preview] Removed empty @apply directive");
+          return "";
+        }
+        return `@apply ${validClasses};`;
+      });
+
+    return transformed;
   }, [files]);
+
+  // Debounce CSS to avoid crashes from incomplete class names while typing
+  const debouncedCss = useDebounce(combinedCss, 500);
+
+  // Generate a simple hash of the CSS content to create unique style IDs
+  // This forces the CDN to treat each change as a completely new element
+  const cssHash = useMemo(() => {
+    let hash = 0;
+    for (let i = 0; i < debouncedCss.length; i++) {
+      const char = debouncedCss.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    console.log("[Preview] CSS changed, new hash:", hash);
+    console.log("[Preview] New CSS (first 200 chars):", debouncedCss.slice(0, 200));
+    return hash;
+  }, [debouncedCss]);
+
+  const dynamicStyleId = `${styleId}-${cssHash}`;
 
   // Build scope with React hooks + local imports (hooks, utils, etc.)
   const scope = useMemo(() => {
@@ -795,12 +934,15 @@ export function PreviewPanel() {
         )}
       </div>
       <div className="flex-1 overflow-auto bg-background p-4">
-        {/* Inject CSS from all style files, scoped to preview container */}
-        {combinedCss && (
+        {/* Inject transformed user CSS for preview - use text/tailwindcss so CDN processes @apply */}
+        {/* Key + unique ID forces CDN to treat each change as a completely new element */}
+        {debouncedCss && (
           <style
-            id={styleId}
+            key={dynamicStyleId}
+            id={dynamicStyleId}
+            type="text/tailwindcss"
             dangerouslySetInnerHTML={{
-              __html: `@scope (#preview-scope) { ${combinedCss} }`,
+              __html: debouncedCss,
             }}
           />
         )}
