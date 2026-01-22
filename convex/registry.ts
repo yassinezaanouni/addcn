@@ -41,10 +41,89 @@ interface RegistryItem {
   dependencies?: string[];
   registryDependencies?: string[];
   files: RegistryFile[];
+  css?: CssObject;
 }
 
 const REGISTRY_SCHEMA_URL =
   "https://ui.shadcn.com/schema/registry-item.json" as const;
+
+/**
+ * Simple CSS parser that converts raw CSS to the shadcn registry css field format.
+ * This enables CSS to be appended to the user's globals.css instead of replacing it.
+ *
+ * Handles:
+ * - @layer rules (base, components, utilities)
+ * - @keyframes animations
+ * - Regular CSS selectors with properties
+ */
+type CssValue = string | Record<string, string>;
+type CssObject = Record<string, CssValue | Record<string, CssValue>>;
+
+function parseCssToRegistryFormat(cssContent: string): CssObject | null {
+  const result: CssObject = {};
+
+  // Remove comments
+  const cleanCss = cssContent.replace(/\/\*[\s\S]*?\*\//g, "").trim();
+
+  if (!cleanCss) return null;
+
+  // Match top-level blocks: @layer, @keyframes, or selectors
+  const blockRegex = /(@[\w-]+\s+[\w-]+|[^{}]+)\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g;
+  let match;
+
+  while ((match = blockRegex.exec(cleanCss)) !== null) {
+    const [, selector, content] = match;
+    const trimmedSelector = selector.trim();
+    const trimmedContent = content.trim();
+
+    if (trimmedSelector.startsWith("@layer") || trimmedSelector.startsWith("@keyframes")) {
+      // Handle @layer and @keyframes - parse nested content
+      result[trimmedSelector] = parseNestedCss(trimmedContent);
+    } else {
+      // Regular selector - parse properties
+      result[trimmedSelector] = parseProperties(trimmedContent);
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+/**
+ * Parse nested CSS content (inside @layer or @keyframes)
+ */
+function parseNestedCss(content: string): Record<string, string | Record<string, string>> {
+  const result: Record<string, string | Record<string, string>> = {};
+  const nestedBlockRegex = /([^{}]+)\s*\{([^{}]*)\}/g;
+  let match;
+
+  while ((match = nestedBlockRegex.exec(content)) !== null) {
+    const [, selector, properties] = match;
+    result[selector.trim()] = parseProperties(properties.trim());
+  }
+
+  return result;
+}
+
+/**
+ * Parse CSS properties into key-value pairs
+ */
+function parseProperties(propertiesStr: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  const properties = propertiesStr.split(";").filter((p) => p.trim());
+
+  for (const prop of properties) {
+    const colonIndex = prop.indexOf(":");
+    if (colonIndex > -1) {
+      const key = prop.slice(0, colonIndex).trim();
+      const value = prop.slice(colonIndex + 1).trim();
+      if (key && value) {
+        result[key] = value;
+      }
+    }
+  }
+
+  return result;
+}
 
 /**
  * Get the filename from a path
@@ -92,7 +171,16 @@ function getRegistryFileInfo(file: Doc<"components">["files"][number]): {
 export function componentToRegistryJson(
   component: Doc<"components">
 ): RegistryItem {
-  const files: RegistryFile[] = component.files.map((file) => {
+  // Separate CSS files from other files
+  const cssFiles = component.files.filter(
+    (file) => file.type === "style" || file.path.endsWith(".css")
+  );
+  const nonCssFiles = component.files.filter(
+    (file) => file.type !== "style" && !file.path.endsWith(".css")
+  );
+
+  // Convert non-CSS files to registry format
+  const files: RegistryFile[] = nonCssFiles.map((file) => {
     const { type, target } = getRegistryFileInfo(file);
 
     const registryFile: RegistryFile = {
@@ -111,6 +199,16 @@ export function componentToRegistryJson(
     return registryFile;
   });
 
+  // Parse CSS files and merge into a single css object
+  // This enables CSS to be appended to globals.css instead of replacing it
+  let css: CssObject | undefined;
+  for (const cssFile of cssFiles) {
+    const parsed = parseCssToRegistryFormat(cssFile.content);
+    if (parsed) {
+      css = css ? { ...css, ...parsed } : parsed;
+    }
+  }
+
   return {
     $schema: REGISTRY_SCHEMA_URL,
     name: component.name,
@@ -124,6 +222,7 @@ export function componentToRegistryJson(
         ? component.registryDependencies
         : undefined,
     files,
+    css,
   };
 }
 

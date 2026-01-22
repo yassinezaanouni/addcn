@@ -11,6 +11,12 @@ const DEFAULT_FILE_CONTENT = `export default function Component() {
   );
 }`;
 
+const DEFAULT_GLOBALS_CSS = `/* Styles will be appended to globals.css when installed */
+@layer components {
+  /* Add your component-specific styles here */
+}
+`;
+
 interface EditorState {
   // Convex ID (null for new components)
   convexId: Id<"components"> | null;
@@ -84,13 +90,29 @@ function createDefaultFile(): ComponentFile {
   };
 }
 
+function createDefaultGlobalsCss(): ComponentFile {
+  return {
+    id: generateId(),
+    path: "globals.css",
+    content: DEFAULT_GLOBALS_CSS,
+    type: "style",
+    language: "css",
+  };
+}
+
+function createDefaultFiles(): ComponentFile[] {
+  return [createDefaultFile(), createDefaultGlobalsCss()];
+}
+
+const defaultFiles = createDefaultFiles();
+
 const initialState = {
   convexId: null,
   name: "",
   title: "",
   description: "",
-  files: [createDefaultFile()],
-  activeFileId: null,
+  files: defaultFiles,
+  activeFileId: defaultFiles[0].id,
   dependencies: [],
   registryDependencies: [],
   isDirty: false,
@@ -193,11 +215,11 @@ export const useEditorStore = create<EditorState>()((set) => ({
   setIsDirty: (dirty) => set({ isDirty: dirty }),
 
   reset: () => {
-    const defaultFile = createDefaultFile();
+    const files = createDefaultFiles();
     set({
       ...initialState,
-      files: [defaultFile],
-      activeFileId: defaultFile.id,
+      files,
+      activeFileId: files[0].id,
     });
   },
 
