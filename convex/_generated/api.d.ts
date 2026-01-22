@@ -16,6 +16,7 @@ import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_validation from "../lib/validation.js";
 import type * as organizations from "../organizations.js";
 import type * as registry from "../registry.js";
+import type * as sandboxes from "../sandboxes.js";
 import type * as users from "../users.js";
 import type * as validators from "../validators.js";
 
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   "lib/validation": typeof lib_validation;
   organizations: typeof organizations;
   registry: typeof registry;
+  sandboxes: typeof sandboxes;
   users: typeof users;
   validators: typeof validators;
 }>;
