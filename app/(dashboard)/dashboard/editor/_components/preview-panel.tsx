@@ -795,13 +795,20 @@ export function PreviewPanel() {
         )}
       </div>
       <div className="flex-1 overflow-auto bg-background p-4">
-        {/* Inject CSS from all style files */}
+        {/* Inject CSS from all style files, scoped to preview container */}
         {combinedCss && (
-          <style id={styleId} dangerouslySetInnerHTML={{ __html: combinedCss }} />
+          <style
+            id={styleId}
+            dangerouslySetInnerHTML={{
+              __html: `@scope (#preview-scope) { ${combinedCss} }`,
+            }}
+          />
         )}
         <LiveProvider code={transformedCode} scope={scope} noInline>
           <LiveError className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive" />
-          <LivePreview />
+          <div id="preview-scope">
+            <LivePreview />
+          </div>
         </LiveProvider>
       </div>
     </div>
