@@ -29,6 +29,7 @@ interface EditorState {
   // Files
   files: ComponentFile[];
   activeFileId: string | null;
+  previewFileId: string | null;
 
   // Dependencies
   dependencies: string[];
@@ -41,6 +42,7 @@ interface EditorState {
   setConvexId: (id: Id<"components"> | null) => void;
   setMetadata: (data: { name?: string; title?: string; description?: string }) => void;
   setActiveFile: (fileId: string | null) => void;
+  setPreviewFile: (fileId: string | null) => void;
   updateFileContent: (fileId: string, content: string) => void;
   addFile: (path: string) => void;
   removeFile: (fileId: string) => void;
@@ -113,6 +115,7 @@ const initialState = {
   description: "",
   files: defaultFiles,
   activeFileId: defaultFiles[0].id,
+  previewFileId: defaultFiles[0].id,
   dependencies: [],
   registryDependencies: [],
   isDirty: false,
@@ -121,6 +124,7 @@ const initialState = {
 export const useEditorStore = create<EditorState>()((set) => ({
   ...initialState,
   activeFileId: initialState.files[0].id,
+  previewFileId: initialState.files[0].id,
 
   setConvexId: (id) => set({ convexId: id }),
 
@@ -131,6 +135,8 @@ export const useEditorStore = create<EditorState>()((set) => ({
     })),
 
   setActiveFile: (fileId) => set({ activeFileId: fileId }),
+
+  setPreviewFile: (fileId) => set({ previewFileId: fileId }),
 
   updateFileContent: (fileId, content) =>
     set((state) => ({
@@ -174,9 +180,14 @@ export const useEditorStore = create<EditorState>()((set) => ({
         state.activeFileId === fileId
           ? newFiles[0]?.id ?? null
           : state.activeFileId;
+      const newPreviewId =
+        state.previewFileId === fileId
+          ? newFiles.find((f) => f.path.endsWith(".tsx"))?.id ?? null
+          : state.previewFileId;
       return {
         files: newFiles,
         activeFileId: newActiveId,
+        previewFileId: newPreviewId,
         isDirty: true,
       };
     }),
@@ -232,11 +243,14 @@ export const useEditorStore = create<EditorState>()((set) => ({
       ...initialState,
       files,
       activeFileId: files[0].id,
+      previewFileId: files[0].id,
     });
   },
 
   loadComponent: (component) => {
+    const firstTsxFile = component.files.find((f) => f.path.endsWith(".tsx"));
     const activeFileId = component.files[0]?.id ?? null;
+    const previewFileId = firstTsxFile?.id ?? activeFileId;
     set({
       convexId: component._id,
       name: component.name,
@@ -244,6 +258,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
       description: component.description,
       files: component.files,
       activeFileId,
+      previewFileId,
       dependencies: component.dependencies,
       registryDependencies: component.registryDependencies,
       isDirty: false,

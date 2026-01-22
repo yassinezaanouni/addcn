@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import {
   IconChevronDown,
   IconChevronRight,
+  IconEye,
   IconFile,
   IconFileTypeCss,
   IconFileTypeTs,
@@ -37,7 +38,9 @@ interface FileNodeProps {
   expandedFolders: Set<string>;
   onToggleFolder: (path: string) => void;
   activeFileId: string | null;
+  previewFileId: string | null;
   onSelectFile: (fileId: string) => void;
+  onSetPreviewFile: (fileId: string) => void;
   onRenameFile: (fileId: string, newPath: string) => void;
   onDeleteFile: (fileId: string) => void;
   canDelete: boolean;
@@ -49,7 +52,9 @@ function FileNode({
   expandedFolders,
   onToggleFolder,
   activeFileId,
+  previewFileId,
   onSelectFile,
+  onSetPreviewFile,
   onRenameFile,
   onDeleteFile,
   canDelete,
@@ -60,6 +65,8 @@ function FileNode({
   const isFolder = !node.file;
   const isExpanded = expandedFolders.has(node.path);
   const isActive = node.file?.id === activeFileId;
+  const isPreview = node.file?.id === previewFileId;
+  const canPreview = node.file?.path.endsWith(".tsx");
 
   const handleSaveRename = () => {
     if (node.file && editPath.trim() && editPath !== node.path) {
@@ -118,11 +125,27 @@ function FileNode({
           >
             {getFileIcon(node.path)}
             <span className="truncate">{node.name}</span>
+            {isPreview && (
+              <IconEye className="size-3 text-primary" />
+            )}
           </button>
         )}
 
         {node.file && (
           <div className="hidden items-center gap-0.5 group-hover:flex">
+            {canPreview && !isPreview && (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                title="Set as preview"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSetPreviewFile(node.file!.id);
+                }}
+              >
+                <IconEye className="size-3" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon-xs"
@@ -160,7 +183,9 @@ function FileNode({
               expandedFolders={expandedFolders}
               onToggleFolder={onToggleFolder}
               activeFileId={activeFileId}
+              previewFileId={previewFileId}
               onSelectFile={onSelectFile}
+              onSetPreviewFile={onSetPreviewFile}
               onRenameFile={onRenameFile}
               onDeleteFile={onDeleteFile}
               canDelete={canDelete}
@@ -173,7 +198,7 @@ function FileNode({
 }
 
 export function FileTree() {
-  const { files, activeFileId, setActiveFile, addFile, removeFile, renamePath } =
+  const { files, activeFileId, previewFileId, setActiveFile, setPreviewFile, addFile, removeFile, renamePath } =
     useEditorStore();
 
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
@@ -240,7 +265,9 @@ export function FileTree() {
             expandedFolders={expandedFolders}
             onToggleFolder={toggleFolder}
             activeFileId={activeFileId}
+            previewFileId={previewFileId}
             onSelectFile={setActiveFile}
+            onSetPreviewFile={setPreviewFile}
             onRenameFile={renamePath}
             onDeleteFile={removeFile}
             canDelete={canDelete}
