@@ -422,14 +422,33 @@ function transformCode(code: string, inlineComponents: Array<{ name: string; cod
 
 export function PreviewPanel() {
   const files = useEditorStore((state) => state.files);
+  const previewFileId = useEditorStore((state) => state.previewFileId);
   const styleId = useId();
 
-  // Get the main component file (first .tsx file)
+  // Load Tailwind v4 browser CDN for dynamic class support in preview
+  useEffect(() => {
+    const TAILWIND_CDN_ID = "tailwind-cdn-preview";
+    if (document.getElementById(TAILWIND_CDN_ID)) return;
+
+    const script = document.createElement("script");
+    script.id = TAILWIND_CDN_ID;
+    script.src = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4";
+    document.head.appendChild(script);
+
+    return () => {
+      // Don't remove on unmount - other previews may need it
+    };
+  }, []);
+
+  // Get the preview file (selected by user or first .tsx file)
   const mainFile = useMemo(() => {
-    return files.find(
-      (f) => f.path.endsWith(".tsx") && f.type === "component"
-    );
-  }, [files]);
+    if (previewFileId) {
+      const file = files.find((f) => f.id === previewFileId);
+      if (file?.path.endsWith(".tsx")) return file;
+    }
+    // Fallback to first tsx file
+    return files.find((f) => f.path.endsWith(".tsx"));
+  }, [files, previewFileId]);
 
   // Collect all CSS from style files
   const combinedCss = useMemo(() => {
@@ -467,8 +486,11 @@ export function PreviewPanel() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b px-3 py-1.5">
+      <div className="flex items-center justify-between border-b px-3 py-1.5">
         <span className="text-xs font-medium text-muted-foreground">Preview</span>
+        {mainFile && (
+          <span className="text-xs text-muted-foreground/70">{mainFile.path.split("/").pop()}</span>
+        )}
       </div>
       <div className="flex-1 overflow-auto bg-white p-4 dark:bg-zinc-950">
         {/* Inject CSS from all style files */}
