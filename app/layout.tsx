@@ -5,6 +5,7 @@ import { Header } from "@/components/shared/header";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
 import { ConvexClientProvider } from "@/components/providers/convex-client-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { getToken } from "@/lib/auth-server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,17 +22,20 @@ export const metadata: Metadata = {
   description: APP_DESCRIPTION,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Get auth token on server for instant auth on client
+  const initialToken = await getToken();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ConvexClientProvider>
+        <ConvexClientProvider initialToken={initialToken}>
           <Header />
           {children}
           <Toaster />
