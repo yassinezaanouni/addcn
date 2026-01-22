@@ -38,7 +38,6 @@ export function NavMain({ items }: NavMainProps) {
                 <SidebarMenuButton
                   render={<Link href={item.url} />}
                   isActive={isActive}
-                  tooltip={item.title}
                 >
                   <item.icon />
                   <span>{item.title}</span>
