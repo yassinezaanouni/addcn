@@ -46,8 +46,9 @@ export function UsernameForm() {
   const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const setUsernameMutationFn = useConvexMutation(api.users.setUsername);
   const { mutate: setUsernameMutation, isPending } = useMutation({
-    mutationFn: useConvexMutation(api.users.setUsername),
+    mutationFn: setUsernameMutationFn,
     onSuccess: () => {
       router.push("/");
     },

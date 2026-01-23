@@ -72,8 +72,9 @@ export default function NewOrgPage() {
     }
   }, [name, slugManuallyEdited]);
 
+  const createOrgMutationFn = useConvexMutation(api.organizations.create);
   const { mutate: createOrg, isPending } = useMutation({
-    mutationFn: useConvexMutation(api.organizations.create),
+    mutationFn: createOrgMutationFn,
     onSuccess: () => {
       toast.success("Organization created successfully");
       router.push(`/dashboard/orgs/${slug}`);

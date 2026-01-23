@@ -199,6 +199,16 @@ export const remove = mutation({
       await ctx.db.delete(invite._id);
     }
 
+    // Delete all components owned by this organization
+    const components = await ctx.db
+      .query("components")
+      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .collect();
+
+    for (const component of components) {
+      await ctx.db.delete(component._id);
+    }
+
     // Delete the organization
     await ctx.db.delete(args.orgId);
 
@@ -209,16 +219,28 @@ export const remove = mutation({
 /**
  * Get all members of an organization.
  * Returns members with their user details.
+ * Only members of the organization can view the member list.
  */
 export const getMembers = query({
   args: {
     orgId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
+    const currentUser = await safeGetCurrentUser(ctx);
+    if (!currentUser) {
+      return [];
+    }
+
     // Check if org exists
     const org = await ctx.db.get(args.orgId);
     if (!org) {
-      throw new ConvexError("Organization not found");
+      return [];
+    }
+
+    // Check if current user is a member
+    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    if (!currentMembership) {
+      return [];
     }
 
     // Get all members for this org
@@ -439,11 +461,9 @@ export const updateMemberRole = mutation({
  */
 function generateInviteToken(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let token = "";
-  for (let i = 0; i < 32; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
+  const randomBytes = new Uint8Array(32);
+  crypto.getRandomValues(randomBytes);
+  return Array.from(randomBytes, (byte) => chars[byte % chars.length]).join("");
 }
 
 /**

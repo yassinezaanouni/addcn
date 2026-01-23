@@ -80,8 +80,9 @@ export default function ProfileSettingsPage() {
     }
   }, [user]);
 
+  const updateProfileMutationFn = useConvexMutation(api.users.updateMe);
   const { mutate: updateProfile, isPending: isUpdating } = useMutation({
-    mutationFn: useConvexMutation(api.users.updateMe),
+    mutationFn: updateProfileMutationFn,
     onSuccess: () => {
       toast.success("Profile updated successfully");
     },

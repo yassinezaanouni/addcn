@@ -209,32 +209,6 @@ export const get = query({
   },
 });
 
-/**
- * Get a component by name (for backwards compatibility with local dev flow).
- * Only returns public components or components the user has access to.
- */
-export const getByName = query({
-  args: { name: v.string() },
-  handler: async (ctx, args) => {
-    const component = await ctx.db
-      .query("components")
-      .withIndex("by_name", (q) => q.eq("name", args.name))
-      .first();
-
-    if (!component) {
-      return null;
-    }
-
-    const user = await getCurrentUser(ctx);
-    const hasAccess = await canAccessComponent(ctx, component, user?._id ?? null);
-
-    if (!hasAccess) {
-      return null;
-    }
-
-    return component;
-  },
-});
 
 /**
  * Search components by title.
@@ -477,18 +451,6 @@ export const getMyComponentsFiltered = query({
   },
 });
 
-/**
- * List all components (legacy - kept for backwards compatibility).
- * Returns all public components.
- */
-export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    // Return all public components for now
-    const components = await ctx.db.query("components").order("desc").collect();
-    return components.filter((c) => c.isPublic);
-  },
-});
 
 /**
  * Get public components for a specific user.
