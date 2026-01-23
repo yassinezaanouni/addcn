@@ -96,6 +96,12 @@ export const create = mutation({
     registryDependencies: v.array(v.string()),
     orgId: v.optional(v.id("organizations")),
     isPublic: v.boolean(),
+    // Preview settings
+    previewEnabled: v.optional(v.boolean()),
+    previewMediaUrl: v.optional(v.string()),
+    previewMediaType: v.optional(
+      v.union(v.literal("image"), v.literal("video"))
+    ),
   },
   handler: async (ctx, args) => {
     const user = await requireCurrentUser(ctx);
@@ -141,6 +147,9 @@ export const create = mutation({
         downloads: 0,
         createdAt: now,
         updatedAt: now,
+        previewEnabled: args.previewEnabled,
+        previewMediaUrl: args.previewMediaUrl,
+        previewMediaType: args.previewMediaType,
       });
     }
 
@@ -170,6 +179,9 @@ export const create = mutation({
       downloads: 0,
       createdAt: now,
       updatedAt: now,
+      previewEnabled: args.previewEnabled,
+      previewMediaUrl: args.previewMediaUrl,
+      previewMediaType: args.previewMediaType,
     });
   },
 });
@@ -268,6 +280,12 @@ export const update = mutation({
     dependencies: v.optional(v.array(v.string())),
     registryDependencies: v.optional(v.array(v.string())),
     isPublic: v.optional(v.boolean()),
+    // Preview settings
+    previewEnabled: v.optional(v.boolean()),
+    previewMediaUrl: v.optional(v.string()),
+    previewMediaType: v.optional(
+      v.union(v.literal("image"), v.literal("video"))
+    ),
   },
   handler: async (ctx, args) => {
     const user = await requireCurrentUser(ctx);

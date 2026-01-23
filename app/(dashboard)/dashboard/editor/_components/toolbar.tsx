@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
 import { useEditorStore, useIsNewComponent } from "@/stores/editor-store";
 import { useOrgContext } from "@/components/org-switcher";
+import { useUpload } from "@/hooks/use-upload";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,10 +36,18 @@ export function Toolbar({ previewVisible, onTogglePreview }: ToolbarProps) {
     files,
     dependencies,
     registryDependencies,
+    previewEnabled,
+    previewMediaUrl,
+    previewMediaType,
+    pendingMediaFile,
     isDirty,
     setConvexId,
     setIsDirty,
+    commitPendingMedia,
   } = useEditorStore();
+
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const { upload } = useUpload();
 
   const createMutationFn = useConvexMutation(api.components.create);
   const updateMutationFn = useConvexMutation(api.components.update);
@@ -70,9 +80,9 @@ export function Toolbar({ previewVisible, onTogglePreview }: ToolbarProps) {
     },
   });
 
-  const isSaving = createMutation.isPending || updateMutation.isPending;
+  const isSaving = createMutation.isPending || updateMutation.isPending || isUploadingMedia;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate
     if (!name.trim()) {
       toast.error("Name is required");
@@ -82,6 +92,33 @@ export function Toolbar({ previewVisible, onTogglePreview }: ToolbarProps) {
     if (!title.trim()) {
       toast.error("Title is required");
       return;
+    }
+
+    // Upload pending media first if exists
+    let finalMediaUrl = previewMediaUrl;
+    let finalMediaType = previewMediaType;
+
+    if (pendingMediaFile) {
+      setIsUploadingMedia(true);
+      try {
+        const result = await upload(pendingMediaFile);
+        if (result) {
+          finalMediaUrl = result.url;
+          finalMediaType = result.type;
+          commitPendingMedia(result.url);
+        } else {
+          toast.error("Failed to upload media");
+          setIsUploadingMedia(false);
+          return;
+        }
+      } catch (error) {
+        toast.error("Failed to upload media", {
+          description: error instanceof Error ? error.message : "An error occurred",
+        });
+        setIsUploadingMedia(false);
+        return;
+      }
+      setIsUploadingMedia(false);
     }
 
     if (isNew) {
@@ -94,6 +131,9 @@ export function Toolbar({ previewVisible, onTogglePreview }: ToolbarProps) {
         registryDependencies,
         orgId: context === "personal" ? undefined : context,
         isPublic: false,
+        previewEnabled,
+        previewMediaUrl: finalMediaUrl ?? undefined,
+        previewMediaType: finalMediaType ?? undefined,
       });
     } else if (convexId) {
       updateMutation.mutate({
@@ -104,6 +144,9 @@ export function Toolbar({ previewVisible, onTogglePreview }: ToolbarProps) {
         files,
         dependencies,
         registryDependencies,
+        previewEnabled,
+        previewMediaUrl: finalMediaUrl ?? undefined,
+        previewMediaType: finalMediaType ?? undefined,
       });
     }
   };
@@ -141,7 +184,7 @@ export function Toolbar({ previewVisible, onTogglePreview }: ToolbarProps) {
         </Button>
         <Button size="sm" onClick={handleSave} disabled={isSaving}>
           <IconDeviceFloppy className="size-4" />
-          {isSaving ? "Saving..." : "Save"}
+          {isUploadingMedia ? "Uploading..." : isSaving ? "Saving..." : "Save"}
         </Button>
       </div>
     </div>

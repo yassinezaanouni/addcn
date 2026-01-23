@@ -1,9 +1,27 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useTheme } from "next-themes";
+import { useDropzone } from "react-dropzone";
+import { motion, LayoutGroup } from "motion/react";
 import { useEditorStore } from "@/stores/editor-store";
+import { analyzeMultipleFiles } from "@/lib/import-analyzer";
+import { validateFile, isImageType } from "@/lib/upload-constants";
+import { processImageFile } from "@/lib/image-utils";
 import type { ComponentFile } from "@/types/component";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  IconInfoCircle,
+  IconAlertTriangle,
+  IconX,
+  IconUpload,
+} from "@tabler/icons-react";
+import { toast } from "sonner";
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -448,6 +466,8 @@ ${cssContent}
       document.getElementById('root').innerHTML =
         '<div class="error-display"><strong>Script Error:</strong>\\n' +
         (error?.message || msg) + '</div>';
+      // Notify parent window of error
+      window.parent.postMessage({ type: 'preview-error', error: error?.message || msg }, '*');
       return true;
     };
   </script>
@@ -632,6 +652,8 @@ ${cssContent}
       }
       componentDidCatch(error, errorInfo) {
         console.error('Preview error:', error, errorInfo);
+        // Notify parent window of error
+        window.parent.postMessage({ type: 'preview-error', error: error?.message || 'Unknown error' }, '*');
       }
       render() {
         if (this.state.hasError) {
@@ -662,11 +684,15 @@ ${combinedCode.split('\n').map(line => '      ' + line).join('\n')}
         </ErrorBoundary>
       );
       console.log('Render called successfully');
+      // Notify parent of successful render
+      window.parent.postMessage({ type: 'preview-success' }, '*');
     } catch (error) {
       document.getElementById('root').innerHTML =
         '<div class="error-display"><strong>Compilation Error:</strong>\\n' +
         error.message.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>';
       console.error('Compilation error:', error);
+      // Notify parent window of error
+      window.parent.postMessage({ type: 'preview-error', error: error.message }, '*');
     }
 
     // Listen for theme changes from parent
@@ -680,11 +706,89 @@ ${combinedCode.split('\n').map(line => '      ' + line).join('\n')}
 </html>`;
 }
 
+// Info content for the tooltip
+const PREVIEW_INFO = `Live Preview works with:
+• React, Tailwind, shadcn/ui
+
+Won't work with:
+• External npm packages (framer-motion, etc.)
+• API calls or data fetching`;
+
 export function PreviewPanel() {
   const files = useEditorStore((state) => state.files);
   const previewFileId = useEditorStore((state) => state.previewFileId);
+  const previewEnabled = useEditorStore((state) => state.previewEnabled);
+  const previewMediaUrl = useEditorStore((state) => state.previewMediaUrl);
+  const previewMediaType = useEditorStore((state) => state.previewMediaType);
+  const pendingMediaLocalUrl = useEditorStore((state) => state.pendingMediaLocalUrl);
+  const setPreviewEnabled = useEditorStore((state) => state.setPreviewEnabled);
+  const setPendingMedia = useEditorStore((state) => state.setPendingMedia);
+  const setPreviewMedia = useEditorStore((state) => state.setPreviewMedia);
+
   const { resolvedTheme } = useTheme();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [showWarningDetails, setShowWarningDetails] = useState(false);
+
+  // The display URL is either the pending local blob or the saved R2 URL
+  const displayMediaUrl = pendingMediaLocalUrl || previewMediaUrl;
+
+  // Process and add a media file
+  const handleMediaFile = useCallback(
+    async (file: File) => {
+      // Validate file type and size
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        toast.error("Invalid file", { description: validation.error });
+        return;
+      }
+
+      // Convert images to WebP
+      if (isImageType(file.type)) {
+        try {
+          const { file: processedFile, wasConverted } = await processImageFile(file);
+          setPendingMedia(processedFile);
+          toast.success("Image added", {
+            description: wasConverted
+              ? "Converted to WebP. Will upload on save."
+              : "Will upload on save.",
+          });
+        } catch (error) {
+          toast.error("Failed to process image", {
+            description: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      } else {
+        setPendingMedia(file);
+        toast.success("Video added", { description: "Will upload on save." });
+      }
+    },
+    [setPendingMedia]
+  );
+
+  // Dropzone setup
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: (acceptedFiles) => {
+      const file = acceptedFiles[0];
+      if (file) handleMediaFile(file);
+    },
+    accept: {
+      "image/jpeg": [".jpg", ".jpeg"],
+      "image/png": [".png"],
+      "image/webp": [".webp"],
+      "image/avif": [".avif"],
+      "video/mp4": [".mp4"],
+      "video/webm": [".webm"],
+      "video/quicktime": [".mov"],
+    },
+    maxFiles: 1,
+    multiple: false,
+  });
+
+  // Analyze imports for warnings
+  const importAnalysis = useMemo(() => {
+    return analyzeMultipleFiles(files);
+  }, [files]);
 
   // Get the preview file (selected by user or first .tsx file)
   const mainFile = useMemo(() => {
@@ -735,6 +839,20 @@ export function PreviewPanel() {
     return hash;
   }, [debouncedHtml]);
 
+  // Listen for messages from iframe
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "preview-error") {
+        setPreviewError(event.data.error);
+      } else if (event.data?.type === "preview-success") {
+        setPreviewError(null);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
   // Sync theme changes to iframe
   useEffect(() => {
     if (iframeRef.current?.contentWindow) {
@@ -745,6 +863,12 @@ export function PreviewPanel() {
     }
   }, [resolvedTheme]);
 
+  const handleRemoveMedia = useCallback(() => {
+    // Clear both pending and saved media
+    setPendingMedia(null);
+    setPreviewMedia(null, null);
+  }, [setPendingMedia, setPreviewMedia]);
+
   if (!mainFile) {
     return (
       <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -753,24 +877,194 @@ export function PreviewPanel() {
     );
   }
 
+  // Animated switch - simple "Live Preview" toggle
+  const PreviewSwitch = (
+    <motion.div
+      layoutId="preview-switch"
+      className="flex items-center gap-2"
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+    >
+      <Switch
+        checked={previewEnabled}
+        onCheckedChange={setPreviewEnabled}
+      />
+      <span className="text-sm text-muted-foreground">Live Preview</span>
+    </motion.div>
+  );
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b px-3 py-1.5">
-        <span className="text-xs font-medium text-muted-foreground">Preview</span>
-        <span className="text-xs text-muted-foreground/70">
-          {mainFile.path.split("/").pop()}
-        </span>
-      </div>
+    <LayoutGroup>
+      <div className="flex h-full flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b px-3 py-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Preview</span>
+            <Tooltip>
+              <TooltipTrigger className="text-muted-foreground/70 hover:text-muted-foreground">
+                <IconInfoCircle className="size-3.5" />
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs whitespace-pre-line">
+                {PREVIEW_INFO}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground/70">
+              {mainFile.path.split("/").pop()}
+            </span>
+            {/* Switch in header when preview is ON */}
+            {previewEnabled && PreviewSwitch}
+          </div>
+        </div>
+
+      {/* Warning banner for unsupported imports */}
+      {importAnalysis.hasUnsupported && previewEnabled && (
+        <div className="border-b bg-amber-500/10 px-3 py-2">
+          <button
+            onClick={() => setShowWarningDetails(!showWarningDetails)}
+            className="flex w-full items-center gap-2 text-left text-xs text-amber-600 dark:text-amber-400"
+          >
+            <IconAlertTriangle className="size-3.5 shrink-0" />
+            <span>
+              {importAnalysis.unsupported.length} unsupported import
+              {importAnalysis.unsupported.length > 1 ? "s" : ""} detected
+            </span>
+          </button>
+          {showWarningDetails && (
+            <div className="mt-2 space-y-1 pl-5 text-xs text-muted-foreground">
+              {importAnalysis.unsupported.map((imp) => (
+                <div key={imp} className="font-mono">
+                  {imp}
+                </div>
+              ))}
+              <p className="pt-1 text-amber-600/80 dark:text-amber-400/80">
+                These packages won&apos;t render in live preview.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Preview content */}
       <div className="relative flex-1 overflow-hidden">
-        <iframe
-          ref={iframeRef}
-          key={iframeKey}
-          srcDoc={debouncedHtml}
-          className="h-full w-full border-0"
-          sandbox="allow-scripts"
-          title="Component Preview"
-        />
+        {previewEnabled ? (
+          // Live preview mode
+          <>
+            {previewError ? (
+              // Error state with switch
+              <div className="flex h-full flex-col items-center justify-center gap-6 p-6">
+                <div className="w-full max-w-md rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+                  <div className="flex items-start gap-2 text-sm text-destructive">
+                    <IconAlertTriangle className="mt-0.5 size-4 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium">Preview Error</p>
+                      <p className="mt-1 wrap-break-word font-mono text-xs opacity-80">
+                        {previewError}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Switch to disable - but it's in header when preview is ON */}
+              </div>
+            ) : (
+              // Live iframe
+              <iframe
+                ref={iframeRef}
+                key={iframeKey}
+                srcDoc={debouncedHtml}
+                className="h-full w-full border-0"
+                sandbox="allow-scripts"
+                title="Component Preview"
+              />
+            )}
+          </>
+        ) : (
+          // Disabled mode - show switch + or + upload
+          <div className="flex h-full flex-col items-center justify-center gap-4 p-6">
+            {displayMediaUrl ? (
+              // Show media with switch above
+              <>
+                {PreviewSwitch}
+
+                {/* Media */}
+                <div className="relative w-full max-w-lg">
+                  {previewMediaType === "video" ? (
+                    <video
+                      src={displayMediaUrl}
+                      controls
+                      className="w-full rounded-lg border"
+                    />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={displayMediaUrl}
+                      alt="Component preview"
+                      className="w-full rounded-lg border"
+                    />
+                  )}
+                  <button
+                    onClick={handleRemoveMedia}
+                    className="absolute -right-2 -top-2 rounded-full bg-background p-1 shadow-md hover:bg-muted"
+                    title="Remove media"
+                  >
+                    <IconX className="size-4" />
+                  </button>
+                </div>
+                {/* Show pending indicator */}
+                {pendingMediaLocalUrl && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    Will upload when you save
+                  </p>
+                )}
+              </>
+            ) : (
+              // No media - show switch + dropzone
+              <div className="flex h-full flex-col items-center justify-center gap-6 p-6">
+                {/* Title */}
+                <p className="max-w-[280px] text-center text-xs text-muted-foreground">
+                  Live preview works with React + Tailwind.
+                  External npm packages won&apos;t render.
+                </p>
+
+                {/* Switch centered */}
+                {PreviewSwitch}
+
+                {/* Separator */}
+                <div className="flex w-full max-w-xs items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-xs text-muted-foreground">or upload</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+
+                {/* Dropzone */}
+                <div
+                  {...getRootProps()}
+                  className={`
+                    flex w-full max-w-xs cursor-pointer flex-col items-center justify-center
+                    rounded-lg border-2 border-dashed p-5 transition-colors
+                    ${isDragActive
+                      ? "border-primary bg-primary/5"
+                      : "border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/50"
+                    }
+                  `}
+                >
+                  <input {...getInputProps()} />
+                  <IconUpload className={`mb-3 size-6 ${isDragActive ? "text-primary" : "text-muted-foreground/50"}`} />
+                  <p className="text-sm text-foreground">
+                    {isDragActive ? "Drop to upload" : "Drop image or video"}
+                  </p>
+                  <div className="mt-2 space-y-0.5 text-center text-[11px] text-muted-foreground">
+                    <p>Images: JPG, PNG, WebP, AVIF (max 5 MB)</p>
+                    <p>Videos: MP4, WebM, MOV (max 20 MB)</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </div>
+      </div>
+    </LayoutGroup>
   );
 }

@@ -35,6 +35,15 @@ interface EditorState {
   dependencies: string[];
   registryDependencies: string[];
 
+  // Preview settings
+  previewEnabled: boolean;
+  previewMediaUrl: string | null; // R2 URL (after save)
+  previewMediaType: "image" | "video" | null;
+
+  // Pending media (before save)
+  pendingMediaFile: File | null;
+  pendingMediaLocalUrl: string | null; // Blob URL for preview
+
   // State
   isDirty: boolean;
 
@@ -52,6 +61,11 @@ interface EditorState {
   addRegistryDependency: (dep: string) => void;
   removeRegistryDependency: (dep: string) => void;
   setIsDirty: (dirty: boolean) => void;
+  setPreviewEnabled: (enabled: boolean) => void;
+  setPreviewMedia: (url: string | null, type: "image" | "video" | null) => void;
+  setPendingMedia: (file: File | null) => void;
+  clearPendingMedia: () => void;
+  commitPendingMedia: (r2Url: string) => void;
   reset: () => void;
   loadComponent: (component: {
     _id: Id<"components">;
@@ -61,6 +75,9 @@ interface EditorState {
     files: ComponentFile[];
     dependencies: string[];
     registryDependencies: string[];
+    previewEnabled?: boolean;
+    previewMediaUrl?: string;
+    previewMediaType?: "image" | "video";
   }) => void;
 }
 
@@ -118,6 +135,11 @@ const initialState = {
   previewFileId: defaultFiles[0].id,
   dependencies: [],
   registryDependencies: [],
+  previewEnabled: false,
+  previewMediaUrl: null,
+  previewMediaType: null,
+  pendingMediaFile: null,
+  pendingMediaLocalUrl: null,
   isDirty: false,
 };
 
@@ -237,13 +259,87 @@ export const useEditorStore = create<EditorState>()((set) => ({
 
   setIsDirty: (dirty) => set({ isDirty: dirty }),
 
+  setPreviewEnabled: (enabled) =>
+    set(() => ({
+      previewEnabled: enabled,
+      isDirty: true,
+    })),
+
+  setPreviewMedia: (url, type) =>
+    set(() => ({
+      previewMediaUrl: url,
+      previewMediaType: type,
+      isDirty: true,
+    })),
+
+  setPendingMedia: (file) =>
+    set((state) => {
+      // Revoke old blob URL if exists
+      if (state.pendingMediaLocalUrl) {
+        URL.revokeObjectURL(state.pendingMediaLocalUrl);
+      }
+
+      if (!file) {
+        return {
+          pendingMediaFile: null,
+          pendingMediaLocalUrl: null,
+          previewMediaType: null,
+          isDirty: true,
+        };
+      }
+
+      // Create new blob URL for preview
+      const localUrl = URL.createObjectURL(file);
+      const type = file.type.startsWith("video/") ? "video" : "image";
+
+      return {
+        pendingMediaFile: file,
+        pendingMediaLocalUrl: localUrl,
+        previewMediaType: type,
+        // Clear existing R2 URL since we have new pending media
+        previewMediaUrl: null,
+        isDirty: true,
+      };
+    }),
+
+  clearPendingMedia: () =>
+    set((state) => {
+      if (state.pendingMediaLocalUrl) {
+        URL.revokeObjectURL(state.pendingMediaLocalUrl);
+      }
+      return {
+        pendingMediaFile: null,
+        pendingMediaLocalUrl: null,
+        previewMediaType: state.previewMediaUrl ? state.previewMediaType : null,
+      };
+    }),
+
+  commitPendingMedia: (r2Url) =>
+    set((state) => {
+      // Revoke blob URL after successful upload
+      if (state.pendingMediaLocalUrl) {
+        URL.revokeObjectURL(state.pendingMediaLocalUrl);
+      }
+      return {
+        previewMediaUrl: r2Url,
+        pendingMediaFile: null,
+        pendingMediaLocalUrl: null,
+      };
+    }),
+
   reset: () => {
     const files = createDefaultFiles();
-    set({
-      ...initialState,
-      files,
-      activeFileId: files[0].id,
-      previewFileId: files[0].id,
+    set((state) => {
+      // Cleanup blob URL
+      if (state.pendingMediaLocalUrl) {
+        URL.revokeObjectURL(state.pendingMediaLocalUrl);
+      }
+      return {
+        ...initialState,
+        files,
+        activeFileId: files[0].id,
+        previewFileId: files[0].id,
+      };
     });
   },
 
@@ -251,17 +347,28 @@ export const useEditorStore = create<EditorState>()((set) => ({
     const firstTsxFile = component.files.find((f) => f.path.endsWith(".tsx"));
     const activeFileId = component.files[0]?.id ?? null;
     const previewFileId = firstTsxFile?.id ?? activeFileId;
-    set({
-      convexId: component._id,
-      name: component.name,
-      title: component.title,
-      description: component.description,
-      files: component.files,
-      activeFileId,
-      previewFileId,
-      dependencies: component.dependencies,
-      registryDependencies: component.registryDependencies,
-      isDirty: false,
+    set((state) => {
+      // Cleanup blob URL
+      if (state.pendingMediaLocalUrl) {
+        URL.revokeObjectURL(state.pendingMediaLocalUrl);
+      }
+      return {
+        convexId: component._id,
+        name: component.name,
+        title: component.title,
+        description: component.description,
+        files: component.files,
+        activeFileId,
+        previewFileId,
+        dependencies: component.dependencies,
+        registryDependencies: component.registryDependencies,
+        previewEnabled: component.previewEnabled ?? false,
+        previewMediaUrl: component.previewMediaUrl ?? null,
+        previewMediaType: component.previewMediaType ?? null,
+        pendingMediaFile: null,
+        pendingMediaLocalUrl: null,
+        isDirty: false,
+      };
     });
   },
 }));
