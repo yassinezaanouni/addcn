@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { componentFilesValidator } from "./validators";
@@ -451,6 +452,49 @@ export const getMyComponentsFiltered = query({
   },
 });
 
+/**
+ * Paginated version of getMyComponentsFiltered.
+ * Returns components with cursor-based pagination.
+ */
+export const getMyComponentsPaginated = query({
+  args: {
+    context: v.union(v.literal("personal"), v.id("organizations")),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+
+    // Personal components
+    if (args.context === "personal") {
+      return await ctx.db
+        .query("components")
+        .withIndex("by_userId", (q) => q.eq("userId", user._id))
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
+
+    // Org components - verify membership first
+    const membership = await ctx.db
+      .query("orgMembers")
+      .withIndex("by_orgId_userId", (q) =>
+        q.eq("orgId", args.context as Id<"organizations">).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+
+    return await ctx.db
+      .query("components")
+      .withIndex("by_orgId", (q) => q.eq("orgId", args.context as Id<"organizations">))
+      .order("desc")
+      .paginate(args.paginationOpts);
+  },
+});
 
 /**
  * Get public components for a specific user.
