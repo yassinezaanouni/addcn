@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { useQuery, useMutation, useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useConvex } from "convex/react";
 import { useTheme } from "next-themes";
@@ -44,6 +44,7 @@ import {
   IconEyeOff,
   IconPencil,
   IconPlus,
+  IconTrash,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -178,12 +179,32 @@ function ComponentCard({
   registryToken: string | null;
 }) {
   const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const queryClient = useQueryClient();
 
   const updateMutationFn = useConvexMutation(api.components.update);
   const updateMutation = useMutation({
     mutationFn: updateMutationFn,
     onError: (error) => {
       toast.error("Failed to update visibility", {
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+      });
+    },
+  });
+
+  const deleteMutationFn = useConvexMutation(api.components.remove);
+  const deleteMutation = useMutation({
+    mutationFn: deleteMutationFn,
+    onSuccess: () => {
+      toast.success("Component deleted", {
+        description: "Your component has been permanently deleted.",
+      });
+      setShowDeleteDialog(false);
+      queryClient.invalidateQueries({ queryKey: ["components"] });
+    },
+    onError: (error) => {
+      toast.error("Failed to delete component", {
         description:
           error instanceof Error ? error.message : "An error occurred",
       });
@@ -236,7 +257,7 @@ function ComponentCard({
 
   return (
     <>
-      <Card size="sm" className="overflow-hidden">
+      <Card size="sm" className="overflow-hidden justify-between">
         {/* Preview: static media or live iframe */}
         <div className="relative aspect-video w-full overflow-hidden bg-muted">
           {component.previewMediaUrl ? (
@@ -261,6 +282,7 @@ function ComponentCard({
             <LivePreview files={component.files} />
           )}
         </div>
+        <div>
         <CardHeader>
           <CardTitle>{component.title || component.name}</CardTitle>
           {component.description && (
@@ -303,12 +325,21 @@ function ComponentCard({
                   <IconEye className="size-4" />
                 )}
               </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setShowDeleteDialog(true)}
+                title="Delete component"
+              >
+                <IconTrash className="size-4" />
+              </Button>
             </div>
           </div>
 
           {/* Install command */}
           {registryUrl && <InstallCommand registryUrl={registryUrl} />}
         </CardContent>
+        </div>
       </Card>
 
       <Dialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
@@ -331,6 +362,27 @@ function ComponentCard({
               disabled={updateMutation.isPending}
             >
               {updateMutation.isPending ? "Publishing..." : "Publish Component"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Component</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{component.title || component.name}&quot;?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter showCloseButton>
+            <Button
+              variant="destructive"
+              onClick={() => deleteMutation.mutate({ id: component._id })}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete Component"}
             </Button>
           </DialogFooter>
         </DialogContent>
