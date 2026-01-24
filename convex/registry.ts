@@ -78,10 +78,18 @@ function parseCssToRegistryFormat(cssContent: string): CssObject | null {
 
     if (trimmedSelector.startsWith("@layer") || trimmedSelector.startsWith("@keyframes")) {
       // Handle @layer and @keyframes - parse nested content
-      result[trimmedSelector] = parseNestedCss(trimmedContent);
+      const nested = parseNestedCss(trimmedContent);
+      // Only include if there's actual content (skip empty layers)
+      if (Object.keys(nested).length > 0) {
+        result[trimmedSelector] = nested;
+      }
     } else {
       // Regular selector - parse properties
-      result[trimmedSelector] = parseProperties(trimmedContent);
+      const props = parseProperties(trimmedContent);
+      // Only include if there are actual properties
+      if (Object.keys(props).length > 0) {
+        result[trimmedSelector] = props;
+      }
     }
   }
 

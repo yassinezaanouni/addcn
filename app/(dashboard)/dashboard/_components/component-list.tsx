@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useTheme } from "next-themes";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { useOrgContext } from "@/components/org-switcher";
 import { useRegistryToken } from "@/hooks/use-registry-token";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { collectAllFiles, transformCss, generateIframeHtml } from "@/lib/preview";
 import {
   Card,
   CardHeader,
@@ -47,7 +49,8 @@ import { toast } from "sonner";
 
 function ComponentCardSkeleton() {
   return (
-    <Card size="sm">
+    <Card size="sm" className="overflow-hidden">
+      <Skeleton className="aspect-video w-full" />
       <CardHeader>
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-4 w-48 mt-1" />
@@ -67,6 +70,39 @@ function ComponentListSkeleton() {
         <ComponentCardSkeleton key={i} />
       ))}
     </div>
+  );
+}
+
+function LivePreview({ files }: { files: Doc<"components">["files"] }) {
+  const { resolvedTheme } = useTheme();
+
+  const iframeHtml = useMemo(() => {
+    const mainFile = files.find((f) => f.path.endsWith(".tsx"));
+    if (!mainFile) return "";
+
+    const cssContent = files
+      .filter((f) => f.type === "style" || f.path.endsWith(".css"))
+      .map((f) => f.content)
+      .join("\n\n");
+
+    const componentFiles = collectAllFiles(mainFile, files);
+    return generateIframeHtml(
+      componentFiles,
+      mainFile.path,
+      transformCss(cssContent),
+      resolvedTheme || "light"
+    );
+  }, [files, resolvedTheme]);
+
+  if (!iframeHtml) return null;
+
+  return (
+    <iframe
+      srcDoc={iframeHtml}
+      className="h-full w-full border-0 pointer-events-none"
+      sandbox="allow-scripts"
+      title="Component preview"
+    />
   );
 }
 
@@ -150,7 +186,31 @@ function ComponentCard({
 
   return (
     <>
-      <Card size="sm">
+      <Card size="sm" className="overflow-hidden">
+        {/* Preview: static media or live iframe */}
+        <div className="relative aspect-video w-full overflow-hidden bg-muted">
+          {component.previewMediaUrl ? (
+            component.previewMediaType === "video" ? (
+              <video
+                src={component.previewMediaUrl}
+                className="h-full w-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={component.previewMediaUrl}
+                alt={component.title || component.name}
+                className="h-full w-full object-cover"
+              />
+            )
+          ) : (
+            <LivePreview files={component.files} />
+          )}
+        </div>
         <CardHeader>
           <CardTitle>{component.title || component.name}</CardTitle>
           {component.description && (
