@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useConvex } from "convex/react";
 import { useTheme } from "next-themes";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { useOrgContext } from "@/components/org-switcher";
 import { useRegistryToken } from "@/hooks/use-registry-token";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { collectAllFiles, transformCss, generateIframeHtml } from "@/lib/preview";
+import { InstallCommand } from "./install-command";
 import {
   Card,
   CardHeader,
@@ -34,6 +35,7 @@ import {
   EmptyTitle,
   EmptyDescription,
   EmptyMedia,
+  EmptyContent,
 } from "@/components/ui/empty";
 import {
   IconPackage,
@@ -41,8 +43,7 @@ import {
   IconEye,
   IconEyeOff,
   IconPencil,
-  IconCopy,
-  IconCheck,
+  IconPlus,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -65,7 +66,7 @@ function ComponentCardSkeleton() {
 
 function ComponentListSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 [@media(min-width:2200px)]:grid-cols-5">
       {Array.from({ length: 6 }).map((_, i) => (
         <ComponentCardSkeleton key={i} />
       ))}
@@ -75,34 +76,95 @@ function ComponentListSkeleton() {
 
 function LivePreview({ files }: { files: Doc<"components">["files"] }) {
   const { resolvedTheme } = useTheme();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Only render iframe when visible (lazy loading)
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect(); // Once visible, stop observing
+        }
+      },
+      { rootMargin: "100px" } // Start loading slightly before visible
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Find main file - try .tsx first, then .jsx, then .ts, then .js
+  const mainFile = useMemo(() => {
+    const extensions = [".tsx", ".jsx", ".ts", ".js"];
+    for (const ext of extensions) {
+      const file = files.find((f) => f.path.endsWith(ext));
+      if (file) return file;
+    }
+    return null;
+  }, [files]);
 
   const iframeHtml = useMemo(() => {
-    const mainFile = files.find((f) => f.path.endsWith(".tsx"));
-    if (!mainFile) return "";
+    if (!isVisible || !mainFile) return null;
 
     const cssContent = files
       .filter((f) => f.type === "style" || f.path.endsWith(".css"))
       .map((f) => f.content)
       .join("\n\n");
 
-    const componentFiles = collectAllFiles(mainFile, files);
-    return generateIframeHtml(
-      componentFiles,
-      mainFile.path,
-      transformCss(cssContent),
-      resolvedTheme || "light"
-    );
-  }, [files, resolvedTheme]);
+    try {
+      const componentFiles = collectAllFiles(mainFile, files);
+      return generateIframeHtml(
+        componentFiles,
+        mainFile.path,
+        transformCss(cssContent),
+        resolvedTheme || "light"
+      );
+    } catch {
+      return null;
+    }
+  }, [files, mainFile, resolvedTheme, isVisible]);
 
-  if (!iframeHtml) return null;
+  // No main file found - show placeholder
+  if (!mainFile) {
+    return (
+      <div className="flex h-full items-center justify-center bg-muted/50">
+        <IconPackage className="size-8 text-muted-foreground/50" />
+      </div>
+    );
+  }
+
+  // Still loading (not visible yet)
+  if (!isVisible) {
+    return (
+      <div ref={containerRef} className="flex h-full w-full items-center justify-center">
+        <Skeleton className="h-8 w-8 rounded-full" />
+      </div>
+    );
+  }
+
+  // Error generating preview
+  if (!iframeHtml) {
+    return (
+      <div className="flex h-full items-center justify-center bg-muted/50">
+        <IconPackage className="size-8 text-muted-foreground/50" />
+      </div>
+    );
+  }
 
   return (
-    <iframe
-      srcDoc={iframeHtml}
-      className="h-full w-full border-0 pointer-events-none"
-      sandbox="allow-scripts"
-      title="Component preview"
-    />
+    <div ref={containerRef} className="h-full w-full">
+      <iframe
+        srcDoc={iframeHtml}
+        className="h-full w-full border-0"
+        sandbox="allow-scripts"
+        title="Component preview"
+      />
+    </div>
   );
 }
 
@@ -116,7 +178,6 @@ function ComponentCard({
   registryToken: string | null;
 }) {
   const [showPublishDialog, setShowPublishDialog] = useState(false);
-  const { copied, copy } = useCopyToClipboard();
 
   const updateMutationFn = useConvexMutation(api.components.update);
   const updateMutation = useMutation({
@@ -172,17 +233,6 @@ function ComponentCard({
     baseUrl && !component.isPublic && registryToken
       ? `${baseUrl}?token=${registryToken}`
       : baseUrl;
-
-  const installCommand = registryUrl
-    ? `npx shadcn@latest add "${registryUrl}"`
-    : null;
-
-  const handleCopyCommand = () => {
-    if (installCommand) {
-      copy(installCommand);
-      toast.success("Command copied to clipboard");
-    }
-  };
 
   return (
     <>
@@ -257,22 +307,7 @@ function ComponentCard({
           </div>
 
           {/* Install command */}
-          {installCommand && (
-            <div
-              className="group relative rounded-md bg-muted px-3 py-2 font-mono text-xs cursor-pointer hover:bg-muted/80 transition-colors"
-              onClick={handleCopyCommand}
-              title="Click to copy"
-            >
-              <span className="block truncate pr-6">{installCommand}</span>
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground group-hover:text-foreground">
-                {copied ? (
-                  <IconCheck className="size-3.5" />
-                ) : (
-                  <IconCopy className="size-3.5" />
-                )}
-              </span>
-            </div>
-          )}
+          {registryUrl && <InstallCommand registryUrl={registryUrl} />}
         </CardContent>
       </Card>
 
@@ -304,28 +339,79 @@ function ComponentCard({
   );
 }
 
+const PAGE_SIZE = 12;
+
 export function ComponentList() {
   const context = useOrgContext();
+  const convex = useConvex();
   const { token: registryToken } = useRegistryToken();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Convert OrgContext to query-compatible format
-  const queryContext: "personal" | Id<"organizations"> | undefined =
-    context === "personal" ? "personal" : context;
-
-  const { data: components, isLoading: componentsLoading } = useQuery(
-    convexQuery(api.components.getMyComponentsFiltered, {
-      context: queryContext,
-    })
-  );
+  const queryContext: "personal" | Id<"organizations"> =
+    context === "personal" ? "personal" : context!;
 
   const { data: user } = useQuery(convexQuery(api.users.getMe, {}));
   const { data: orgs } = useQuery(convexQuery(api.organizations.getMyOrgs, {}));
 
-  if (componentsLoading) {
+  // Infinite query for paginated components
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery({
+    queryKey: ["components", queryContext],
+    queryFn: async ({ pageParam }) => {
+      return await convex.query(api.components.getMyComponentsPaginated, {
+        context: queryContext,
+        paginationOpts: { numItems: PAGE_SIZE, cursor: pageParam ?? null },
+      });
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.isDone ? undefined : lastPage.continueCursor,
+    enabled: !!queryContext,
+  });
+
+  // Intersection observer for infinite scroll
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Memoized helper to get namespace for a component
+  const getNamespace = useCallback(
+    (component: Doc<"components">): string | undefined => {
+      if (component.userId) return user?.username;
+      if (component.orgId && orgs) {
+        return orgs.find((o) => o._id === component.orgId)?.slug;
+      }
+      return undefined;
+    },
+    [user?.username, orgs]
+  );
+
+  if (isLoading) {
     return <ComponentListSkeleton />;
   }
 
-  if (!components || components.length === 0) {
+  const allComponents = data?.pages.flatMap((page) => page.page) ?? [];
+
+  if (allComponents.length === 0) {
     return (
       <Empty>
         <EmptyHeader>
@@ -337,32 +423,40 @@ export function ComponentList() {
             Create your first component to get started with your registry.
           </EmptyDescription>
         </EmptyHeader>
+        <EmptyContent>
+          <Link href="/dashboard/editor">
+            <Button>
+              <IconPlus className="size-4" />
+              Create Component
+            </Button>
+          </Link>
+        </EmptyContent>
       </Empty>
     );
   }
 
-  // Helper to get the namespace for a component
-  const getNamespace = (component: Doc<"components">): string | undefined => {
-    if (component.userId) {
-      return user?.username;
-    }
-    if (component.orgId && orgs) {
-      const org = orgs.find((o) => o._id === component.orgId);
-      return org?.slug;
-    }
-    return undefined;
-  };
-
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {components.map((component) => (
-        <ComponentCard
-          key={component._id}
-          component={component}
-          namespace={getNamespace(component)}
-          registryToken={registryToken}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 [@media(min-width:2200px)]:grid-cols-5">
+        {allComponents.map((component) => (
+          <ComponentCard
+            key={component._id}
+            component={component}
+            namespace={getNamespace(component)}
+            registryToken={registryToken}
+          />
+        ))}
+      </div>
+
+      {/* Load more trigger */}
+      <div ref={loadMoreRef} className="flex justify-center py-4">
+        {isFetchingNextPage && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Skeleton className="h-4 w-4 rounded-full" />
+            Loading more...
+          </div>
+        )}
+      </div>
     </div>
   );
 }
