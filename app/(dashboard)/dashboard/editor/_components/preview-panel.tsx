@@ -114,7 +114,7 @@ export function PreviewPanel() {
   }, [mainFile, componentFiles, cssContent, resolvedTheme]);
 
   // Debounce the iframe content to avoid too many re-renders while typing
-  const debouncedHtml = useDebounce(iframeHtml, 300);
+  const debouncedHtml = useDebounce(iframeHtml, 500);
 
   // Generate a hash of the content to use as iframe key
   const iframeKey = useMemo(() => {
@@ -213,12 +213,26 @@ export function PreviewPanel() {
                     <div className="h-px flex-1 bg-linear-to-l from-transparent to-border" />
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground">Enable Live Preview</span>
-                    <PreviewSwitch
-                      checked={previewEnabled}
-                      onCheckedChange={setPreviewEnabled}
-                    />
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-3">
+                      <PreviewSwitch
+                        checked={previewEnabled}
+                        onCheckedChange={setPreviewEnabled}
+                      />
+                    </div>
+                    <p className="max-w-[280px] text-center text-[11px] text-muted-foreground/70">
+                      {importAnalysis.hasUnsupported ? (
+                        <>
+                          <span className="text-amber-500">Limited support</span> — some imports
+                          won&apos;t render
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-emerald-500">Full support</span> — React, Tailwind &amp;
+                          Motion only
+                        </>
+                      )}
+                    </p>
                   </div>
                 </div>
               )}

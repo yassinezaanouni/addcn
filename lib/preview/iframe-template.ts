@@ -74,6 +74,7 @@ function generateHtmlTemplate(
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/framer-motion@11/dist/framer-motion.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style type="text/tailwindcss">
 ${TAILWIND_CONFIG}
@@ -293,6 +294,14 @@ const REACT_GLOBALS = `    console.log('Babel script starting...');
             useTransition, useSyncExternalStore, useInsertionEffect, forwardRef,
             createContext, Children, cloneElement, isValidElement, Fragment, memo,
             lazy, Suspense, createElement } = React;
+
+    // Framer Motion globals (from motion/react)
+    const { motion, AnimatePresence, LayoutGroup, Reorder, LazyMotion, domAnimation,
+            useMotionValue, useTransform, useSpring, useScroll, useInView,
+            useAnimate, useAnimationControls, useReducedMotion, useMotionTemplate,
+            useVelocity, useTime, motionValue, animate, stagger, easeIn, easeOut,
+            easeInOut, circIn, circOut, circInOut, backIn, backOut, backInOut,
+            anticipate } = Motion;
 
     // cn utility (clsx + tailwind-merge simplified)
     function cn(...inputs) {

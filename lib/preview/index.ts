@@ -3,6 +3,6 @@ export { transformCss, getComponentName, transformComponentCode } from "./code-t
 export { generateIframeHtml } from "./iframe-template";
 
 // Preview constants
-export const PREVIEW_INFO = `Live Preview supports React + Tailwind + shadcn/ui
+export const PREVIEW_INFO = `Works with: React, Tailwind, Motion, clsx, cva, cn
 
-External npm packages and API calls won't render.`;
+Won't render: External packages, API calls`;

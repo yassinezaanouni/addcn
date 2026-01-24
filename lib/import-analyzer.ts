@@ -13,6 +13,10 @@ const SUPPORTED_IMPORTS = new Set([
   "react-dom",
   "react-dom/client",
 
+  // Animation
+  "motion/react",
+  "framer-motion",
+
   // Styling utilities (implemented in preview)
   "clsx",
   "class-variance-authority",
