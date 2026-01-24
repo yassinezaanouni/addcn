@@ -183,38 +183,27 @@ export const getByUsername = query({
 });
 
 /**
- * Validate a JWT token from Better Auth and return the user ID.
+ * Validate a session ID and return the user ID.
  * Used by HTTP action for authenticated registry access.
  *
- * The JWT contains a sessionId - we validate the session exists and is not expired,
- * then return the corresponding user ID from our users table.
+ * Security model:
+ * - Session IDs are cryptographically random and unguessable
+ * - Sessions are managed by Better Auth (expiration, revocation on logout)
+ * - Only users with valid sessions can access private registry components
  */
 export const validateAuthToken = internalQuery({
   args: {
-    token: v.string(),
+    token: v.string(), // This is actually the session ID
   },
   handler: async (ctx, args) => {
     try {
-      // Decode JWT payload (base64url encoded, second part of JWT)
-      const parts = args.token.split(".");
-      if (parts.length !== 3) {
+      const sessionId = args.token;
+
+      if (!sessionId || sessionId.length < 10) {
         return null;
       }
 
-      // Decode the payload (handle base64url encoding)
-      const payloadBase64 = parts[1]
-        .replace(/-/g, "+")
-        .replace(/_/g, "/");
-      const payloadJson = atob(payloadBase64);
-      const payload = JSON.parse(payloadJson);
-
-      // Extract sessionId from JWT payload
-      const sessionId = payload.sessionId;
-      if (!sessionId) {
-        return null;
-      }
-
-      // Validate session exists and is not expired using Better Auth adapter
+      // Validate session exists and is not expired
       const session = await ctx.runQuery(
         components.betterAuth.adapter.findOne,
         {
@@ -250,7 +239,6 @@ export const validateAuthToken = internalQuery({
 
       return user._id;
     } catch {
-      // Invalid token format or decoding error
       return null;
     }
   },

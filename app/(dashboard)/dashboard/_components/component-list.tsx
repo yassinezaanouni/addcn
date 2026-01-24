@@ -229,7 +229,7 @@ function ComponentCard({
   // Build the registry URL for the component
   // Add token for private components
   const baseUrl = namespace
-    ? `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL}/r/${namespace}/${component.name}.json`
+    ? `${process.env.NEXT_PUBLIC_SITE_URL}/r/${namespace}/${component.name}.json`
     : null;
 
   const registryUrl =
