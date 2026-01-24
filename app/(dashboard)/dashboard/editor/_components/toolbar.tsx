@@ -41,7 +41,6 @@ export function Toolbar() {
     previewMediaType,
     pendingMediaFile,
     isDirty,
-    setConvexId,
     setIsDirty,
     commitPendingMedia,
   } = useEditorStore();
@@ -54,11 +53,10 @@ export function Toolbar() {
 
   const createMutation = useMutation({
     mutationFn: createMutationFn,
-    onSuccess: (id) => {
-      setConvexId(id);
+    onSuccess: () => {
       setIsDirty(false);
       toast.success("Component created");
-      router.replace(`/dashboard/editor/${id}`);
+      router.push("/dashboard");
     },
     onError: (error) => {
       toast.error("Failed to create component", {
@@ -72,6 +70,7 @@ export function Toolbar() {
     onSuccess: () => {
       setIsDirty(false);
       toast.success("Component saved");
+      router.push("/dashboard");
     },
     onError: (error) => {
       toast.error("Failed to save component", {

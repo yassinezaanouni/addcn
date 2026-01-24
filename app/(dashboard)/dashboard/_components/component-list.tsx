@@ -133,8 +133,9 @@ function LivePreview({ files }: { files: Doc<"components">["files"] }) {
   // No main file found - show placeholder
   if (!mainFile) {
     return (
-      <div className="flex h-full items-center justify-center bg-muted/50">
-        <IconPackage className="size-8 text-muted-foreground/50" />
+      <div className="flex h-full flex-col items-center justify-center gap-2 bg-muted/50">
+        <IconPackage className="size-8 text-muted-foreground/40" />
+        <span className="text-xs text-muted-foreground/60">No preview</span>
       </div>
     );
   }
@@ -151,8 +152,9 @@ function LivePreview({ files }: { files: Doc<"components">["files"] }) {
   // Error generating preview
   if (!iframeHtml) {
     return (
-      <div className="flex h-full items-center justify-center bg-muted/50">
-        <IconPackage className="size-8 text-muted-foreground/50" />
+      <div className="flex h-full flex-col items-center justify-center gap-2 bg-muted/50">
+        <IconPackage className="size-8 text-muted-foreground/40" />
+        <span className="text-xs text-muted-foreground/60">No preview</span>
       </div>
     );
   }
@@ -237,9 +239,9 @@ function ComponentCard({
 
   return (
     <>
-      <Card size="sm" className="overflow-hidden justify-between">
+      <Card size="sm" className="overflow-hidden justify-between pt-0!">
         {/* Preview: static media or live iframe */}
-        <div className="relative aspect-video w-full overflow-hidden bg-muted ">
+        <div className="relative aspect-video w-full overflow-hidden bg-muted">
           {component.previewMediaUrl ? (
             component.previewMediaType === "video" ? (
               <video
@@ -258,8 +260,13 @@ function ComponentCard({
                 className="h-full w-full object-cover"
               />
             )
-          ) : (
+          ) : component.previewEnabled ? (
             <LivePreview files={component.files} />
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-2 bg-muted/50">
+              <IconPackage className="size-8 text-muted-foreground/40" />
+              <span className="text-xs text-muted-foreground/60">No preview</span>
+            </div>
           )}
         </div>
         <div className="space-y-4">
