@@ -4,26 +4,25 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useConvexMutation } from "@convex-dev/react-query";
+import { motion } from "motion/react";
 import { api } from "@/convex/_generated/api";
 import { useEditorStore, useIsNewComponent } from "@/stores/editor-store";
 import { useOrgContext } from "@/components/org-switcher";
 import { useUpload } from "@/hooks/use-upload";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   IconArrowLeft,
   IconDeviceFloppy,
-  IconEye,
-  IconEyeOff,
+  IconLoader2,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-interface ToolbarProps {
-  previewVisible: boolean;
-  onTogglePreview: () => void;
-}
-
-export function Toolbar({ previewVisible, onTogglePreview }: ToolbarProps) {
+export function Toolbar() {
   const router = useRouter();
   const isNew = useIsNewComponent();
   const context = useOrgContext();
@@ -152,38 +151,55 @@ export function Toolbar({ previewVisible, onTogglePreview }: ToolbarProps) {
   };
 
   return (
-    <div className="flex h-12 items-center justify-between border-b px-4">
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => router.push("/dashboard")}
-        >
-          <IconArrowLeft className="size-4" />
-        </Button>
-        <span className="font-medium">{title || "Untitled Component"}</span>
-        {isDirty && (
-          <Badge variant="secondary" className="text-xs">
-            Unsaved
-          </Badge>
-        )}
+    <div className="relative z-10 flex h-14 items-center justify-between">
+      {/* Left side */}
+      <div className="flex items-center gap-4">
+        <Tooltip>
+          <TooltipTrigger
+            className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            onClick={() => router.push("/dashboard")}
+          >
+            <IconArrowLeft className="size-5" />
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Back to dashboard</TooltipContent>
+        </Tooltip>
+
+        <div className="flex items-center gap-3">
+          <motion.h1
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-lg font-semibold tracking-tight"
+          >
+            {title || "Untitled"}
+          </motion.h1>
+          {isDirty && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-600 dark:text-amber-400"
+            >
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500" />
+              </span>
+              Unsaved
+            </motion.div>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Right side */}
+      <div className="flex items-center gap-1">
         <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onTogglePreview}
-          title={previewVisible ? "Hide preview" : "Show preview"}
+          onClick={handleSave}
+          disabled={isSaving}
+          className="gap-2 rounded-lg px-4 font-medium shadow-sm transition-all hover:shadow-md"
         >
-          {previewVisible ? (
-            <IconEyeOff className="size-4" />
+          {isSaving ? (
+            <IconLoader2 className="size-4 animate-spin" />
           ) : (
-            <IconEye className="size-4" />
+            <IconDeviceFloppy className="size-4" />
           )}
-        </Button>
-        <Button size="sm" onClick={handleSave} disabled={isSaving}>
-          <IconDeviceFloppy className="size-4" />
           {isUploadingMedia ? "Uploading..." : isSaving ? "Saving..." : "Save"}
         </Button>
       </div>

@@ -17,20 +17,23 @@ export function ComponentMetaForm() {
   const { name, title, description, setMetadata } = useEditorStore();
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 px-4 pb-4">
+      {/* Name field */}
       <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="name">Slug</Label>
         <Input
           id="name"
           value={name}
           onChange={(e) => setMetadata({ name: toKebabCase(e.target.value) })}
           placeholder="my-component"
+          className="font-mono"
         />
-        <p className="text-xs text-muted-foreground">
-          Used in the registry URL
+        <p className="text-[11px] text-muted-foreground">
+          URL: /r/namespace/<span className="text-foreground">{name || "slug"}</span>
         </p>
       </div>
 
+      {/* Title field */}
       <div className="space-y-2">
         <Label htmlFor="title">Title</Label>
         <Input
@@ -41,14 +44,16 @@ export function ComponentMetaForm() {
         />
       </div>
 
+      {/* Description field */}
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
         <Textarea
           id="description"
           value={description}
           onChange={(e) => setMetadata({ description: e.target.value })}
-          placeholder="A description of your component..."
+          placeholder="A brief description of your component..."
           rows={3}
+          className="resize-none"
         />
       </div>
     </div>

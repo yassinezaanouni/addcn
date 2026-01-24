@@ -1,9 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { useEditorStore, buildFolderTree, type FolderNode } from "@/stores/editor-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   IconChevronDown,
   IconChevronRight,
@@ -12,24 +18,26 @@ import {
   IconFileTypeCss,
   IconFileTypeTs,
   IconFolder,
-  IconPlus,
+  IconFolderOpen,
   IconPencil,
+  IconPlus,
   IconTrash,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
 const PATH_PRESETS = [
-  { label: "components/ui", path: "components/ui/" },
-  { label: "hooks", path: "hooks/" },
-  { label: "lib", path: "lib/" },
-  { label: "app", path: "app/" },
+  { label: "ui", path: "components/ui/", color: "bg-blue-500" },
+  { label: "hooks", path: "hooks/", color: "bg-purple-500" },
+  { label: "lib", path: "lib/", color: "bg-emerald-500" },
+  { label: "app", path: "app/", color: "bg-orange-500" },
 ];
 
 function getFileIcon(path: string) {
-  if (path.endsWith(".css")) return <IconFileTypeCss className="size-4" />;
+  if (path.endsWith(".css"))
+    return <IconFileTypeCss className="size-5 text-pink-500" />;
   if (path.endsWith(".ts") || path.endsWith(".tsx"))
-    return <IconFileTypeTs className="size-4" />;
-  return <IconFile className="size-4" />;
+    return <IconFileTypeTs className="size-5 text-blue-500" />;
+  return <IconFile className="size-5 text-muted-foreground" />;
 }
 
 interface FileNodeProps {
@@ -77,7 +85,12 @@ function FileNode({
 
   if (isEditing && node.file) {
     return (
-      <div className="flex items-center gap-1 py-1" style={{ paddingLeft: depth * 12 }}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex items-center gap-1 py-1"
+        style={{ paddingLeft: depth * 14 + 8 }}
+      >
         <Input
           value={editPath}
           onChange={(e) => setEditPath(e.target.value)}
@@ -89,110 +102,154 @@ function FileNode({
               setIsEditing(false);
             }
           }}
-          className="h-6 text-xs"
+          className="h-7 font-mono text-xs"
           autoFocus
         />
-      </div>
+      </motion.div>
     );
   }
 
   return (
     <>
-      <div
+      <motion.div
+        initial={false}
+        animate={{ backgroundColor: isActive ? "var(--muted)" : "transparent" }}
         className={cn(
-          "group flex items-center gap-1 rounded-sm py-1 pr-1 text-sm hover:bg-muted/50",
-          isActive && "bg-muted"
+          "group relative flex items-center gap-1.5 rounded-lg py-1.5 pr-1 text-sm transition-colors",
+          !isActive && "hover:bg-muted/50"
         )}
-        style={{ paddingLeft: depth * 12 }}
+        style={{ paddingLeft: depth * 14 + 8 }}
       >
+        {/* Active indicator */}
+        {isActive && (
+          <motion.div
+            layoutId="active-file-indicator"
+            className="absolute left-1 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-primary"
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          />
+        )}
+
         {isFolder ? (
           <button
             onClick={() => onToggleFolder(node.path)}
-            className="flex flex-1 items-center gap-1"
+            className="flex flex-1 items-center gap-2"
           >
+            <span className="flex size-5 items-center justify-center">
+              {isExpanded ? (
+                <IconChevronDown className="size-4 text-muted-foreground" />
+              ) : (
+                <IconChevronRight className="size-4 text-muted-foreground" />
+              )}
+            </span>
             {isExpanded ? (
-              <IconChevronDown className="size-4" />
+              <IconFolderOpen className="size-5 text-amber-500" />
             ) : (
-              <IconChevronRight className="size-4" />
+              <IconFolder className="size-5 text-amber-500/70" />
             )}
-            <IconFolder className="size-4 text-muted-foreground" />
-            <span className="truncate">{node.name}</span>
+            <span className="truncate font-medium text-foreground/80">{node.name}</span>
           </button>
         ) : (
           <button
             onClick={() => node.file && onSelectFile(node.file.id)}
-            className="flex flex-1 items-center gap-1 pl-5"
+            className="flex flex-1 items-center gap-2 pl-7"
           >
-            {getFileIcon(node.path)}
-            <span className="truncate">{node.name}</span>
-            {isPreview && (
-              <IconEye className="size-3 text-primary" />
-            )}
+            <span className="relative">
+              {getFileIcon(node.path)}
+              {isPreview && (
+                <Tooltip>
+                  <TooltipTrigger
+                    className="absolute -bottom-1 -right-1 flex size-3 items-center justify-center rounded-full bg-primary"
+                    render={<span />}
+                  >
+                    <IconEye className="size-2 text-primary-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Rendered in preview panel</TooltipContent>
+                </Tooltip>
+              )}
+            </span>
+            <span className={cn(
+              "truncate font-mono text-[13px]",
+              isActive ? "text-foreground" : "text-foreground/70"
+            )}>
+              {node.name}
+            </span>
           </button>
         )}
 
         {node.file && (
-          <div className="hidden items-center gap-0.5 group-hover:flex">
+          <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
             {canPreview && !isPreview && (
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                title="Set as preview"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSetPreviewFile(node.file!.id);
-                }}
-              >
-                <IconEye className="size-3" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger
+                  className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSetPreviewFile(node.file!.id);
+                  }}
+                >
+                  <IconEye className="size-3.5" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Render in preview panel</TooltipContent>
+              </Tooltip>
             )}
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditPath(node.path);
-                setIsEditing(true);
-              }}
-            >
-              <IconPencil className="size-3" />
-            </Button>
-            {canDelete && (
-              <Button
-                variant="ghost"
-                size="icon-xs"
+            <Tooltip>
+              <TooltipTrigger
+                className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDeleteFile(node.file!.id);
+                  setEditPath(node.path);
+                  setIsEditing(true);
                 }}
               >
-                <IconTrash className="size-3" />
-              </Button>
+                <IconPencil className="size-3.5" />
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Rename</TooltipContent>
+            </Tooltip>
+            {canDelete && (
+              <Tooltip>
+                <TooltipTrigger
+                  className="flex size-6 items-center justify-center rounded-md text-destructive/70 hover:bg-destructive/10 hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteFile(node.file!.id);
+                  }}
+                >
+                  <IconTrash className="size-3.5" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Delete</TooltipContent>
+              </Tooltip>
             )}
           </div>
         )}
-      </div>
+      </motion.div>
 
-      {isFolder && isExpanded && (
-        <>
-          {node.children.map((child) => (
-            <FileNode
-              key={child.path}
-              node={child}
-              depth={depth + 1}
-              expandedFolders={expandedFolders}
-              onToggleFolder={onToggleFolder}
-              activeFileId={activeFileId}
-              previewFileId={previewFileId}
-              onSelectFile={onSelectFile}
-              onSetPreviewFile={onSetPreviewFile}
-              onRenameFile={onRenameFile}
-              onDeleteFile={onDeleteFile}
-              canDelete={canDelete}
-            />
-          ))}
-        </>
-      )}
+      <AnimatePresence>
+        {isFolder && isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {node.children.map((child) => (
+              <FileNode
+                key={child.path}
+                node={child}
+                depth={depth + 1}
+                expandedFolders={expandedFolders}
+                onToggleFolder={onToggleFolder}
+                activeFileId={activeFileId}
+                previewFileId={previewFileId}
+                onSelectFile={onSelectFile}
+                onSetPreviewFile={onSetPreviewFile}
+                onRenameFile={onRenameFile}
+                onDeleteFile={onDeleteFile}
+                canDelete={canDelete}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
@@ -245,18 +302,27 @@ export function FileTree() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b px-2 py-1.5">
-        <span className="text-xs font-medium text-muted-foreground">Files</span>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={() => setIsAdding(true)}
-        >
-          <IconPlus className="size-3.5" />
-        </Button>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Files
+          </span>
+        </div>
+        <Tooltip>
+          <TooltipTrigger
+            className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
+            onClick={() => setIsAdding(true)}
+          >
+            <IconPlus className="size-4" />
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Add file</TooltipContent>
+        </Tooltip>
       </div>
 
-      <div className="flex-1 overflow-auto p-2">
+      {/* File list */}
+      <div className="flex-1 overflow-auto px-2 pb-4">
         {tree.map((node) => (
           <FileNode
             key={node.path}
@@ -274,51 +340,74 @@ export function FileTree() {
           />
         ))}
 
-        {isAdding && (
-          <div className="mt-2 space-y-2">
-            <div className="flex flex-wrap gap-1">
-              {PATH_PRESETS.map((preset) => (
-                <Button
-                  key={preset.path}
-                  variant="outline"
-                  size="xs"
-                  onClick={() => setNewFilePath(preset.path)}
-                >
-                  {preset.label}
-                </Button>
-              ))}
-            </div>
-            <Input
-              value={newFilePath}
-              onChange={(e) => setNewFilePath(e.target.value)}
-              placeholder="path/to/file.tsx"
-              className="h-7 text-xs"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddFile();
-                if (e.key === "Escape") {
-                  setNewFilePath("");
-                  setIsAdding(false);
-                }
-              }}
-            />
-            <div className="flex gap-1">
-              <Button size="xs" onClick={handleAddFile}>
-                Add
-              </Button>
-              <Button
-                size="xs"
-                variant="ghost"
-                onClick={() => {
-                  setNewFilePath("");
-                  setIsAdding(false);
+        {/* Add file form */}
+        <AnimatePresence>
+          {isAdding && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: "auto" }}
+              exit={{ opacity: 0, y: -10, height: 0 }}
+              className="mt-3 overflow-hidden rounded-lg border p-3"
+            >
+              {/* Quick presets */}
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {PATH_PRESETS.map((preset) => (
+                  <button
+                    key={preset.path}
+                    onClick={() => setNewFilePath(preset.path)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+                      newFilePath.startsWith(preset.path)
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                    )}
+                  >
+                    <span className={cn("h-1.5 w-1.5 rounded-full", preset.color)} />
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Input */}
+              <Input
+                value={newFilePath}
+                onChange={(e) => setNewFilePath(e.target.value)}
+                placeholder="path/to/file.tsx"
+                className="h-8 font-mono text-xs"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddFile();
+                  if (e.key === "Escape") {
+                    setNewFilePath("");
+                    setIsAdding(false);
+                  }
                 }}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        )}
+              />
+
+              {/* Actions */}
+              <div className="mt-3 flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={handleAddFile}
+                  disabled={!newFilePath.trim()}
+                >
+                  Create
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setNewFilePath("");
+                    setIsAdding(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
