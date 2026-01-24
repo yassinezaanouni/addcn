@@ -86,8 +86,8 @@ http.route({
       );
     }
 
-    // Increment download count (fire and forget - don't await)
-    ctx.runMutation(internal.registry.incrementDownloads, {
+    // Increment download count
+    await ctx.runMutation(internal.registry.incrementDownloads, {
       componentId: component._id,
     });
 
