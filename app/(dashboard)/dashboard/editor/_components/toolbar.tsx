@@ -10,6 +10,7 @@ import { useEditorStore, useIsNewComponent } from "@/stores/editor-store";
 import { useOrgContext } from "@/components/org-switcher";
 import { useUpload } from "@/hooks/use-upload";
 import { Button } from "@/components/ui/button";
+import { DeleteComponentButton } from "../../_components/delete-component-button";
 import {
   Tooltip,
   TooltipContent,
@@ -189,7 +190,14 @@ export function Toolbar() {
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        {!isNew && convexId && (
+          <DeleteComponentButton
+            componentId={convexId}
+            componentName={title || name}
+            redirectAfterDelete
+          />
+        )}
         <Button
           onClick={handleSave}
           disabled={isSaving}

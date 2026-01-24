@@ -141,6 +141,11 @@ export function PreviewPanel() {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
+  // Clear error when code changes so the iframe can re-render
+  useEffect(() => {
+    setPreviewError(null);
+  }, [iframeKey]);
+
   if (!mainFile) {
     return (
       <div className="flex h-full items-center justify-center text-muted-foreground">
