@@ -17,6 +17,9 @@ const SUPPORTED_IMPORTS = new Set([
   "motion/react",
   "framer-motion",
 
+  // Theme
+  "next-themes",
+
   // Styling utilities (implemented in preview)
   "clsx",
   "class-variance-authority",

@@ -303,6 +303,22 @@ const REACT_GLOBALS = `    console.log('Babel script starting...');
             easeInOut, circIn, circOut, circInOut, backIn, backOut, backInOut,
             anticipate } = Motion;
 
+    // useTheme stub (next-themes compatible)
+    function useTheme() {
+      const [theme, setThemeState] = useState(document.documentElement.className || 'light');
+      const setTheme = (newTheme) => {
+        document.documentElement.className = newTheme;
+        setThemeState(newTheme);
+      };
+      return {
+        theme,
+        setTheme,
+        resolvedTheme: theme,
+        themes: ['light', 'dark'],
+        systemTheme: 'light',
+      };
+    }
+
     // cn utility (clsx + tailwind-merge simplified)
     function cn(...inputs) {
       return inputs.filter(Boolean).join(' ');
