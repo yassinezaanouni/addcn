@@ -86,9 +86,11 @@ http.route({
       );
     }
 
-    // Increment download count
+    // Increment download count with IP fingerprint for deduplication
+    const fingerprint = request.headers.get("x-forwarded-for") || "unknown";
     await ctx.runMutation(internal.registry.incrementDownloads, {
       componentId: component._id,
+      fingerprint,
     });
 
     // Convert to registry JSON and return

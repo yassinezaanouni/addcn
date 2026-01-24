@@ -24,11 +24,18 @@ export async function GET(
     // Build Convex URL (name already includes .json extension)
     const convexUrl = `${convexSiteUrl}/r/${namespace}/${name}${token ? `?token=${token}` : ""}`;
 
+    // Extract client IP for download deduplication
+    const clientIp =
+      request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+
     // Proxy to Convex
     const response = await fetch(convexUrl, {
       method: "GET",
       headers: {
         Accept: "application/json",
+        "X-Forwarded-For": clientIp,
       },
     });
 

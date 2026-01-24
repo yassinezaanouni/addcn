@@ -81,4 +81,12 @@ export default defineSchema({
       searchField: "title",
       filterFields: ["name"],
     }),
+
+  // Download attempts for deduplication
+  // Tracks recent downloads per IP to prevent multiple counts from CLI burst requests
+  downloadAttempts: defineTable({
+    componentId: v.id("components"),
+    fingerprint: v.string(), // IP address
+    timestamp: v.number(),
+  }).index("by_component_fingerprint", ["componentId", "fingerprint"]),
 });

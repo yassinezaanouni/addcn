@@ -279,21 +279,48 @@ export const getPublicComponent = internalQuery({
 
 /**
  * Increment the download count for a component.
- * Called fire-and-forget by the HTTP action.
+ * Uses 10-second burst deduplication to handle shadcn CLI's multiple requests.
  */
 export const incrementDownloads = internalMutation({
   args: {
     componentId: v.id("components"),
+    fingerprint: v.string(),
   },
   handler: async (ctx, args) => {
-    const component = await ctx.db.get(args.componentId);
-    if (!component) {
+    const DEDUP_WINDOW_MS = 10 * 1000; // 10 seconds
+    const now = Date.now();
+
+    // Check for recent download from same IP
+    const recentAttempt = await ctx.db
+      .query("downloadAttempts")
+      .withIndex("by_component_fingerprint", (q) =>
+        q.eq("componentId", args.componentId).eq("fingerprint", args.fingerprint)
+      )
+      .first();
+
+    if (recentAttempt && now - recentAttempt.timestamp < DEDUP_WINDOW_MS) {
+      // Burst request within dedup window, don't count
       return;
     }
 
-    await ctx.db.patch(args.componentId, {
-      downloads: component.downloads + 1,
-    });
+    // Update or insert the attempt record
+    if (recentAttempt) {
+      await ctx.db.patch(recentAttempt._id, { timestamp: now });
+    } else {
+      await ctx.db.insert("downloadAttempts", {
+        componentId: args.componentId,
+        fingerprint: args.fingerprint,
+        timestamp: now,
+      });
+    }
+
+    // Increment download count
+    const component = await ctx.db.get(args.componentId);
+    if (component) {
+      await ctx.db.patch(args.componentId, {
+        downloads: component.downloads + 1,
+      });
+    }
   },
 });
 
