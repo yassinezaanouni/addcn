@@ -31,6 +31,66 @@ export function getComponentName(code: string): string {
 }
 
 /**
+ * Extract import aliases (e.g., "import { motion as m }" -> { motion: "m" })
+ */
+export function extractImportAliases(code: string): Map<string, string> {
+  const aliases = new Map<string, string>();
+  const lines = code.split("\n");
+  let fullImport = "";
+  let inMultilineImport = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith("import ")) {
+      if (trimmed.includes(" from ")) {
+        fullImport = trimmed;
+      } else {
+        inMultilineImport = true;
+        fullImport = trimmed;
+        continue;
+      }
+    } else if (inMultilineImport) {
+      fullImport += " " + trimmed;
+      if (trimmed.includes(" from ")) {
+        inMultilineImport = false;
+      } else {
+        continue;
+      }
+    } else {
+      continue;
+    }
+
+    // Parse "as" aliases from the import
+    const namedMatch = fullImport.match(/\{([^}]+)\}/);
+    if (namedMatch) {
+      const names = namedMatch[1].split(",");
+      for (const name of names) {
+        const asMatch = name.trim().match(/^(\w+)\s+as\s+(\w+)$/);
+        if (asMatch) {
+          aliases.set(asMatch[1], asMatch[2]);
+        }
+      }
+    }
+
+    fullImport = "";
+  }
+
+  return aliases;
+}
+
+/**
+ * Generate alias declarations (e.g., "const m = motion;")
+ */
+export function generateAliasDeclarations(aliases: Map<string, string>): string {
+  const declarations: string[] = [];
+  for (const [original, alias] of aliases) {
+    declarations.push(`const ${alias} = ${original};`);
+  }
+  return declarations.join("\n");
+}
+
+/**
  * Remove imports from code (handles single and multiline imports)
  */
 export function removeImports(code: string): string {
@@ -100,8 +160,17 @@ export function transformComponentCode(code: string): string {
   // Remove "use client" directive
   transformed = transformed.replace(/["']use client["'];?/g, "");
 
+  // Extract import aliases before removing imports
+  const aliases = extractImportAliases(transformed);
+  const aliasDeclarations = generateAliasDeclarations(aliases);
+
   // Remove imports
   transformed = removeImports(transformed);
+
+  // Add alias declarations at the top
+  if (aliasDeclarations) {
+    transformed = aliasDeclarations + "\n\n" + transformed;
+  }
 
   // Remove export keywords
   transformed = transformed.replace(/export\s+default\s+/g, "");
