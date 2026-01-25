@@ -1,5 +1,6 @@
 "use client";
 
+import { LayoutGroup } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Toolbar } from "./toolbar";
 import { FileTree } from "./file-tree";
@@ -15,56 +16,56 @@ const PANEL_SOLID = "bg-card shadow-xl dark:shadow-black/20";
 
 export function EditorLayout() {
   return (
-    <div className="@container relative flex h-full flex-col bg-linear-to-br from-background via-background to-muted/30">
-     
+    <LayoutGroup>
+      <div className="@container relative flex h-full flex-col bg-linear-to-br from-background via-background to-muted/30">
+        <Toolbar />
 
-      <Toolbar />
-
-      {/* Main content area with container queries (mobile-first) */}
-      <div className="flex flex-1 flex-col gap-2 h-full @4xl:flex-row">
-        {/* File Tree */}
-        <div className={cn(PANEL_BASE, PANEL_BG, "h-[min(100%,20rem)]  @4xl:h-full shrink-0")}>
-          <FileTree />
-        </div>
-
-        {/* Editor + Preview wrapper - they wrap together */}
-        <div className="flex flex-1 flex-col gap-2 @6xl:flex-row">
-          {/* Monaco Editor */}
-          <div className={cn(PANEL_BASE, PANEL_SOLID, "min-h-32 flex-1")}>
-            <MonacoEditor />
+        {/* Main content area with container queries (mobile-first) */}
+        <div className="flex flex-1 flex-col gap-2 h-full @4xl:flex-row">
+          {/* File Tree */}
+          <div className={cn(PANEL_BASE, PANEL_BG, "h-[min(100%,20rem)]  @4xl:h-full shrink-0")}>
+            <FileTree />
           </div>
 
-          {/* Preview Panel */}
-          <div className={cn(PANEL_BASE, PANEL_SOLID, "min-h-32 flex-1")}>
-            <PreviewPanel />
-          </div>
-        </div>
-
-        {/* Right Sidebar */}
-        <div className="flex  shrink-0 flex-col gap-3 ">
-          {/* Component Info Section */}
-          <div className={cn(PANEL_BASE, PANEL_BG)}>
-            <div className="flex items-center gap-2 px-4 py-3">
-              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Component
-              </span>
+          {/* Editor + Preview wrapper - they wrap together */}
+          <div className="flex flex-1 flex-col gap-2 @6xl:flex-row">
+            {/* Monaco Editor */}
+            <div className={cn(PANEL_BASE, PANEL_SOLID, "min-h-32 flex-1")}>
+              <MonacoEditor />
             </div>
-            <ComponentMetaForm />
+
+            {/* Preview Panel */}
+            <div className={cn(PANEL_BASE, PANEL_SOLID, "min-h-32 flex-1")}>
+              <PreviewPanel />
+            </div>
           </div>
 
-          {/* Dependencies Section */}
-          <div className={cn(PANEL_BASE, PANEL_BG, "flex-1 overflow-auto")}>
-            <div className="flex items-center gap-2 px-4 py-3">
-              <div className="h-1.5 w-1.5 rounded-full bg-chart-2" />
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Dependencies
-              </span>
+          {/* Right Sidebar */}
+          <div className="flex shrink-0 flex-col gap-3">
+            {/* Component Info Section */}
+            <div className={cn(PANEL_BASE, PANEL_BG)}>
+              <div className="flex items-center gap-2 px-4 py-3">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Component
+                </span>
+              </div>
+              <ComponentMetaForm />
             </div>
-            <DependencyManager />
+
+            {/* Dependencies Section */}
+            <div className={cn(PANEL_BASE, PANEL_BG, "flex-1 overflow-auto")}>
+              <div className="flex items-center gap-2 px-4 py-3">
+                <div className="h-1.5 w-1.5 rounded-full bg-chart-2" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Dependencies
+                </span>
+              </div>
+              <DependencyManager />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </LayoutGroup>
   );
 }
