@@ -51,7 +51,7 @@ import { DeleteComponentButton } from "./delete-component-button";
 
 function ComponentCardSkeleton() {
   return (
-    <Card size="sm" className="overflow-hidden">
+    <Card size="sm" className="overflow-hidden pt-0!">
       <Skeleton className="aspect-video w-full" />
       <CardHeader>
         <Skeleton className="h-5 w-32" />
