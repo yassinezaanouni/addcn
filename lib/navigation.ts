@@ -14,6 +14,8 @@ export const DASHBOARD_NAV_ITEMS = [
     title: "Organizations",
     url: "/dashboard/orgs",
     icon: IconBuilding,
+    disabled: true,
+    tooltip: "Coming soon",
   },
   {
     title: "Settings",
