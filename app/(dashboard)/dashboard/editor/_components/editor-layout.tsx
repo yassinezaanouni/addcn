@@ -41,7 +41,7 @@ export function EditorLayout() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="flex w-[min(100%,20rem)] shrink-0 flex-col gap-3">
+        <div className="flex @4xl:w-[min(100%,20rem)] shrink-0 flex-col gap-3">
           {/* Component Info Section */}
           <div className={cn(PANEL_BASE, PANEL_BG)}>
             <div className="flex items-center gap-2 px-4 py-3">
