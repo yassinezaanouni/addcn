@@ -1,6 +1,6 @@
 # addcn
 
-![addcn - Build and Share shadcn Registries](/public/og-image.png)
+![addcn - Build and Share shadcn Registries](/public/og-image.jpg)
 
 A multi-user platform for creating and serving custom shadcn/ui registry components. Build your personal component registry and share it with `npx shadcn@latest add`.
 
