@@ -10,7 +10,11 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { analyzeMultipleFiles } from "@/lib/import-analyzer";
 import { validateFile, isImageType } from "@/lib/upload-constants";
 import { processImageFile } from "@/lib/image-utils";
-import { collectAllFiles, transformCss, generateIframeHtml } from "@/lib/preview";
+import {
+  collectAllFiles,
+  transformCss,
+  generateIframeHtml,
+} from "@/lib/preview";
 
 import {
   PreviewHeader,
@@ -28,7 +32,9 @@ export function PreviewPanel() {
   const previewEnabled = useEditorStore((state) => state.previewEnabled);
   const previewMediaUrl = useEditorStore((state) => state.previewMediaUrl);
   const previewMediaType = useEditorStore((state) => state.previewMediaType);
-  const pendingMediaLocalUrl = useEditorStore((state) => state.pendingMediaLocalUrl);
+  const pendingMediaLocalUrl = useEditorStore(
+    (state) => state.pendingMediaLocalUrl,
+  );
   const setPreviewEnabled = useEditorStore((state) => state.setPreviewEnabled);
   const setPendingMedia = useEditorStore((state) => state.setPendingMedia);
   const setPreviewMedia = useEditorStore((state) => state.setPreviewMedia);
@@ -50,7 +56,8 @@ export function PreviewPanel() {
 
       if (isImageType(file.type)) {
         try {
-          const { file: processedFile, wasConverted } = await processImageFile(file);
+          const { file: processedFile, wasConverted } =
+            await processImageFile(file);
           setPendingMedia(processedFile);
           toast.success("Image added", {
             description: wasConverted
@@ -59,7 +66,8 @@ export function PreviewPanel() {
           });
         } catch (error) {
           toast.error("Failed to process image", {
-            description: error instanceof Error ? error.message : "Unknown error",
+            description:
+              error instanceof Error ? error.message : "Unknown error",
           });
         }
       } else {
@@ -67,7 +75,7 @@ export function PreviewPanel() {
         toast.success("Video added", { description: "Will upload on save." });
       }
     },
-    [setPendingMedia]
+    [setPendingMedia],
   );
 
   const handleRemoveMedia = useCallback(() => {
@@ -109,7 +117,7 @@ export function PreviewPanel() {
       componentFiles,
       mainFile.path,
       cssContent,
-      resolvedTheme || "light"
+      resolvedTheme || "light",
     );
   }, [mainFile, componentFiles, cssContent, resolvedTheme]);
 
@@ -121,7 +129,7 @@ export function PreviewPanel() {
     let hash = 0;
     for (let i = 0; i < debouncedHtml.length; i++) {
       const char = debouncedHtml.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return hash;
@@ -166,7 +174,9 @@ export function PreviewPanel() {
         />
 
         {importAnalysis.hasUnsupported && previewEnabled && (
-          <PreviewWarningBanner unsupportedImports={importAnalysis.unsupported} />
+          <PreviewWarningBanner
+            unsupportedImports={importAnalysis.unsupported}
+          />
         )}
 
         <div className="relative flex-1 overflow-hidden">
@@ -202,7 +212,9 @@ export function PreviewPanel() {
                 // No media - show dropzone + switch
                 <div className="flex h-full flex-col items-center gap-6 p-6">
                   <div className="text-center">
-                    <h2 className="text-xl font-semibold text-foreground">Add a preview</h2>
+                    <h2 className="text-xl font-semibold text-foreground">
+                      Add a preview
+                    </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Displayed on your component card in the dashboard
                     </p>
@@ -228,13 +240,15 @@ export function PreviewPanel() {
                     <p className="max-w-[280px] text-center text-[11px] text-muted-foreground/70">
                       {importAnalysis.hasUnsupported ? (
                         <>
-                          <span className="text-amber-500">Limited support</span> — some imports
-                          won&apos;t render
+                          <span className="text-amber-500">
+                            Limited support
+                          </span>{" "}
+                          — some imports won&apos;t render
                         </>
                       ) : (
                         <>
-                          <span className="text-emerald-500">Full support</span> — React, Tailwind &amp;
-                          Motion only
+                          <span className="text-emerald-500">Full support</span>{" "}
+                          — React, Tailwind &amp; Motion npm packages only
                         </>
                       )}
                     </p>

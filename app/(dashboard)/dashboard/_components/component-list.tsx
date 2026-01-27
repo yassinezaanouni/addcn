@@ -40,11 +40,10 @@ import {
 import {
   IconPackage,
   IconDownload,
-  IconEye,
-  IconEyeOff,
   IconPencil,
   IconPlus,
 } from "@tabler/icons-react";
+import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
 import { toast } from "sonner";
 import { DeleteComponentButton } from "./delete-component-button";
@@ -289,7 +288,16 @@ function ComponentCard({
                 {component.downloads ?? 0}
               </span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                <Switch
+                  checked={component.isPublic}
+                  onCheckedChange={handleVisibilityToggle}
+                  disabled={updateMutation.isPending}
+                  size="sm"
+                />
+                Public
+              </label>
               <Link href={`/dashboard/editor/${component._id}`}>
                 <Button
                   variant="ghost"
@@ -299,19 +307,6 @@ function ComponentCard({
                   <IconPencil className="size-4" />
                 </Button>
               </Link>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={handleVisibilityToggle}
-                disabled={updateMutation.isPending}
-                title={component.isPublic ? "Make private" : "Make public"}
-              >
-                {component.isPublic ? (
-                  <IconEyeOff className="size-4" />
-                ) : (
-                  <IconEye className="size-4" />
-                )}
-              </Button>
               <DeleteComponentButton
                 componentId={component._id}
                 componentName={component.title || component.name}

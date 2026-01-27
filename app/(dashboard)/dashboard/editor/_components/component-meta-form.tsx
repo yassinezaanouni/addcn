@@ -9,10 +9,7 @@ import { toKebabCase } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
-function RequiredIndicator() {
-  return <span className="text-destructive">*</span>;
-}
+import { RequiredIndicator, SlugLabel } from "./form-elements";
 
 export function ComponentMetaForm() {
   const { name, title, description, setMetadata } = useEditorStore();
@@ -30,9 +27,7 @@ export function ComponentMetaForm() {
     <div className="space-y-4 px-4 pb-4">
       {/* Name field */}
       <div className="space-y-2">
-        <Label htmlFor="name">
-          Slug <RequiredIndicator />
-        </Label>
+        <SlugLabel htmlFor="name" />
         <Input
           id="name"
           value={name}
@@ -49,7 +44,7 @@ export function ComponentMetaForm() {
       {/* Title field */}
       <div className="space-y-2">
         <Label htmlFor="title">
-          Title <RequiredIndicator />
+          Title<RequiredIndicator />
         </Label>
         <Input
           id="title"

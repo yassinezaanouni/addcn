@@ -10,11 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { IconDeviceFloppy, IconLoader2, IconX } from "@tabler/icons-react";
 import { DependencyInputs } from "./dependency-inputs";
+import { RequiredIndicator, SlugLabel } from "./form-elements";
 import type { ComponentMetadataErrors } from "@/lib/validators";
-
-function RequiredIndicator() {
-  return <span className="text-destructive">*</span>;
-}
 
 interface RequiredFieldsDialogProps {
   open: boolean;
@@ -94,7 +91,7 @@ export function RequiredFieldsDialog({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-            className="fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl bg-background p-6 shadow-lg ring-1 ring-foreground/10"
+            className="fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl bg-background p-6 shadow-lg ring-1 ring-foreground/10"
             role="dialog"
             aria-modal="true"
             aria-labelledby="dialog-title"
@@ -123,9 +120,7 @@ export function RequiredFieldsDialog({
             <div className="space-y-4 overflow-y-auto">
               {/* Name field */}
               <div className="space-y-2">
-                <Label htmlFor="dialog-name">
-                  Slug <RequiredIndicator />
-                </Label>
+                <SlugLabel htmlFor="dialog-name" />
                 <Input
                   ref={nameInputRef}
                   id="dialog-name"
@@ -157,7 +152,7 @@ export function RequiredFieldsDialog({
               {/* Title field */}
               <div className="space-y-2">
                 <Label htmlFor="dialog-title-input">
-                  Title <RequiredIndicator />
+                  Title<RequiredIndicator />
                 </Label>
                 <Input
                   id="dialog-title-input"
@@ -203,6 +198,7 @@ export function RequiredFieldsDialog({
                   onRemoveDependency={removeDependency}
                   onAddRegistryDependency={addRegistryDependency}
                   onRemoveRegistryDependency={removeRegistryDependency}
+                  twoColumns
                 />
               </div>
             </div>

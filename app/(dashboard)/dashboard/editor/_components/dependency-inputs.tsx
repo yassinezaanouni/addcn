@@ -4,7 +4,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { IconPlus, IconX, IconPackage, IconComponents } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconX,
+  IconPackage,
+  IconComponents,
+} from "@tabler/icons-react";
 
 interface DependencyInputsProps {
   dependencies: string[];
@@ -13,6 +18,7 @@ interface DependencyInputsProps {
   onRemoveDependency: (dep: string) => void;
   onAddRegistryDependency: (dep: string) => void;
   onRemoveRegistryDependency: (dep: string) => void;
+  twoColumns?: boolean;
 }
 
 export function DependencyInputs({
@@ -22,6 +28,7 @@ export function DependencyInputs({
   onRemoveDependency,
   onAddRegistryDependency,
   onRemoveRegistryDependency,
+  twoColumns = false,
 }: DependencyInputsProps) {
   const [npmInput, setNpmInput] = useState("");
   const [registryInput, setRegistryInput] = useState("");
@@ -41,7 +48,7 @@ export function DependencyInputs({
   };
 
   return (
-    <div className="space-y-4">
+    <div className={twoColumns ? "grid grid-cols-2 gap-4" : "space-y-4"}>
       {/* NPM Dependencies */}
       <div className="space-y-2.5">
         <div className="flex items-center gap-2">

@@ -6,7 +6,9 @@
     "dev": "concurrently -n convex,next -c blue,green \"convex dev\" \"next dev\"",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "pretteier:format": "prettier --write ."
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
