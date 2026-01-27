@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
@@ -15,41 +15,36 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { validateUsernameFormat, USERNAME_RULES } from "@/lib/validators";
 
-const USERNAME_RULES = {
-  minLength: 3,
-  maxLength: 39,
-  pattern: /^[a-z0-9-]+$/,
-};
-
-function validateUsername(username: string): string | null {
-  if (username.length < USERNAME_RULES.minLength) {
-    return `Username must be at least ${USERNAME_RULES.minLength} characters`;
-  }
-  if (username.length > USERNAME_RULES.maxLength) {
-    return `Username must be at most ${USERNAME_RULES.maxLength} characters`;
-  }
-  if (!USERNAME_RULES.pattern.test(username)) {
-    return "Username can only contain lowercase letters, numbers, and hyphens";
-  }
-  if (username.startsWith("-") || username.endsWith("-")) {
-    return "Username cannot start or end with a hyphen";
-  }
-  if (username.includes("--")) {
-    return "Username cannot contain consecutive hyphens";
-  }
-  return null;
-}
+const CLAIMED_USERNAME_KEY = "addcn_claimed_username";
 
 export function UsernameForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Pre-fill username from URL params or localStorage
+  useEffect(() => {
+    const urlUsername = searchParams.get("username");
+    if (urlUsername) {
+      setUsername(urlUsername.toLowerCase());
+      return;
+    }
+
+    const storedUsername = localStorage.getItem(CLAIMED_USERNAME_KEY);
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
+  }, [searchParams]);
 
   const setUsernameMutationFn = useConvexMutation(api.users.setUsername);
   const { mutate: setUsernameMutation, isPending } = useMutation({
     mutationFn: setUsernameMutationFn,
     onSuccess: () => {
+      // Clear the claimed username from localStorage
+      localStorage.removeItem(CLAIMED_USERNAME_KEY);
       router.push("/");
     },
     onError: (err) => {
@@ -61,7 +56,7 @@ export function UsernameForm() {
     e.preventDefault();
     setError(null);
 
-    const validationError = validateUsername(username);
+    const validationError = validateUsernameFormat(username);
     if (validationError) {
       setError(validationError);
       return;
@@ -99,7 +94,7 @@ export function UsernameForm() {
             />
             {error && <p className="text-sm text-destructive">{error}</p>}
             <p className="text-xs text-muted-foreground">
-              3-39 characters, lowercase letters, numbers, and hyphens only
+              {USERNAME_RULES.minLength}-{USERNAME_RULES.maxLength} characters, lowercase letters, numbers, and hyphens only
             </p>
           </div>
           <Button type="submit" className="w-full" disabled={isPending}>

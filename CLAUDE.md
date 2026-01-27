@@ -10,6 +10,7 @@ A multi-user platform for creating and serving custom shadcn/ui registry compone
 - Convex (database + backend)
 - TanStack Query (data fetching)
 - Better Auth (authentication)
+- Tabler Icons (`@tabler/icons-react`) - NOT lucide-react
 
 ## Key Concepts
 

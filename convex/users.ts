@@ -2,7 +2,62 @@ import { ConvexError, v } from "convex/values";
 import { components } from "./_generated/api";
 import { internalQuery, mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
-import { isValidUsername } from "./lib/validation";
+import { isValidUsername, RESERVED_NAMES } from "./lib/validation";
+
+/**
+ * Check if a username is available for claiming.
+ * Public query - no auth required.
+ */
+export const checkUsernameAvailability = query({
+  args: {
+    username: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const username = args.username.toLowerCase();
+
+    // Validate format first
+    if (username.length < 3) {
+      return { available: false, reason: "Username must be at least 3 characters" };
+    }
+    if (username.length > 39) {
+      return { available: false, reason: "Username must be at most 39 characters" };
+    }
+    if (!/^[a-z0-9-]+$/.test(username)) {
+      return { available: false, reason: "Only lowercase letters, numbers, and hyphens allowed" };
+    }
+    if (username.startsWith("-") || username.endsWith("-")) {
+      return { available: false, reason: "Cannot start or end with a hyphen" };
+    }
+    if (username.includes("--")) {
+      return { available: false, reason: "Cannot contain consecutive hyphens" };
+    }
+    if (RESERVED_NAMES.includes(username as (typeof RESERVED_NAMES)[number])) {
+      return { available: false, reason: "This username is reserved" };
+    }
+
+    // Check if taken by a user
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", username))
+      .unique();
+
+    if (existingUser) {
+      return { available: false, reason: "Username is already taken" };
+    }
+
+    // Check if conflicts with an org slug
+    const existingOrg = await ctx.db
+      .query("organizations")
+      .withIndex("by_slug", (q) => q.eq("slug", username))
+      .unique();
+
+    if (existingOrg) {
+      return { available: false, reason: "Username is already taken" };
+    }
+
+    return { available: true, reason: null };
+  },
+});
 
 /**
  * Get the current authenticated user from our users table.
