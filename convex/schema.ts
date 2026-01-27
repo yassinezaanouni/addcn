@@ -71,6 +71,8 @@ export default defineSchema({
     previewMediaType: v.optional(
       v.union(v.literal("image"), v.literal("video"))
     ),
+    // Combined search field (name + title + description) for full-text search
+    searchText: v.string(),
   })
     .index("by_name", ["name"])
     .index("by_userId", ["userId"])
@@ -78,7 +80,7 @@ export default defineSchema({
     .index("by_userId_name", ["userId", "name"])
     .index("by_orgId_name", ["orgId", "name"])
     .searchIndex("search_components", {
-      searchField: "title",
+      searchField: "searchText",
       filterFields: ["name"],
     }),
 

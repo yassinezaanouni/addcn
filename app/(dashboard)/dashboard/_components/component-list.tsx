@@ -42,7 +42,10 @@ import {
   IconDownload,
   IconPencil,
   IconPlus,
+  IconSearch,
+  IconX,
 } from "@tabler/icons-react";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -350,11 +353,53 @@ function ComponentCard({
 
 const PAGE_SIZE = 12;
 
+function SearchInput({
+  value,
+  onChange,
+  onClear,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="relative max-w-sm">
+      <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+      <Input
+        type="text"
+        placeholder="Search components..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="pl-8 pr-8"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={onClear}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        >
+          <IconX className="size-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function ComponentList() {
   const context = useOrgContext();
   const convex = useConvex();
   const { token: registryToken } = useRegistryToken();
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Convert OrgContext to query-compatible format
   const queryContext: "personal" | Id<"organizations"> =
@@ -363,13 +408,13 @@ export function ComponentList() {
   const { data: user } = useQuery(convexQuery(api.users.getMe, {}));
   const { data: orgs } = useQuery(convexQuery(api.organizations.getMyOrgs, {}));
 
-  // Infinite query for paginated components
+  // Infinite query for paginated components (when not searching)
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
+    isLoading: isPaginatedLoading,
   } = useInfiniteQuery({
     queryKey: ["components", queryContext],
     queryFn: async ({ pageParam }) => {
@@ -381,8 +426,29 @@ export function ComponentList() {
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) =>
       lastPage.isDone ? undefined : lastPage.continueCursor,
-    enabled: !!queryContext,
+    enabled: !!queryContext && !debouncedSearch,
   });
+
+  // Search query (when searching)
+  const { data: searchResults, isLoading: isSearchLoading } = useQuery({
+    ...convexQuery(api.components.search, { query: debouncedSearch }),
+    enabled: !!debouncedSearch,
+  });
+
+  // Filter search results by context (also filter out nulls from permission checks)
+  const filteredSearchResults = useMemo(() => {
+    if (!searchResults || !debouncedSearch) return [];
+
+    return searchResults.filter((component): component is NonNullable<typeof component> => {
+      if (!component) return false;
+      if (queryContext === "personal") {
+        return !!component.userId;
+      }
+      return component.orgId === queryContext;
+    });
+  }, [searchResults, debouncedSearch, queryContext]);
+
+  const isLoading = debouncedSearch ? isSearchLoading : isPaginatedLoading;
 
   // Intersection observer for infinite scroll
   useEffect(() => {
@@ -414,13 +480,27 @@ export function ComponentList() {
     [user?.username, orgs]
   );
 
-  if (isLoading) {
-    return <ComponentListSkeleton />;
+  // Get components to display based on search state
+  const allComponents = debouncedSearch
+    ? filteredSearchResults
+    : (data?.pages.flatMap((page) => page.page) ?? []);
+
+  // Show skeleton only on initial load (not when searching with existing data)
+  if (isLoading && allComponents.length === 0) {
+    return (
+      <div className="space-y-4">
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onClear={() => setSearchQuery("")}
+        />
+        <ComponentListSkeleton />
+      </div>
+    );
   }
 
-  const allComponents = data?.pages.flatMap((page) => page.page) ?? [];
-
-  if (allComponents.length === 0) {
+  // Empty state when no components exist at all
+  if (allComponents.length === 0 && !debouncedSearch) {
     return (
       <Empty>
         <EmptyHeader>
@@ -446,26 +526,58 @@ export function ComponentList() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 [@media(min-width:2200px)]:grid-cols-5">
-        {allComponents.map((component) => (
-          <ComponentCard
-            key={component._id}
-            component={component}
-            namespace={getNamespace(component)}
-            registryToken={registryToken}
-          />
-        ))}
-      </div>
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        onClear={() => setSearchQuery("")}
+      />
 
-      {/* Load more trigger */}
-      <div ref={loadMoreRef} className="flex justify-center py-4">
-        {isFetchingNextPage && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Skeleton className="h-4 w-4 rounded-full" />
-            Loading more...
-          </div>
-        )}
-      </div>
+      {/* No results for search */}
+      {allComponents.length === 0 && debouncedSearch && (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <IconSearch />
+            </EmptyMedia>
+            <EmptyTitle>No results found</EmptyTitle>
+            <EmptyDescription>
+              No components match &quot;{debouncedSearch}&quot;. Try a different
+              search term.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button variant="outline" onClick={() => setSearchQuery("")}>
+              Clear search
+            </Button>
+          </EmptyContent>
+        </Empty>
+      )}
+
+      {/* Component grid */}
+      {allComponents.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 [@media(min-width:2200px)]:grid-cols-5">
+          {allComponents.map((component) => (
+            <ComponentCard
+              key={component._id}
+              component={component}
+              namespace={getNamespace(component)}
+              registryToken={registryToken}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Load more trigger (only when not searching) */}
+      {!debouncedSearch && (
+        <div ref={loadMoreRef} className="flex justify-center py-4">
+          {isFetchingNextPage && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Skeleton className="h-4 w-4 rounded-full" />
+              Loading more...
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

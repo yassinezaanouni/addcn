@@ -10,6 +10,7 @@ import {
   canTransferComponent,
 } from "./lib/permissions";
 import { resolveNamespace } from "./lib/namespace";
+import { r2Client } from "./r2";
 
 /**
  * Get current user from auth and our users table.
@@ -151,6 +152,7 @@ export const create = mutation({
         previewEnabled: args.previewEnabled,
         previewMediaUrl: args.previewMediaUrl,
         previewMediaType: args.previewMediaType,
+        searchText: `${args.name} ${args.title} ${args.description}`,
       });
     }
 
@@ -183,6 +185,7 @@ export const create = mutation({
       previewEnabled: args.previewEnabled,
       previewMediaUrl: args.previewMediaUrl,
       previewMediaType: args.previewMediaType,
+      searchText: `${args.name} ${args.title} ${args.description}`,
     });
   },
 });
@@ -212,7 +215,7 @@ export const get = query({
 
 
 /**
- * Search components by title.
+ * Search components by name, title, and description.
  * Only returns components the user has access to.
  */
 export const search = query({
@@ -222,7 +225,7 @@ export const search = query({
 
     const results = await ctx.db
       .query("components")
-      .withSearchIndex("search_components", (q) => q.search("title", args.query))
+      .withSearchIndex("search_components", (q) => q.search("searchText", args.query))
       .collect();
 
     // Filter by access permissions
@@ -311,14 +314,35 @@ export const update = mutation({
       Object.entries(updates).filter(([, value]) => value !== undefined)
     );
 
-    await ctx.db.patch(id, { ...filtered, updatedAt: Date.now() });
+    // Update searchText if name, title, or description changed
+    const newName = args.name ?? component.name;
+    const newTitle = args.title ?? component.title;
+    const newDescription = args.description ?? component.description;
+    const searchText = `${newName} ${newTitle} ${newDescription}`;
+
+    await ctx.db.patch(id, { ...filtered, searchText, updatedAt: Date.now() });
     return await ctx.db.get(id);
   },
 });
 
 /**
+ * Extract R2 key from a public URL.
+ * URL format: https://domain.com/key
+ */
+function extractR2Key(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    // Remove leading slash from pathname
+    return parsed.pathname.slice(1) || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Delete a component.
  * Requires edit permission.
+ * Also cleans up any associated R2 media.
  */
 export const remove = mutation({
   args: { id: v.id("components") },
@@ -335,6 +359,14 @@ export const remove = mutation({
       throw new ConvexError(
         "You don't have permission to delete this component"
       );
+    }
+
+    // Delete R2 media if it exists
+    if (component.previewMediaUrl) {
+      const key = extractR2Key(component.previewMediaUrl);
+      if (key) {
+        await r2Client.deleteObject(ctx, key);
+      }
     }
 
     await ctx.db.delete(args.id);
@@ -558,3 +590,4 @@ export const getByNamespaceAndName = query({
     return component;
   },
 });
+
