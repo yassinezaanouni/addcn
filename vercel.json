@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.addcn.dev" }],
+      "destination": "https://addcn.dev/:path*",
+      "permanent": true
+    }
+  ]
+}
