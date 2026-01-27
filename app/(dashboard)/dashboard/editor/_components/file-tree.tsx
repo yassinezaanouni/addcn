@@ -459,6 +459,7 @@ export function FileTree() {
   );
   const [isAdding, setIsAdding] = useState(false);
   const [newFilePath, setNewFilePath] = useState("");
+  const newFileInputRef = useRef<HTMLInputElement>(null);
   const [dragState, setDragState] = useState<DragState>({
     draggedFileId: null,
     draggedFilePath: null,
@@ -682,7 +683,10 @@ export function FileTree() {
                 {PATH_PRESETS.map((preset) => (
                   <button
                     key={preset.path}
-                    onClick={() => setNewFilePath(preset.path)}
+                    onClick={() => {
+                      setNewFilePath(preset.path);
+                      newFileInputRef.current?.focus();
+                    }}
                     className={cn(
                       "flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
                       newFilePath.startsWith(preset.path)
@@ -700,6 +704,7 @@ export function FileTree() {
 
               {/* Input */}
               <Input
+                ref={newFileInputRef}
                 value={newFilePath}
                 onChange={(e) => setNewFilePath(e.target.value)}
                 placeholder="path/to/file.tsx"
