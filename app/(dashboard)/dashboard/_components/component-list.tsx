@@ -256,7 +256,7 @@ function ComponentCard({
               <img
                 src={component.previewMediaUrl}
                 alt={component.title || component.name}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
               />
             )
           ) : component.previewEnabled ? (

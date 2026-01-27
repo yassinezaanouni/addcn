@@ -104,7 +104,7 @@ function generateId(): string {
 function createDefaultFile(): ComponentFile {
   return {
     id: generateId(),
-    path: "components/ui/component.tsx",
+    path: "components/component.tsx",
     content: DEFAULT_FILE_CONTENT,
     type: "component",
     language: "typescript",

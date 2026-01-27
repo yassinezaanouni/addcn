@@ -26,7 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const PATH_PRESETS = [
-  { label: "ui", path: "components/ui/", color: "bg-blue-500" },
+  { label: "components", path: "components/", color: "bg-blue-500" },
   { label: "hooks", path: "hooks/", color: "bg-purple-500" },
   { label: "lib", path: "lib/", color: "bg-emerald-500" },
   { label: "app", path: "app/", color: "bg-orange-500" },
@@ -427,7 +427,7 @@ export function FileTree() {
     useEditorStore();
 
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set(["components", "components/ui"])
+    new Set(["components"])
   );
   const [isAdding, setIsAdding] = useState(false);
   const [newFilePath, setNewFilePath] = useState("");

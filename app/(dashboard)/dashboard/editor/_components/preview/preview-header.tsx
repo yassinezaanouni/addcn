@@ -59,13 +59,18 @@ interface PreviewSwitchProps {
 
 export function PreviewSwitch({ checked, onCheckedChange }: PreviewSwitchProps) {
   return (
-    <motion.div
-      layoutId="preview-switch"
-      className="flex items-center gap-2"
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-    >
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
-      <span className="text-sm text-muted-foreground">Live Preview</span>
-    </motion.div>
+    <Tooltip>
+      <TooltipTrigger render={<span />}>
+        <motion.div
+          layoutId="preview-switch"
+          className="flex items-center gap-2 cursor-not-allowed opacity-50"
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        >
+          <Switch checked={checked} onCheckedChange={onCheckedChange} disabled />
+          <span className="text-sm text-muted-foreground">Live Preview</span>
+        </motion.div>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">Coming soon</TooltipContent>
+    </Tooltip>
   );
 }
