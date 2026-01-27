@@ -9,6 +9,27 @@ const publicAuthRoutes = ["/login"];
 export default async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
+  // Handle PostHog proxy requests first (before auth)
+  if (path.startsWith("/ph")) {
+    const url = request.nextUrl.clone();
+    const hostname = path.startsWith("/ph/static/")
+      ? "us-assets.i.posthog.com"
+      : "us.i.posthog.com";
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("host", hostname);
+    requestHeaders.delete("cookie"); // Don't forward auth cookies to PostHog
+
+    url.protocol = "https";
+    url.hostname = hostname;
+    url.port = "443";
+    url.pathname = path.replace(/^\/ph/, "");
+
+    return NextResponse.rewrite(url, {
+      headers: requestHeaders,
+    });
+  }
+
   // Check if route needs protection
   const isProtectedRoute = protectedRoutes.some(
     (route) => path === route || path.startsWith(`${route}/`),
@@ -40,6 +61,8 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    // PostHog proxy
+    "/ph/:path*",
     // Match all paths except static files and api routes
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
