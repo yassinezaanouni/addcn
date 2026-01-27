@@ -5,11 +5,18 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
 import { useEditorStore } from "@/stores/editor-store";
 import { useOrgContext } from "@/components/org-switcher";
-import { toKebabCase } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RequiredIndicator, SlugLabel } from "./form-elements";
+
+// Filter to valid slug characters while typing (allows trailing dash)
+function toSlug(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/--+/g, "-");
+}
 
 export function ComponentMetaForm() {
   const { name, title, description, setMetadata } = useEditorStore();
@@ -31,7 +38,7 @@ export function ComponentMetaForm() {
         <Input
           id="name"
           value={name}
-          onChange={(e) => setMetadata({ name: toKebabCase(e.target.value) })}
+          onChange={(e) => setMetadata({ name: toSlug(e.target.value) })}
           placeholder="my-component"
           className="font-mono"
         />
