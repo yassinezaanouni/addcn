@@ -46,9 +46,11 @@ interface EditorState {
 
   // State
   isDirty: boolean;
+  validationDialogOpen: boolean;
 
   // Actions
   setConvexId: (id: Id<"components"> | null) => void;
+  setValidationDialogOpen: (open: boolean) => void;
   setMetadata: (data: { name?: string; title?: string; description?: string }) => void;
   setActiveFile: (fileId: string | null) => void;
   setPreviewFile: (fileId: string | null) => void;
@@ -141,6 +143,7 @@ const initialState = {
   pendingMediaFile: null,
   pendingMediaLocalUrl: null,
   isDirty: false,
+  validationDialogOpen: false,
 };
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -259,6 +262,8 @@ export const useEditorStore = create<EditorState>()((set) => ({
 
   setIsDirty: (dirty) => set({ isDirty: dirty }),
 
+  setValidationDialogOpen: (open) => set({ validationDialogOpen: open }),
+
   setPreviewEnabled: (enabled) =>
     set(() => ({
       previewEnabled: enabled,
@@ -368,6 +373,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
         pendingMediaFile: null,
         pendingMediaLocalUrl: null,
         isDirty: false,
+        validationDialogOpen: false,
       };
     });
   },
