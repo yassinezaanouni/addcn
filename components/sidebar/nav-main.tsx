@@ -45,15 +45,13 @@ export function NavMain({ items }: NavMainProps) {
               return (
                 <SidebarMenuItem key={item.title}>
                   <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <SidebarMenuButton disabled className="cursor-not-allowed opacity-50">
-                          <item.icon />
-                          <span>{item.title}</span>
-                          <IconLock className="ml-auto size-4" />
-                        </SidebarMenuButton>
-                      }
-                    />
+                    <TooltipTrigger render={<span className="w-full" />}>
+                      <SidebarMenuButton disabled className="pointer-events-none opacity-50">
+                        <item.icon />
+                        <span>{item.title}</span>
+                        <IconLock className="ml-auto size-4" />
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
                     <TooltipContent side="right">
                       {item.tooltip}
                     </TooltipContent>
