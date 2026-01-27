@@ -133,8 +133,9 @@ export function UsernameForm() {
     }
   };
 
+  // Don't show "taken" error while submitting (race condition with availability check)
   const errorMessage =
-    clientError || (state === "taken" && availabilityResult?.reason);
+    clientError || (!isPending && state === "taken" && availabilityResult?.reason);
   const displayUsername = username || "username";
 
   return (
