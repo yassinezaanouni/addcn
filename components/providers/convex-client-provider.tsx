@@ -1,7 +1,11 @@
 "use client";
 
-import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ReactNode } from "react";
+import { ConvexReactClient } from "convex/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ConvexQueryClient } from "@convex-dev/react-query";
+import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { authClient } from "@/lib/auth-client";
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 
@@ -14,6 +18,34 @@ if (!convexUrl) {
 
 const convex = new ConvexReactClient(convexUrl);
 
-export function ConvexClientProvider({ children }: { children: ReactNode }) {
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+// TanStack Query + Convex integration
+const convexQueryClient = new ConvexQueryClient(convex);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      queryKeyHashFn: convexQueryClient.hashFn(),
+      queryFn: convexQueryClient.queryFn(),
+    },
+  },
+});
+convexQueryClient.connect(queryClient);
+
+export function ConvexClientProvider({
+  children,
+  initialToken,
+}: {
+  children: ReactNode;
+  initialToken?: string | null;
+}) {
+  return (
+    <ConvexBetterAuthProvider
+      client={convex}
+      authClient={authClient}
+      initialToken={initialToken}
+    >
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    </ConvexBetterAuthProvider>
+  );
 }

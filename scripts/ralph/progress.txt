@@ -3,5 +3,533 @@
 # Branch: ralph/multi-user-namespaces
 # Started: 2026-01-17
 
+## Codebase Patterns
+- Validators are kept in `convex/validators.ts` and imported into schema
+- Use `v.optional()` for nullable fields in Convex schema
+- Compound indexes follow pattern `by_field1_field2`
+- Timestamps use `v.number()` storing `Date.now()` values
+- Organization membership roles: owner, admin, member
+- Utility functions go in `convex/lib/` directory
+- Use `as const` for readonly arrays to enable type inference
+- Import QueryCtx/MutationCtx from "../_generated/server" for typing
+- Use Doc<"tableName"> from "../_generated/dataModel" for document types
+- Discriminated unions with `type` field for multi-variant patterns
+- Permission helpers in `convex/lib/permissions.ts` - use {allowed, reason} for error messages
+- Better Auth setup: convex.config.ts (defineApp + app.use), auth.config.ts (AuthConfig with providers)
+- Better Auth server: auth.ts exports authComponent (createClient), createAuth function, getCurrentUser query
+
+- HTTP router in convex/http.ts - use httpRouter() and export default http
+- authComponent.registerRoutes(http, createAuth, { cors: true }) for Better Auth route registration
+- Auth client: lib/auth-client.ts with createAuthClient from better-auth/react + convexClient plugin
+- Auth server: lib/auth-server.ts with convexBetterAuthNextJs from @convex-dev/better-auth/nextjs
+- Auth API route: app/api/auth/[...all]/route.ts exports GET, POST from handler
+- ConvexClientProvider: components/providers/convex-client-provider.tsx with ConvexBetterAuthProvider + QueryClientProvider
+- TanStack Query setup: ConvexQueryClient connects to QueryClient via queryKeyHashFn and queryFn
+- Better Auth to app user linking: authComponent.getAuthUser(ctx)._id → users.externalId
+- Use safeGetAuthUser for nullable auth checks, getAuthUser when auth is required (throws)
+- Auth pages: app/(auth)/ route group, use authClient.signIn.social for OAuth buttons
+- Use @tabler/icons-react for icons (IconBrandGithub, IconBrandGoogle, etc.)
+- TanStack Query patterns: useQuery(convexQuery(api.x.y, {})), useMutation with useConvexMutation(api.x.y)
+- Client-side validation mirrors server validation for UX (validate before submit)
+- Use internalQuery/internalMutation for functions only callable by HTTP actions (not exposed to client)
+- HTTP actions: use httpAction from "_generated/server", ctx.runQuery/runMutation for internal calls
+- HTTP route params: {param} syntax but parse manually from request.url (not auto-injected)
+- shadcn components use base-ui instead of radix-ui - use `render` prop instead of `asChild` for composition
+- Dashboard routes: app/(dashboard)/ group with /dashboard/* paths, separate from marketing at /
+- Auth state in client components: authClient.useSession() for session, useQuery(convexQuery(api.users.getMe, {})) for user profile
+
+---
+
+## 2026-01-17 - US-008
+- Created convex/http.ts with HTTP router for auth and registry endpoints
+- Imported authComponent and createAuth from ./auth
+- Registered Better Auth routes with authComponent.registerRoutes(http, createAuth, { cors: true })
+- Added REGISTRY_CORS_HEADERS constant for future registry endpoints
+- Files changed: convex/http.ts (new), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Use httpRouter() from "convex/server" to create HTTP router
+  - authComponent.registerRoutes takes http, createAuth function, and options object
+  - { cors: true } option enables CORS for client-side framework compatibility
+  - CORS headers constant defined with "as const" for strict typing
+---
+
+## 2026-01-17 - US-002
+- Created validation helpers in convex/lib/validation.ts
+- Added RESERVED_NAMES constant with common reserved slugs (admin, api, app, etc.)
+- Implemented isValidUsername with validation rules: 3-39 chars, lowercase alphanumeric + hyphens, no consecutive hyphens, no start/end hyphen, not reserved
+- Exported isValidOrgSlug as alias since org slugs follow same rules
+- Files changed: convex/lib/validation.ts (new)
+- **Learnings for future iterations:**
+  - Use `as const` for constant arrays to get literal types for includes() check
+  - Validation functions are pure TypeScript, no Convex-specific code needed
+---
+
+## 2026-01-17 - US-001
+- Implemented full Convex schema with users, organizations, orgMembers, invites tables
+- Updated components table with multi-user fields (userId, orgId, createdBy, isPublic, downloads, timestamps)
+- Files changed: convex/schema.ts, convex/components.ts
+- **Learnings for future iterations:**
+  - componentFileValidator already exists in validators.ts - no need to recreate
+  - When schema changes, existing mutations may need updates to pass typecheck
+  - Both userId and orgId are optional on components (one should be set based on owner type)
+---
+
+## 2026-01-17 - US-003
+- Created namespace resolution helper in convex/lib/namespace.ts
+- Defined NamespaceOwner discriminated union type with "user" | "org" variants
+- Implemented resolveNamespace function that takes QueryCtx and namespace string
+- Function strips @ prefix, checks users table first (by_username index), then organizations (by_slug index)
+- Files changed: convex/lib/namespace.ts (new)
+- **Learnings for future iterations:**
+  - Import QueryCtx from "../_generated/server" for typing Convex database context
+  - Use Doc<"tableName"> for document types from dataModel
+  - Discriminated unions with `type` field work well for multi-owner patterns
+---
+
+## 2026-01-17 - US-004
+- Created permissions helper in convex/lib/permissions.ts
+- Implemented canAccessComponent: checks isPublic, personal owner match, or org membership
+- Implemented canEditComponent: personal owner or org admin/owner role
+- Implemented canPublishComponent: delegates to canEditComponent
+- Implemented canTransferComponent: returns {allowed, reason} for better error handling
+- Helper getOrgMembership extracted for reuse
+- Files changed: convex/lib/permissions.ts (new)
+- **Learnings for future iterations:**
+  - Return structured objects {allowed, reason} for permission checks that need error messages
+  - Extract shared DB queries into private helper functions
+  - Use compound index by_orgId_userId for efficient membership lookups
+---
+
+## 2026-01-17 - US-005
+- Installed Better Auth dependencies for Convex integration
+- Ran: pnpm add convex@latest @convex-dev/better-auth
+- Ran: pnpm add better-auth@1.4.9 --save-exact
+- Ran: pnpm add @tanstack/react-query @convex-dev/react-query
+- Verified packages in package.json: @convex-dev/better-auth, better-auth@1.4.9, @tanstack/react-query, @convex-dev/react-query
+- Files changed: package.json, pnpm-lock.yaml
+- **Learnings for future iterations:**
+  - better-call peer dependency warning about zod@^4.0.0 can be ignored (works with zod 3.x)
+  - Use --save-exact flag for pinning specific versions
+---
+
+## 2026-01-17 - US-006
+- Created convex/convex.config.ts to register Better Auth Convex component
+- Used defineApp() and app.use(betterAuth) pattern from @convex-dev/better-auth
+- Created convex/auth.config.ts with getAuthConfigProvider for Convex auth integration
+- Files changed: convex/convex.config.ts (new), convex/auth.config.ts (new)
+- **Learnings for future iterations:**
+  - Better Auth Convex component uses defineApp/app.use pattern in convex.config.ts
+  - auth.config.ts exports AuthConfig with providers array containing getAuthConfigProvider()
+  - The _generated/api.d.ts file auto-updates with betterAuth component types
+---
+
+## 2026-01-17 - US-007
+- Created convex/auth.ts with Better Auth server instance
+- Configured authComponent using createClient<DataModel>(components.betterAuth)
+- Implemented createAuth function with:
+  - baseURL from SITE_URL env var
+  - database adapter from authComponent.adapter(ctx)
+  - emailAndPassword enabled (no email verification required)
+  - GitHub socialProvider with GITHUB_CLIENT_ID/SECRET env vars
+  - Google socialProvider with GOOGLE_CLIENT_ID/SECRET env vars
+  - convex plugin with authConfig for Convex compatibility
+- Exported getCurrentUser query using authComponent.getAuthUser(ctx)
+- Files changed: convex/auth.ts (new)
+- **Learnings for future iterations:**
+  - Use `better-auth/minimal` import for smaller bundle size
+  - GenericCtx type comes from @convex-dev/better-auth
+  - authComponent.getAuthUser(ctx) returns the current user from Better Auth session
+  - Environment variables needed: SITE_URL, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+---
+
+## 2026-01-17 - US-009
+- Created lib/auth-client.ts for Better Auth frontend client
+- Used createAuthClient from "better-auth/react"
+- Added convexClient plugin from "@convex-dev/better-auth/client/plugins"
+- Configured baseURL from NEXT_PUBLIC_SITE_URL env var
+- Exported authClient for use in React components
+- Files changed: lib/auth-client.ts (new)
+- **Learnings for future iterations:**
+  - Use "use client" directive at top of file since it uses React hooks
+  - convexClient() plugin enables Convex-specific auth integration on client side
+  - baseURL uses NEXT_PUBLIC_ prefix for client-side access
+---
+
+## 2026-01-17 - US-010
+- Created lib/auth-server.ts with Next.js server auth utilities
+- Used convexBetterAuthNextJs from "@convex-dev/better-auth/nextjs"
+- Exported handler (for API route), preloadAuthQuery (for RSC preloading), isAuthenticated, getToken
+- Exported fetchAuthQuery, fetchAuthMutation, fetchAuthAction for server-side Convex operations
+- Configured with NEXT_PUBLIC_CONVEX_URL and NEXT_PUBLIC_CONVEX_SITE_URL env vars
+- Files changed: lib/auth-server.ts (new)
+- **Learnings for future iterations:**
+  - convexBetterAuthNextJs provides all server-side auth utilities for Next.js
+  - handler is used in API routes for auth endpoints (GET, POST)
+  - preloadAuthQuery is for RSC data preloading with auth
+  - fetchAuthQuery/Mutation/Action are for server-side Convex calls with auth token
+---
+
+## 2026-01-17 - US-011
+- Created app/api/auth/[...all]/route.ts for Next.js auth catch-all route
+- Imported handler from lib/auth-server
+- Exported GET and POST handlers from the imported handler
+- Files changed: app/api/auth/[...all]/route.ts (new)
+- **Learnings for future iterations:**
+  - Next.js catch-all routes use [...param] syntax in directory names
+  - handler from lib/auth-server provides both GET and POST handlers
+  - Simple destructuring export: `export const { GET, POST } = handler`
+---
+
+## 2026-01-17 - US-012
+- Updated ConvexClientProvider at components/providers/convex-client-provider.tsx
+- Added ConvexQueryClient and QueryClient for TanStack Query integration
+- Connected convexQueryClient to queryClient with convexQueryClient.connect(queryClient)
+- Wrapped children with ConvexBetterAuthProvider (from @convex-dev/better-auth/react) and QueryClientProvider
+- Added initialToken prop for SSR auth token hydration
+- Imported authClient from lib/auth-client for Better Auth integration
+- Files changed: components/providers/convex-client-provider.tsx (modified)
+- **Learnings for future iterations:**
+  - ConvexQueryClient takes convex client, then connect() to QueryClient
+  - QueryClient needs queryKeyHashFn and queryFn from convexQueryClient
+  - ConvexBetterAuthProvider wraps QueryClientProvider (auth outside, queries inside)
+  - initialToken prop allows passing SSR token for hydration
+---
+
+## 2026-01-17 - US-013
+- Created convex/users.ts with user CRUD functions
+- Implemented getMe query: looks up users table by externalId matching Better Auth user._id
+- Implemented updateMe mutation: validates username format, checks for conflicts with existing users and orgs
+- Implemented setUsername mutation: for onboarding, creates new profile or updates existing one
+- Implemented getByUsername query: returns public profile info only (_id, username, avatarUrl, createdAt)
+- Files changed: convex/users.ts (new), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Better Auth user `_id` maps to our users table `externalId` field
+  - Use authComponent.safeGetAuthUser(ctx) for nullable user, getAuthUser(ctx) throws if not authenticated
+  - Check both users table (by_username) and organizations table (by_slug) for username conflicts
+  - Better Auth user has `image` field (nullable string), map to our `avatarUrl` with ?? undefined
+---
+
+## 2026-01-17 - US-014
+- Created login page UI at app/(auth)/login/page.tsx
+- Created LoginForm component at app/(auth)/login/_components/login-form.tsx
+- Added GitHub OAuth button using authClient.signIn.social with provider: "github"
+- Added Google OAuth button using authClient.signIn.social with provider: "google"
+- Used shadcn Card component for layout, Button with outline variant for OAuth buttons
+- Used Tabler icons (IconBrandGithub, IconBrandGoogle) for button icons
+- callbackURL set to "/onboarding" for post-OAuth redirect
+- Files changed: app/(auth)/login/page.tsx (new), app/(auth)/login/_components/login-form.tsx (new)
+- **Learnings for future iterations:**
+  - Use @tabler/icons-react for icons (already installed in project)
+  - authClient.signIn.social takes { provider, callbackURL } object
+  - Use useState for loading state management with provider type to show correct loading state
+  - Auth route groups use (auth) folder naming convention
+---
+
+## 2026-01-17 - US-015
+- Created onboarding page at app/(auth)/onboarding/page.tsx
+- Created UsernameForm component at app/(auth)/onboarding/_components/username-form.tsx
+- Used useQuery with convexQuery(api.users.getMe, {}) to check if user has username
+- useEffect redirects to "/" if user already has username
+- Client-side validation mirrors server rules: 3-39 chars, lowercase alphanumeric + hyphens, no consecutive hyphens
+- useMutation with useConvexMutation(api.users.setUsername) for form submission
+- Redirects to "/" on successful username set
+- Added shadcn Label component (was missing from UI library)
+- Files changed: app/(auth)/onboarding/page.tsx (new), app/(auth)/onboarding/_components/username-form.tsx (new), components/ui/label.tsx (new)
+- **Learnings for future iterations:**
+  - Use convexQuery(api.x.y, {}) wrapper for TanStack Query integration with Convex
+  - useMutation paired with useConvexMutation for mutations
+  - Client-side validation should mirror server-side for better UX
+  - Check for missing shadcn components and add with `pnpm dlx shadcn@latest add <component>`
+---
+
+## 2026-01-17 - US-016
+- Updated convex/components.ts with full CRUD functions and permission checks
+- Implemented getMyComponents query: fetches personal components + components from orgs user is member of
+- Implemented create mutation: handles orgId (org component) vs no orgId (personal component), checks name conflicts
+- Implemented get query: checks access permissions via canAccessComponent helper
+- Implemented update mutation: requires canEditComponent permission, validates name conflicts on rename
+- Implemented remove mutation: requires canEditComponent permission
+- Implemented transfer mutation: uses canTransferComponent helper, moves personal component to org
+- Kept legacy list query for backwards compatibility (returns public components only)
+- Also kept getByName and search queries with access permission checks
+- Files changed: convex/components.ts (modified)
+- **Learnings for future iterations:**
+  - Use QueryCtx | MutationCtx union type for helper functions that work in both contexts
+  - Helper functions getCurrentUser and requireCurrentUser pattern for auth-aware functions
+  - When transferring component, set userId to undefined and orgId to target org
+  - Name conflict checks use compound indexes (by_userId_name, by_orgId_name)
+---
+
+## 2026-01-17 - US-017
+- Created convex/registry.ts with internal functions for HTTP action endpoint
+- Implemented getPublicComponent internalQuery: uses resolveNamespace to find user/org owner, queries components by userId_name or orgId_name index, only returns public components
+- Implemented incrementDownloads internalMutation: increments the downloads field on a component
+- Created componentToRegistryJson helper function: converts Convex Doc<"components"> to shadcn registry JSON format
+- File type mapping logic: components/ui/ → registry:ui, hooks/ → registry:hook, lib/utils/ → registry:lib, .css → registry:style, custom → registry:file with target
+- Files changed: convex/registry.ts (new), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Use internalQuery/internalMutation from "_generated/server" for functions only called by HTTP actions
+  - Export helper functions (like componentToRegistryJson) as regular functions for use in HTTP actions
+  - When converting to registry JSON, use getFileName helper to extract filename from path for standard types
+  - Only registry:file type needs target field (uses ~/ prefix for project root)
+---
+
+## 2026-01-17 - US-018
+- Added registry HTTP action endpoint at /r/{namespace}/{name}.json
+- Used httpAction from "_generated/server" to create the handler
+- Parses namespace and name from URL path using split and decodeURIComponent
+- Calls internal.registry.getPublicComponent to fetch component
+- Returns 404 JSON response with error message if component not found
+- Fires incrementDownloads mutation without await (fire and forget)
+- Returns registry JSON with REGISTRY_CORS_HEADERS
+- Added OPTIONS handler for CORS preflight with 204 No Content response
+- Files changed: convex/http.ts (modified)
+- **Learnings for future iterations:**
+  - Use httpAction from "_generated/server" for HTTP route handlers
+  - Import internal from "_generated/api" for internal function references
+  - ctx.runQuery/runMutation for calling Convex functions from HTTP actions
+  - Don't await fire-and-forget mutations (like download counting)
+  - URL path parameters in http.route use {param} syntax but aren't auto-parsed - parse manually from request.url
+  - Add Content-Type: application/json to CORS headers for JSON endpoints
+---
+
+## 2026-01-17 - US-019
+- Created dashboard layout at app/(dashboard)/layout.tsx
+- Added sidebar with navigation links: Dashboard, Components, Organizations, Settings
+- Implemented header with user avatar dropdown menu (profile info, settings link, sign out button)
+- Used authClient.useSession() for auth state and useQuery(convexQuery(api.users.getMe, {})) for user profile
+- Added loading state with skeleton components
+- Redirects to /login if not authenticated, to /onboarding if no username set
+- Added shadcn avatar and dropdown-menu components
+- Fixed base-ui dropdown-menu component to support asChild via render prop pattern
+- Dashboard accessible at /dashboard, not / (marketing page at /)
+- Files changed: app/(dashboard)/layout.tsx (new), app/(dashboard)/dashboard/page.tsx (new), components/ui/avatar.tsx (new), components/ui/dropdown-menu.tsx (new)
+- **Learnings for future iterations:**
+  - shadcn components use base-ui, not radix-ui - asChild doesn't exist, use render prop
+  - To implement asChild pattern in base-ui: add asChild prop, use render={asChild ? children : undefined}
+  - Route groups can conflict if both have page.tsx at root - use nested paths like /dashboard
+  - authClient.useSession() returns { data: session, isPending } for session state
+  - Combine session check with user profile query for proper auth + onboarding flow
+---
+
+## 2026-01-17 - US-020
+- Created dashboard component list UI at app/(dashboard)/dashboard/page.tsx
+- Created ComponentList component at app/(dashboard)/dashboard/_components/component-list.tsx
+- Used useQuery with convexQuery(api.components.getMyComponents, {}) for fetching user's components
+- Implemented ComponentCardSkeleton and ComponentListSkeleton for loading state
+- Added empty state with Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription components
+- Component cards display title, description (line-clamp-2), public/private badge, and download count
+- Used IconPackage for empty state icon and IconDownload for download count
+- Files changed: app/(dashboard)/dashboard/page.tsx (modified), app/(dashboard)/dashboard/_components/component-list.tsx (new)
+- **Learnings for future iterations:**
+  - Use Card with size="sm" prop for compact card layouts
+  - Badge variant="default" for public, variant="secondary" for private visibility
+  - line-clamp-2 class truncates text to 2 lines with ellipsis
+  - Empty component is a div container, compose with EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription
+---
+
+## 2026-01-17 - US-021
+- Added publish/unpublish toggle to component cards with eye/eye-off icons
+- Created confirmation dialog when publishing that shows the registry install URL
+- Implemented update mutation call with isPublic field toggle
+- Added sonner toast notifications for success/error feedback
+- Badge dynamically updates to reflect current visibility state (Public/Private)
+- Installed sonner package and created components/ui/sonner.tsx wrapper
+- Added Toaster to app/layout.tsx for toast notifications
+- Files changed: app/(dashboard)/dashboard/_components/component-list.tsx (modified), app/layout.tsx (modified), components/ui/sonner.tsx (new), package.json, pnpm-lock.yaml
+- **Learnings for future iterations:**
+  - Use sonner for toast notifications: install with `pnpm add sonner`, create wrapper component, add Toaster to root layout
+  - TanStack Query mutations: call useConvexMutation outside useMutation config, use mutate with inline onSuccess callback
+  - Dialog component from base-ui uses open/onOpenChange props for controlled state
+  - Build registry URL with NEXT_PUBLIC_CONVEX_SITE_URL environment variable
+---
+
+## 2026-01-17 - US-022
+- Created convex/organizations.ts with organization CRUD functions
+- Implemented getMyOrgs query: fetches user memberships via by_userId index, returns orgs with role attached
+- Implemented create mutation: validates slug with isValidOrgSlug, checks conflicts with orgs (by_slug) and users (by_username), inserts org and adds creator as owner in orgMembers
+- Implemented getBySlug query: simple public lookup by slug index
+- Implemented remove mutation: verifies owner role via by_orgId_userId index, deletes all members, invites, and org
+- Used helper functions safeGetCurrentUser/requireCurrentUser pattern from existing codebase
+- Files changed: convex/organizations.ts (new), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Use Promise.all for parallel org fetches when mapping memberships to full org details
+  - Type filter with type predicate `(org): org is Doc<"organizations"> & { role: ... }` for nulls
+  - Cascade delete pattern: delete related records (members, invites) before parent record
+  - Owner check pattern: query membership, check `role !== "owner"` throws error
+---
+
+## 2026-01-17 - US-023
+- Created organization list page at app/(dashboard)/dashboard/orgs/page.tsx
+- Created OrgList component at app/(dashboard)/dashboard/orgs/_components/org-list.tsx
+- Used useQuery with convexQuery(api.organizations.getMyOrgs, {}) for fetching user's organizations
+- Implemented OrgCardSkeleton and OrgListSkeleton for loading state
+- Added empty state with Empty component and IconBuilding icon
+- OrgCard displays org avatar, name, slug (@slug), and role badge (owner/admin/member)
+- Role badge variants: owner=default, admin=secondary, member=outline
+- Cards link to /dashboard/orgs/{slug} for org detail pages
+- Create Organization button links to /dashboard/orgs/new
+- Files changed: app/(dashboard)/dashboard/orgs/page.tsx (new), app/(dashboard)/dashboard/orgs/_components/org-list.tsx (new)
+- **Learnings for future iterations:**
+  - Dashboard pages use /dashboard/* paths under app/(dashboard)/dashboard/ directory
+  - Role badge variant pattern: getRoleBadgeVariant helper function for consistent styling
+  - Avatar component works with rounded-lg for non-circular org avatars
+  - OrgWithRole type extends Doc<"organizations"> with role field for typed org cards
+---
+
+## 2026-01-17 - US-024
+- Created organization creation page at app/(dashboard)/dashboard/orgs/new/page.tsx
+- Form with name and slug input fields using shadcn Card, Input, Label, Button components
+- Implemented toKebabCase function for auto-generating slug from name
+- Slug auto-updates as user types name (unless manually edited, tracked via slugManuallyEdited state)
+- Client-side validateSlug function mirrors server-side validation rules
+- Uses useMutation with useConvexMutation(api.organizations.create) for form submission
+- Redirects to /dashboard/orgs/{slug} on success with toast notification
+- Cancel button uses router.back() to return to previous page
+- Files changed: app/(dashboard)/dashboard/orgs/new/page.tsx (new)
+- **Learnings for future iterations:**
+  - Use useEffect with dependency on name + slugManuallyEdited flag for auto-slug generation
+  - Track manual edits with boolean state to stop auto-generation when user customizes slug
+  - Use existing slug state in onSuccess callback instead of trying to infer type from mutation return
+  - toKebabCase pattern: lowercase → remove invalid chars → spaces to hyphens → collapse multiple hyphens → trim hyphens
+---
+
+## 2026-01-17 - US-025
+- Implemented member management functions in convex/organizations.ts
+- Added getMembers query: fetches org members with user details (username, email, avatarUrl)
+- Added getMembership helper function for reusable membership lookups
+- Implemented addMember mutation: admin/owner only, validates target user exists, prevents duplicate membership
+- Implemented removeMember mutation: admin/owner only, prevents removing last owner, only owners can remove admins/owners
+- Implemented updateMemberRole mutation: owner only, prevents demoting last owner
+- Files changed: convex/organizations.ts (modified), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Extract getMembership helper for reusable by_orgId_userId index queries
+  - Permission hierarchy: owner > admin > member - admins can't remove admins, only owners can
+  - Always count owners before removing/demoting to prevent orphaned orgs
+  - Return structured objects from member queries: include _id, role, joinedAt, invitedBy + nested user object
+---
+
+## 2026-01-17 - US-026
+- Implemented invite functions in convex/organizations.ts
+- Added generateInviteToken helper: generates 32-char alphanumeric token
+- Implemented createInvite mutation: admin/owner only, checks for existing pending invites, checks if user already member, sets 7-day expiry
+- Implemented getInviteByToken query: returns invite with org and inviter details, null if expired or not found
+- Implemented acceptInvite mutation: validates token, checks expiry, creates membership with invite.role, deletes invite
+- Implemented cancelInvite mutation: admin/owner only, deletes the invite
+- Implemented getPendingInvites query: returns all non-expired invites for an org (admin/owner only)
+- Files changed: convex/organizations.ts (modified), convex/_generated/api.d.ts (auto-updated)
+- **Learnings for future iterations:**
+  - Use simple alphanumeric token generation (32 chars) - no crypto API needed for invite tokens
+  - 7-day expiry: Date.now() + 7 * 24 * 60 * 60 * 1000 milliseconds
+  - Always check both pending invite existence AND existing membership before creating invite
+  - Query returns null for expired invites (soft expiry) rather than deleting them
+  - getPendingInvites useful for org settings page to show/cancel invites
+---
+
+## 2026-01-17 - US-027
+- Created org settings page at app/(dashboard)/dashboard/orgs/[slug]/settings/page.tsx
+- Created MemberList component with role badges, remove button with confirmation, role change dialog (owner only)
+- Created InviteForm component with email input and role dropdown (Select component)
+- Created PendingInvites component with expiry countdown and cancel button
+- Also created org detail page at app/(dashboard)/dashboard/orgs/[slug]/page.tsx with settings link
+- Added shadcn Select component for role dropdown
+- Files changed: app/(dashboard)/dashboard/orgs/[slug]/page.tsx (new), app/(dashboard)/dashboard/orgs/[slug]/settings/page.tsx (new), app/(dashboard)/dashboard/orgs/[slug]/settings/_components/member-list.tsx (new), app/(dashboard)/dashboard/orgs/[slug]/settings/_components/invite-form.tsx (new), app/(dashboard)/dashboard/orgs/[slug]/settings/_components/pending-invites.tsx (new), components/ui/select.tsx (new)
+- **Learnings for future iterations:**
+  - Settings pages should check user role before rendering (canAccessSettings = admin || owner)
+  - Use formatTimeRemaining helper for human-readable countdown (days/hours remaining)
+  - Sort members by role hierarchy (owner, admin, member) for better UX
+  - Permission checks for UI actions: canRemove depends on current user role vs target role
+  - Only owners can change roles, admins can only remove members
+---
+
+## 2026-01-17 - US-028
+- Created invite acceptance page at app/invite/[token]/page.tsx
+- Displays invite details: org name/avatar, inviter username, role badge
+- Handles auth states: redirects to login if not authenticated, with callbackUrl for return
+- Updated login form to support callbackUrl query parameter for post-auth redirect
+- Accept invite functionality with success toast and redirect to org detail page
+- Error UI for invalid/expired tokens with "Go to Dashboard" button
+- Loading state with skeleton components
+- Files changed: app/invite/[token]/page.tsx (new), app/(auth)/login/_components/login-form.tsx (modified)
+- **Learnings for future iterations:**
+  - Use useSearchParams() from next/navigation to read query parameters in client components
+  - When mutation result type is unknown, use existing data from query instead of relying on mutation return type
+  - Escape apostrophes in JSX with &apos; entity to avoid ESLint react/no-unescaped-entities error
+  - Pattern for auth redirect with callback: encode return URL and pass as callbackUrl query param
+---
+
+## 2026-01-17 - US-029
+- Created public profile page at app/[username]/page.tsx
+- Added getPublicByUserId query to convex/components.ts for fetching user's public components
+- Displays user avatar, username with @ prefix, and join date
+- Lists public components in a grid with title, description, public badge, and download count
+- Shows "User not found" empty state for invalid usernames using Empty component
+- Component cards link to /{username}/{component} for detail page (US-030)
+- Uses TanStack Query with conditional query pattern for components (only fetch when user exists)
+- Files changed: app/[username]/page.tsx (new), convex/components.ts (modified)
+- **Learnings for future iterations:**
+  - For conditional queries with Convex + TanStack Query, use pattern: `useQuery({ ...convexQuery(api.x, args), enabled: !!condition })`
+  - When args depend on a previous query result, use ternary with "skip" as second arg: `convexQuery(api.x, userId ? { userId } : "skip")`
+  - Public pages don't need auth state but should handle loading/empty states gracefully
+  - Dynamic routes at app root level like [username] work alongside route groups
+---
+
+## 2026-01-17 - US-030
+- Created component detail page at app/[username]/[component]/page.tsx
+- Added getByNamespaceAndName query to convex/components.ts (uses resolveNamespace for user/org lookup)
+- Page displays: breadcrumb navigation, title, description, public badge, download count, dependencies
+- Install command section with copy button using navigator.clipboard API
+- Dependencies section shows npm packages, Registry Dependencies section shows shadcn components
+- File preview with tabbed interface showing each file with syntax highlighting
+- Added CopyButton component with copied state feedback
+- Added shadcn Tabs component for file navigation
+- Shows NotFound empty state for missing or private components
+- Files changed: app/[username]/[component]/page.tsx (new), convex/components.ts (modified), components/ui/tabs.tsx (new)
+- **Learnings for future iterations:**
+  - Nested dynamic routes use [param] folders: app/[username]/[component]/page.tsx
+  - Use useState for copy feedback with setTimeout to reset state
+  - Tabs component works well for file preview - set value/onValueChange for controlled tabs
+  - CopyButton pattern: async clipboard.writeText, set copied true, setTimeout to reset
+  - getByNamespaceAndName query pattern: resolve namespace first, then query by appropriate index
+---
+
+## 2026-01-17 - US-031
+- Created user settings page with profile update form
+- Main settings page at app/(dashboard)/dashboard/settings/page.tsx redirects to profile
+- Profile page at app/(dashboard)/dashboard/settings/profile/page.tsx with:
+  - Avatar preview with live update as URL changes
+  - Username field with @ prefix display and client-side validation
+  - Avatar URL field for custom avatar images
+  - hasChanges tracking to prevent unnecessary submissions
+  - Success toast on profile update
+- Uses TanStack Query with convexQuery for fetching user data
+- Uses useMutation with useConvexMutation for updateMe mutation
+- Files changed: app/(dashboard)/dashboard/settings/page.tsx (new), app/(dashboard)/dashboard/settings/profile/page.tsx (new)
+- **Learnings for future iterations:**
+  - Use useEffect to populate form fields from query data
+  - Track hasChanges by comparing current form values to original data
+  - Use toast.info for "no changes" feedback, toast.success for successful updates
+  - Avatar preview: show form value if changed, fallback to user data from query
+---
+
+## 2026-01-17 - US-032
+- Created OrgSwitcher component at components/org-switcher.tsx
+- Component shows dropdown with "Personal" and list of user's orgs from getMyOrgs query
+- Context stored in URL query parameter (?context=personal or ?context=orgId)
+- Added getMyComponentsFiltered query to convex/components.ts
+  - Accepts optional context param: "personal" | Id<"organizations">
+  - Filters components by owner type based on context
+  - If no context, returns all components (personal + orgs)
+- Updated ComponentList to use context from URL and filtered query
+- Updated ComponentCard to accept namespace prop (username or org slug)
+- Added getNamespace helper to determine correct namespace for each component
+- OrgSwitcher added to dashboard header (visible on desktop, hidden on mobile)
+- Files changed: components/org-switcher.tsx (new), convex/components.ts (modified), app/(dashboard)/layout.tsx (modified), app/(dashboard)/dashboard/_components/component-list.tsx (modified)
+- **Learnings for future iterations:**
+  - useSearchParams() for reading URL query params in client components
+  - Store context in URL for shareable state and browser history support
+  - OrgContext type: "personal" | Id<"organizations"> for type-safe context handling
+  - When querying Convex with union types, TypeScript requires explicit type assertion for Id types
+  - Component namespace comes from component.userId → user.username or component.orgId → org.slug
 ---
 

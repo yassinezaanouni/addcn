@@ -1,0 +1,239 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { api } from "@/convex/_generated/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
+
+const USERNAME_RULES = {
+  minLength: 3,
+  maxLength: 39,
+  pattern: /^[a-z0-9-]+$/,
+};
+
+function validateUsername(username: string): string | null {
+  if (username.length < USERNAME_RULES.minLength) {
+    return `Username must be at least ${USERNAME_RULES.minLength} characters`;
+  }
+  if (username.length > USERNAME_RULES.maxLength) {
+    return `Username must be at most ${USERNAME_RULES.maxLength} characters`;
+  }
+  if (!USERNAME_RULES.pattern.test(username)) {
+    return "Username can only contain lowercase letters, numbers, and hyphens";
+  }
+  if (username.startsWith("-") || username.endsWith("-")) {
+    return "Username cannot start or end with a hyphen";
+  }
+  if (username.includes("--")) {
+    return "Username cannot contain consecutive hyphens";
+  }
+  return null;
+}
+
+function ProfileFormSkeleton() {
+  return (
+    <Card className="max-w-md">
+      <CardHeader>
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-4 w-48" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <Skeleton className="h-10 w-24" />
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function ProfileSettingsPage() {
+  const { data: user, isPending } = useQuery(convexQuery(api.users.getMe, {}));
+
+  const [username, setUsername] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  // Populate form with user data when loaded
+  useEffect(() => {
+    if (user) {
+      setUsername(user.username);
+      setAvatarUrl(user.avatarUrl ?? "");
+    }
+  }, [user]);
+
+  const updateProfileMutationFn = useConvexMutation(api.users.updateMe);
+  const { mutate: updateProfile, isPending: isUpdating } = useMutation({
+    mutationFn: updateProfileMutationFn,
+    onSuccess: () => {
+      toast.success("Profile updated successfully");
+    },
+    onError: (err) => {
+      setError(err.message || "Failed to update profile");
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    // Validate username
+    const validationError = validateUsername(username);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    // Build updates object - only include changed fields
+    const updates: { username?: string; avatarUrl?: string } = {};
+
+    if (username !== user?.username) {
+      updates.username = username;
+    }
+
+    const newAvatarUrl = avatarUrl.trim() || undefined;
+    if (newAvatarUrl !== user?.avatarUrl) {
+      updates.avatarUrl = newAvatarUrl;
+    }
+
+    // Only submit if there are changes
+    if (Object.keys(updates).length === 0) {
+      toast.info("No changes to save");
+      return;
+    }
+
+    updateProfile(updates);
+  };
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toLowerCase();
+    setUsername(value);
+    setError(null);
+  };
+
+  const handleAvatarUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAvatarUrl(e.target.value);
+    setError(null);
+  };
+
+  if (isPending) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Profile settings</h1>
+          <p className="text-muted-foreground">
+            Manage your account settings and profile information.
+          </p>
+        </div>
+        <ProfileFormSkeleton />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const hasChanges =
+    username !== user.username ||
+    (avatarUrl.trim() || undefined) !== user.avatarUrl;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Profile settings</h1>
+        <p className="text-muted-foreground">
+          Manage your account settings and profile information.
+        </p>
+      </div>
+
+      <Card className="max-w-md">
+        <CardHeader>
+          <CardTitle>Profile</CardTitle>
+          <CardDescription>
+            Update your personal information and avatar.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Avatar preview */}
+            <div className="flex items-center gap-4">
+              <Avatar className="size-16">
+                <AvatarImage
+                  src={avatarUrl || user.avatarUrl}
+                  alt={username || user.username}
+                />
+                <AvatarFallback className="text-lg">
+                  {(username || user.username).charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">@{username || user.username}</p>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
+              </div>
+            </div>
+
+            {/* Username field */}
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">@</span>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="my-username"
+                  value={username}
+                  onChange={handleUsernameChange}
+                  disabled={isUpdating}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                3-39 characters, lowercase letters, numbers, and hyphens only
+              </p>
+            </div>
+
+            {/* Avatar URL field */}
+            <div className="space-y-2">
+              <Label htmlFor="avatarUrl">Avatar URL</Label>
+              <Input
+                id="avatarUrl"
+                type="url"
+                placeholder="https://example.com/avatar.png"
+                value={avatarUrl}
+                onChange={handleAvatarUrlChange}
+                disabled={isUpdating}
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter a URL to an image to use as your avatar
+              </p>
+            </div>
+
+            {error && <p className="text-sm text-destructive">{error}</p>}
+
+            <Button type="submit" disabled={isUpdating || !hasChanges}>
+              {isUpdating ? "Saving..." : "Save changes"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
