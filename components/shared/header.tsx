@@ -17,7 +17,8 @@ export function Header() {
         </Link>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Button
             variant="ghost"
             size="icon"
@@ -27,7 +28,6 @@ export function Header() {
             <IconBrandGithub className="size-5" />
             <span className="sr-only">GitHub</span>
           </Button>
-          <ThemeToggle />
           <UserDropdown />
         </div>
       </div>
