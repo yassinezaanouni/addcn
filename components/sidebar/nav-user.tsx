@@ -63,7 +63,7 @@ export function NavUser({ user }: NavUserProps) {
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">@{user.username}</span>
-              <span className="truncate text-xs text-muted-foreground">
+              <span className="truncate text-xs text-muted-foreground group-hover/menu-button:text-sidebar-accent-foreground/70 group-data-[state=open]/menu-button:text-sidebar-accent-foreground/70">
                 {user.email}
               </span>
             </div>
@@ -104,10 +104,7 @@ export function NavUser({ user }: NavUserProps) {
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleSignOut}
-              className="text-destructive focus:text-destructive"
-            >
+            <DropdownMenuItem onClick={handleSignOut} variant="destructive">
               <IconLogout className="mr-2 size-4" />
               Sign out
             </DropdownMenuItem>

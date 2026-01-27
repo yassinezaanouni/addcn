@@ -112,10 +112,7 @@ export function UserDropdown() {
           )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={handleSignOut}
-          className="text-destructive focus:text-destructive"
-        >
+        <DropdownMenuItem onClick={handleSignOut} variant="destructive">
           <IconLogout className="mr-2 size-4" />
           Sign out
         </DropdownMenuItem>

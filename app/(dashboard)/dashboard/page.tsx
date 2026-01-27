@@ -5,7 +5,7 @@ import { IconPlus } from "@tabler/icons-react";
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8">
+    <div className="gap-8 flex flex-col h-full">
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">

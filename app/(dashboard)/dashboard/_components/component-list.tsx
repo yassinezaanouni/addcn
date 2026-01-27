@@ -503,13 +503,16 @@ export function ComponentList() {
   // Empty state when no components exist at all
   if (allComponents.length === 0 && !debouncedSearch) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/20 p-8">
+      <div className="flex min-h-[400px] flex-1 flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/20 p-8">
         <div className="flex size-16 items-center justify-center rounded-full border border-border/50 bg-card">
           <IconPackage className="size-8 text-muted-foreground" />
         </div>
-        <h3 className="mt-6 font-mono text-lg font-medium">No components yet</h3>
+        <h3 className="mt-6 font-mono text-lg font-medium">
+          No components yet
+        </h3>
         <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">
-          Create your first component to get started with your personal registry.
+          Create your first component to get started with your personal
+          registry.
         </p>
         <Link href="/dashboard/editor" className="mt-6">
           <Button className="gap-2 font-mono">
@@ -535,7 +538,9 @@ export function ComponentList() {
           <div className="flex size-12 items-center justify-center rounded-full border border-border/50 bg-card">
             <IconSearch className="size-5 text-muted-foreground" />
           </div>
-          <h3 className="mt-4 font-mono text-base font-medium">No results found</h3>
+          <h3 className="mt-4 font-mono text-base font-medium">
+            No results found
+          </h3>
           <p className="mt-1.5 text-center text-sm text-muted-foreground">
             No components match &quot;{debouncedSearch}&quot;
           </p>

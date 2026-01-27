@@ -7,7 +7,7 @@ import { OrgList } from "./_components/org-list";
 
 export default function OrgsPage() {
   return (
-    <div className="space-y-6">
+    <div className="gap-8 flex flex-col h-full">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Organizations</h1>
