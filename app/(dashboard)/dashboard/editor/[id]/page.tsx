@@ -10,7 +10,8 @@ import { EditorLayout } from "../_components/editor-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-const PANEL_BASE = "overflow-hidden rounded-xl border border-border/50 shadow-lg shadow-black/5";
+const PANEL_BASE =
+  "overflow-hidden rounded-xl border border-border/50 shadow-lg shadow-black/5";
 const PANEL_BG = "bg-card/80 backdrop-blur-sm dark:bg-card/60";
 const PANEL_SOLID = "bg-card shadow-xl dark:shadow-black/20";
 
@@ -29,7 +30,13 @@ function EditorSkeleton() {
       {/* Main content area */}
       <div className="flex flex-1 flex-col gap-2 h-full @4xl:flex-row">
         {/* File Tree skeleton */}
-        <div className={cn(PANEL_BASE, PANEL_BG, "h-[min(100%,20rem)] @4xl:h-full shrink-0 w-48")}>
+        <div
+          className={cn(
+            PANEL_BASE,
+            PANEL_BG,
+            "h-[min(100%,20rem)] @4xl:h-full shrink-0 w-48",
+          )}
+        >
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -64,7 +71,13 @@ function EditorSkeleton() {
           </div>
 
           {/* Preview Panel skeleton */}
-          <div className={cn(PANEL_BASE, PANEL_SOLID, "min-h-32 flex-1 flex items-center justify-center")}>
+          <div
+            className={cn(
+              PANEL_BASE,
+              PANEL_SOLID,
+              "min-h-32 flex-1 flex items-center justify-center",
+            )}
+          >
             <Skeleton className="size-16 rounded-xl" />
           </div>
         </div>
@@ -126,7 +139,7 @@ export default function EditComponentPage({ params }: EditComponentPageProps) {
   const convexId = useEditorStore((state) => state.convexId);
 
   const { data: component, isLoading } = useQuery(
-    convexQuery(api.components.get, { id: componentId })
+    convexQuery(api.components.get, { id: componentId }),
   );
 
   useEffect(() => {
@@ -146,7 +159,8 @@ export default function EditComponentPage({ params }: EditComponentPageProps) {
         <div className="text-center">
           <h1 className="text-xl font-semibold">Component not found</h1>
           <p className="mt-2 text-muted-foreground">
-            The component you're looking for doesn't exist or you don't have access.
+            The component you&apos;re looking for doesn&apos;t exist or you
+            don&apos;t have access.
           </p>
         </div>
       </div>

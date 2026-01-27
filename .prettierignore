@@ -1,0 +1,5 @@
+# Convex generated files
+convex/_generated/
+
+# shadcn/ui components
+components/ui/

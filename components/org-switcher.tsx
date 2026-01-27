@@ -44,11 +44,11 @@ export function OrgSwitcher() {
   const context = useOrgContext();
 
   const { data: user, isPending: userPending } = useQuery(
-    convexQuery(api.users.getMe, {})
+    convexQuery(api.users.getMe, {}),
   );
 
   const { data: orgs, isPending: orgsPending } = useQuery(
-    convexQuery(api.organizations.getMyOrgs, {})
+    convexQuery(api.organizations.getMyOrgs, {}),
   );
 
   const isLoading = userPending || orgsPending;
@@ -99,7 +99,9 @@ export function OrgSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="ghost" className="flex items-center gap-2 px-2" />}
+        render={
+          <Button variant="ghost" className="flex items-center gap-2 px-2" />
+        }
       >
         {displayIcon}
         <span className="text-sm font-medium">{displayName}</span>

@@ -10,7 +10,8 @@ import { ComponentMetaForm } from "./component-meta-form";
 import { DependencyManager } from "./dependency-manager";
 
 // Shared panel styles
-const PANEL_BASE = "overflow-hidden rounded-xl border border-border/50 shadow-lg shadow-black/5";
+const PANEL_BASE =
+  "overflow-hidden rounded-xl border border-border/50 shadow-lg shadow-black/5";
 const PANEL_BG = "bg-card/80 backdrop-blur-sm dark:bg-card/60";
 const PANEL_SOLID = "bg-card shadow-xl dark:shadow-black/20";
 
@@ -23,7 +24,13 @@ export function EditorLayout() {
         {/* Main content area with container queries (mobile-first) */}
         <div className="flex h-full flex-1 flex-col gap-2 @4xl:flex-row">
           {/* File Tree */}
-          <div className={cn(PANEL_BASE, PANEL_BG, "h-[min(100%,20rem)] shrink-0 @4xl:h-full")}>
+          <div
+            className={cn(
+              PANEL_BASE,
+              PANEL_BG,
+              "h-[min(100%,20rem)] shrink-0 @4xl:h-full",
+            )}
+          >
             <FileTree />
           </div>
 

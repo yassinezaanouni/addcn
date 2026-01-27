@@ -86,9 +86,13 @@ function MemberCard({
 }) {
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
-  const [newRole, setNewRole] = useState<"owner" | "admin" | "member">(member.role);
+  const [newRole, setNewRole] = useState<"owner" | "admin" | "member">(
+    member.role,
+  );
 
-  const removeMemberMutationFn = useConvexMutation(api.organizations.removeMember);
+  const removeMemberMutationFn = useConvexMutation(
+    api.organizations.removeMember,
+  );
   const removeMemberMutation = useMutation({
     mutationFn: removeMemberMutationFn,
     onSuccess: () => {
@@ -99,12 +103,15 @@ function MemberCard({
     },
     onError: (error) => {
       toast.error("Failed to remove member", {
-        description: error instanceof Error ? error.message : "An error occurred",
+        description:
+          error instanceof Error ? error.message : "An error occurred",
       });
     },
   });
 
-  const updateRoleMutationFn = useConvexMutation(api.organizations.updateMemberRole);
+  const updateRoleMutationFn = useConvexMutation(
+    api.organizations.updateMemberRole,
+  );
   const updateRoleMutation = useMutation({
     mutationFn: updateRoleMutationFn,
     onSuccess: () => {
@@ -115,7 +122,8 @@ function MemberCard({
     },
     onError: (error) => {
       toast.error("Failed to update role", {
-        description: error instanceof Error ? error.message : "An error occurred",
+        description:
+          error instanceof Error ? error.message : "An error occurred",
       });
     },
   });
@@ -159,9 +167,14 @@ function MemberCard({
       <div className="flex items-center justify-between rounded-lg border p-4">
         <div className="flex items-center gap-3">
           <Avatar>
-            <AvatarImage src={member.user.avatarUrl} alt={member.user.username} />
+            <AvatarImage
+              src={member.user.avatarUrl}
+              alt={member.user.username}
+            />
             <AvatarFallback>
-              {(member.user.username || member.user.email || "?").charAt(0).toUpperCase()}
+              {(member.user.username || member.user.email || "?")
+                .charAt(0)
+                .toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div>
@@ -174,7 +187,9 @@ function MemberCard({
               )}
             </div>
             {member.user.username && member.user.email && (
-              <p className="text-sm text-muted-foreground">{member.user.email}</p>
+              <p className="text-sm text-muted-foreground">
+                {member.user.email}
+              </p>
             )}
           </div>
         </div>
@@ -212,8 +227,9 @@ function MemberCard({
             <DialogTitle>Remove Member</DialogTitle>
             <DialogDescription>
               Are you sure you want to remove{" "}
-              <strong>{member.user.username || member.user.email}</strong> from this
-              organization? They will lose access to all organization resources.
+              <strong>{member.user.username || member.user.email}</strong> from
+              this organization? They will lose access to all organization
+              resources.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -245,7 +261,10 @@ function MemberCard({
               <strong>{member.user.username || member.user.email}</strong>.
             </DialogDescription>
           </DialogHeader>
-          <Select value={newRole} onValueChange={(v) => setNewRole(v as typeof newRole)}>
+          <Select
+            value={newRole}
+            onValueChange={(v) => setNewRole(v as typeof newRole)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select a role" />
             </SelectTrigger>
@@ -286,7 +305,7 @@ export function MemberList({
   currentUserId?: Id<"users">;
 }) {
   const { data: members, isLoading } = useQuery(
-    convexQuery(api.organizations.getMembers, { orgId })
+    convexQuery(api.organizations.getMembers, { orgId }),
   );
 
   if (isLoading) {

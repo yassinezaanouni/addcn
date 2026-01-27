@@ -48,9 +48,7 @@ export function LoginForm() {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <CardTitle className="text-xl">Welcome back</CardTitle>
-        <CardDescription>
-          Sign in to your account to continue
-        </CardDescription>
+        <CardDescription>Sign in to your account to continue</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Button

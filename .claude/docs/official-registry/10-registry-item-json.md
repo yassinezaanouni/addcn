@@ -46,38 +46,46 @@ The `registry-item.json` schema defines custom registry items for the shadcn/ui 
 ## Field Definitions
 
 ### $schema
+
 Specifies the schema validation endpoint for the file format.
 
 ### name
+
 Unique identifier for the registry item within your registry.
 
 ### title
+
 Human-readable, concise name for the item.
 
 ### description
+
 Detailed explanation of the registry item's purpose and functionality.
 
 ### type
+
 Determines the item category and target resolution path. Supported types:
 
-| Type | Purpose |
-|------|---------|
-| `registry:block` | Complex components with multiple files |
-| `registry:component` | Simple, single-purpose components |
-| `registry:lib` | Library utilities and helper functions |
-| `registry:hook` | React hook implementations |
-| `registry:ui` | UI primitives and single-file components |
-| `registry:page` | Page or file-based route templates |
-| `registry:file` | Miscellaneous file types |
-| `registry:style` | Predefined style sets (e.g., "new-york") |
-| `registry:theme` | Theme configurations |
-| `registry:item` | Universal registry items |
+| Type                 | Purpose                                  |
+| -------------------- | ---------------------------------------- |
+| `registry:block`     | Complex components with multiple files   |
+| `registry:component` | Simple, single-purpose components        |
+| `registry:lib`       | Library utilities and helper functions   |
+| `registry:hook`      | React hook implementations               |
+| `registry:ui`        | UI primitives and single-file components |
+| `registry:page`      | Page or file-based route templates       |
+| `registry:file`      | Miscellaneous file types                 |
+| `registry:style`     | Predefined style sets (e.g., "new-york") |
+| `registry:theme`     | Theme configurations                     |
+| `registry:item`      | Universal registry items                 |
 
 ### author
+
 Attribution information formatted as: `"Name <email@domain.com>"`
 
 ### dependencies
+
 NPM package dependencies with optional version specifications:
+
 ```json
 {
   "dependencies": [
@@ -90,6 +98,7 @@ NPM package dependencies with optional version specifications:
 ```
 
 ### registryDependencies
+
 Registry item dependencies supporting three formats:
 
 - **shadcn/ui items**: Use component name directly (`"button"`, `"input"`)
@@ -99,6 +108,7 @@ Registry item dependencies supporting three formats:
 The CLI automatically resolves remote registry dependencies.
 
 ### files
+
 Array defining all component files. Each entry requires:
 
 - **path**: File location within your registry
@@ -125,6 +135,7 @@ Array defining all component files. Each entry requires:
 Use `~` to reference the project root.
 
 ### cssVars
+
 Defines CSS custom properties organized by scope:
 
 ```json
@@ -145,6 +156,7 @@ Defines CSS custom properties organized by scope:
 ```
 
 ### css
+
 Adds custom CSS rules and utilities:
 
 ```json
@@ -167,6 +179,7 @@ Adds custom CSS rules and utilities:
 ```
 
 ### envVars
+
 Development environment variables (not for production use):
 
 ```json
@@ -182,6 +195,7 @@ Development environment variables (not for production use):
 Existing variables are preserved during installation.
 
 ### docs
+
 Custom documentation or setup instructions displayed during CLI installation:
 
 ```json
@@ -191,6 +205,7 @@ Custom documentation or setup instructions displayed during CLI installation:
 ```
 
 ### categories
+
 Organizational tags for discovery and filtering:
 
 ```json
@@ -200,6 +215,7 @@ Organizational tags for discovery and filtering:
 ```
 
 ### meta
+
 Arbitrary key-value metadata for additional context:
 
 ```json

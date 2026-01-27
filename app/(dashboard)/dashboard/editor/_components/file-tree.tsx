@@ -2,7 +2,11 @@
 
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useEditorStore, buildFolderTree, type FolderNode } from "@/stores/editor-store";
+import {
+  useEditorStore,
+  buildFolderTree,
+  type FolderNode,
+} from "@/stores/editor-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -79,7 +83,11 @@ interface FileNodeProps {
   onDragStart: (fileId: string, filePath: string) => void;
   onDragEnd: () => void;
   onDragOverFolder: (folderPath: string) => void;
-  onDragOverFile: (fileId: string, filePath: string, position: "before" | "after") => void;
+  onDragOverFile: (
+    fileId: string,
+    filePath: string,
+    position: "before" | "after",
+  ) => void;
   onDragLeave: () => void;
   onDrop: () => void;
 }
@@ -117,11 +125,14 @@ function FileNode({
   const isDragging = dragState.draggedFileId === node.file?.id;
 
   // Check if this node is a valid drop target
-  const isDropTargetFolder = dragState.dropTarget?.type === "folder" &&
+  const isDropTargetFolder =
+    dragState.dropTarget?.type === "folder" &&
     dragState.dropTarget.path === node.path;
-  const isDropTargetBefore = dragState.dropTarget?.type === "before" &&
+  const isDropTargetBefore =
+    dragState.dropTarget?.type === "before" &&
     dragState.dropTarget.fileId === node.file?.id;
-  const isDropTargetAfter = dragState.dropTarget?.type === "after" &&
+  const isDropTargetAfter =
+    dragState.dropTarget?.type === "after" &&
     dragState.dropTarget.fileId === node.file?.id;
 
   const handleSaveRename = () => {
@@ -266,112 +277,121 @@ function FileNode({
           className={cn(
             "group relative flex items-center gap-1.5 rounded-lg py-1.5 pr-1 text-sm transition-colors",
             !isActive && "hover:bg-muted/50",
-            isDropTargetFolder && "bg-primary/20 ring-2 ring-primary ring-inset",
-            node.file && "cursor-grab active:cursor-grabbing"
+            isDropTargetFolder &&
+              "bg-primary/20 ring-2 ring-primary ring-inset",
+            node.file && "cursor-grab active:cursor-grabbing",
           )}
           style={{ paddingLeft: depth * 14 + 8 }}
         >
-        {/* Active indicator */}
-        {isActive && (
-          <motion.div
-            layoutId="active-file-indicator"
-            className="absolute left-1 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-primary"
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          />
-        )}
+          {/* Active indicator */}
+          {isActive && (
+            <motion.div
+              layoutId="active-file-indicator"
+              className="absolute left-1 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-primary"
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
+          )}
 
-        {isFolder ? (
-          <button
-            onClick={() => onToggleFolder(node.path)}
-            className="flex flex-1 items-center gap-2"
-          >
-            <span className="flex size-5 items-center justify-center">
+          {isFolder ? (
+            <button
+              onClick={() => onToggleFolder(node.path)}
+              className="flex flex-1 items-center gap-2"
+            >
+              <span className="flex size-5 items-center justify-center">
+                {isExpanded ? (
+                  <IconChevronDown className="size-4 text-muted-foreground" />
+                ) : (
+                  <IconChevronRight className="size-4 text-muted-foreground" />
+                )}
+              </span>
               {isExpanded ? (
-                <IconChevronDown className="size-4 text-muted-foreground" />
+                <IconFolderOpen className="size-5 text-amber-500" />
               ) : (
-                <IconChevronRight className="size-4 text-muted-foreground" />
+                <IconFolder className="size-5 text-amber-500/70" />
               )}
-            </span>
-            {isExpanded ? (
-              <IconFolderOpen className="size-5 text-amber-500" />
-            ) : (
-              <IconFolder className="size-5 text-amber-500/70" />
-            )}
-            <span className="truncate font-medium text-foreground/80">{node.name}</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => node.file && onSelectFile(node.file.id)}
-            className="flex flex-1 items-center gap-2 pl-7"
-          >
-            <span className="relative">
-              {getFileIcon(node.path)}
-              {isPreview && (
+              <span className="truncate font-medium text-foreground/80">
+                {node.name}
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={() => node.file && onSelectFile(node.file.id)}
+              className="flex flex-1 items-center gap-2 pl-7"
+            >
+              <span className="relative">
+                {getFileIcon(node.path)}
+                {isPreview && (
+                  <Tooltip>
+                    <TooltipTrigger
+                      className="absolute -bottom-1 -right-1 flex size-3 items-center justify-center rounded-full bg-primary"
+                      render={<span />}
+                    >
+                      <IconEye className="size-2 text-primary-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      Rendered in preview panel
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </span>
+              <span
+                className={cn(
+                  "truncate font-mono text-[13px]",
+                  isActive ? "text-foreground" : "text-foreground/70",
+                )}
+              >
+                {node.name}
+              </span>
+            </button>
+          )}
+
+          {node.file && (
+            <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+              {canPreview && !isPreview && (
                 <Tooltip>
                   <TooltipTrigger
-                    className="absolute -bottom-1 -right-1 flex size-3 items-center justify-center rounded-full bg-primary"
-                    render={<span />}
+                    className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSetPreviewFile(node.file!.id);
+                    }}
                   >
-                    <IconEye className="size-2 text-primary-foreground" />
+                    <IconEye className="size-3.5" />
                   </TooltipTrigger>
-                  <TooltipContent side="bottom">Rendered in preview panel</TooltipContent>
+                  <TooltipContent side="bottom">
+                    Render in preview panel
+                  </TooltipContent>
                 </Tooltip>
               )}
-            </span>
-            <span className={cn(
-              "truncate font-mono text-[13px]",
-              isActive ? "text-foreground" : "text-foreground/70"
-            )}>
-              {node.name}
-            </span>
-          </button>
-        )}
-
-        {node.file && (
-          <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-            {canPreview && !isPreview && (
               <Tooltip>
                 <TooltipTrigger
                   className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onSetPreviewFile(node.file!.id);
+                    setEditPath(node.path);
+                    setIsEditing(true);
                   }}
                 >
-                  <IconEye className="size-3.5" />
+                  <IconPencil className="size-3.5" />
                 </TooltipTrigger>
-                <TooltipContent side="bottom">Render in preview panel</TooltipContent>
+                <TooltipContent side="bottom">Rename</TooltipContent>
               </Tooltip>
-            )}
-            <Tooltip>
-              <TooltipTrigger
-                className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditPath(node.path);
-                  setIsEditing(true);
-                }}
-              >
-                <IconPencil className="size-3.5" />
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Rename</TooltipContent>
-            </Tooltip>
-            {canDelete && (
-              <Tooltip>
-                <TooltipTrigger
-                  className="flex size-6 items-center justify-center rounded-md text-destructive/70 hover:bg-destructive/10 hover:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteFile(node.file!.id);
-                  }}
-                >
-                  <IconTrash className="size-3.5" />
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Delete</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        )}
+              {canDelete && (
+                <Tooltip>
+                  <TooltipTrigger
+                    className="flex size-6 items-center justify-center rounded-md text-destructive/70 hover:bg-destructive/10 hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteFile(node.file!.id);
+                    }}
+                  >
+                    <IconTrash className="size-3.5" />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Delete</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
         </motion.div>
       </div>
 
@@ -423,11 +443,19 @@ function FileNode({
 }
 
 export function FileTree() {
-  const { files, activeFileId, previewFileId, setActiveFile, setPreviewFile, addFile, removeFile, renamePath } =
-    useEditorStore();
+  const {
+    files,
+    activeFileId,
+    previewFileId,
+    setActiveFile,
+    setPreviewFile,
+    addFile,
+    removeFile,
+    renamePath,
+  } = useEditorStore();
 
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set(["components"])
+    new Set(["components"]),
   );
   const [isAdding, setIsAdding] = useState(false);
   const [newFilePath, setNewFilePath] = useState("");
@@ -483,12 +511,15 @@ export function FileTree() {
     }));
   }, []);
 
-  const handleDragOverFile = useCallback((fileId: string, filePath: string, position: "before" | "after") => {
-    setDragState((prev) => ({
-      ...prev,
-      dropTarget: { type: position, path: filePath, fileId },
-    }));
-  }, []);
+  const handleDragOverFile = useCallback(
+    (fileId: string, filePath: string, position: "before" | "after") => {
+      setDragState((prev) => ({
+        ...prev,
+        dropTarget: { type: position, path: filePath, fileId },
+      }));
+    },
+    [],
+  );
 
   const handleDragLeave = useCallback(() => {
     setDragState((prev) => ({
@@ -498,7 +529,11 @@ export function FileTree() {
   }, []);
 
   const handleDrop = useCallback(() => {
-    if (!dragState.draggedFileId || !dragState.draggedFilePath || !dragState.dropTarget) {
+    if (
+      !dragState.draggedFileId ||
+      !dragState.draggedFilePath ||
+      !dragState.dropTarget
+    ) {
       handleDragEnd();
       return;
     }
@@ -575,7 +610,8 @@ export function FileTree() {
     handleDragEnd();
   };
 
-  const isRootDropTarget = dragState.dropTarget?.type === "folder" && dragState.dropTarget.path === "";
+  const isRootDropTarget =
+    dragState.dropTarget?.type === "folder" && dragState.dropTarget.path === "";
 
   return (
     <div className="flex h-full flex-col">
@@ -602,7 +638,7 @@ export function FileTree() {
       <div
         className={cn(
           "flex-1 overflow-auto px-2 pb-4",
-          isRootDropTarget && "bg-primary/10"
+          isRootDropTarget && "bg-primary/10",
         )}
         onDragOver={handleRootDragOver}
         onDrop={handleRootDrop}
@@ -651,10 +687,12 @@ export function FileTree() {
                       "flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
                       newFilePath.startsWith(preset.path)
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
                     )}
                   >
-                    <span className={cn("h-1.5 w-1.5 rounded-full", preset.color)} />
+                    <span
+                      className={cn("h-1.5 w-1.5 rounded-full", preset.color)}
+                    />
                     {preset.label}
                   </button>
                 ))}

@@ -5,20 +5,18 @@
 import { Doc, Id } from "../_generated/dataModel";
 import { QueryCtx } from "../_generated/server";
 
-type OrgMemberRole = "owner" | "admin" | "member";
-
 /**
  * Get the user's membership in an organization
  */
 async function getOrgMembership(
   ctx: QueryCtx,
   orgId: Id<"organizations">,
-  userId: Id<"users">
+  userId: Id<"users">,
 ): Promise<Doc<"orgMembers"> | null> {
   return await ctx.db
     .query("orgMembers")
     .withIndex("by_orgId_userId", (q) =>
-      q.eq("orgId", orgId).eq("userId", userId)
+      q.eq("orgId", orgId).eq("userId", userId),
     )
     .unique();
 }
@@ -34,7 +32,7 @@ async function getOrgMembership(
 export async function canAccessComponent(
   ctx: QueryCtx,
   component: Doc<"components">,
-  userId: Id<"users"> | null
+  userId: Id<"users"> | null,
 ): Promise<boolean> {
   // Public components are always accessible
   if (component.isPublic) {
@@ -70,7 +68,7 @@ export async function canAccessComponent(
 export async function canEditComponent(
   ctx: QueryCtx,
   component: Doc<"components">,
-  userId: Id<"users">
+  userId: Id<"users">,
 ): Promise<boolean> {
   // Personal component: must be the owner
   if (component.userId) {
@@ -96,7 +94,7 @@ export async function canEditComponent(
 export async function canPublishComponent(
   ctx: QueryCtx,
   component: Doc<"components">,
-  userId: Id<"users">
+  userId: Id<"users">,
 ): Promise<boolean> {
   return canEditComponent(ctx, component, userId);
 }
@@ -113,11 +111,14 @@ export async function canTransferComponent(
   ctx: QueryCtx,
   component: Doc<"components">,
   userId: Id<"users">,
-  targetOrgId: Id<"organizations">
+  targetOrgId: Id<"organizations">,
 ): Promise<{ allowed: boolean; reason?: string }> {
   // Component must be personal and owned by the user
   if (!component.userId || component.userId !== userId) {
-    return { allowed: false, reason: "Only the owner can transfer a component" };
+    return {
+      allowed: false,
+      reason: "Only the owner can transfer a component",
+    };
   }
 
   // User must be a member of the target org
@@ -133,7 +134,7 @@ export async function canTransferComponent(
   const existingComponent = await ctx.db
     .query("components")
     .withIndex("by_orgId_name", (q) =>
-      q.eq("orgId", targetOrgId).eq("name", component.name)
+      q.eq("orgId", targetOrgId).eq("name", component.name),
     )
     .unique();
 

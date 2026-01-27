@@ -43,8 +43,8 @@ const SUPPORTED_IMPORTS = new Set([
  * Patterns for imports that are always supported (relative, alias, etc.)
  */
 const SUPPORTED_PATTERNS = [
-  /^\.\.?\//,        // Relative imports (./foo, ../bar)
-  /^@\//,            // Alias imports (@/components)
+  /^\.\.?\//, // Relative imports (./foo, ../bar)
+  /^@\//, // Alias imports (@/components)
 ];
 
 /**
@@ -157,7 +157,7 @@ export function analyzeImports(code: string): ImportAnalysisResult {
  * Analyze imports across multiple files.
  */
 export function analyzeMultipleFiles(
-  files: Array<{ path: string; content: string }>
+  files: Array<{ path: string; content: string }>,
 ): ImportAnalysisResult {
   const allSupported: string[] = [];
   const allUnsupported: string[] = [];

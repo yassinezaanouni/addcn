@@ -77,35 +77,35 @@ Result: `https://registry.company.com/button.json?token=your_token`
 ### Next.js API Route Example
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { name: string } }
+  { params }: { params: { name: string } },
 ) {
-  const authHeader = request.headers.get("authorization")
-  const token = authHeader?.replace("Bearer ", "")
+  const authHeader = request.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "");
 
-  const queryToken = request.nextUrl.searchParams.get("token")
+  const queryToken = request.nextUrl.searchParams.get("token");
 
   if (!isValidToken(token || queryToken)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   if (!hasAccessToComponent(token, params.name)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const component = await getComponent(params.name)
-  return NextResponse.json(component)
+  const component = await getComponent(params.name);
+  return NextResponse.json(component);
 }
 
 function isValidToken(token: string | null) {
-  return token === process.env.VALID_TOKEN
+  return token === process.env.VALID_TOKEN;
 }
 
 function hasAccessToComponent(token: string, componentName: string) {
-  return true // Your logic here
+  return true; // Your logic here
 }
 ```
 
@@ -113,19 +113,19 @@ function hasAccessToComponent(token: string, componentName: string) {
 
 ```javascript
 app.get("/registry/:name.json", (req, res) => {
-  const token = req.headers.authorization?.replace("Bearer ", "")
+  const token = req.headers.authorization?.replace("Bearer ", "");
 
   if (!isValidToken(token)) {
-    return res.status(401).json({ error: "Unauthorized" })
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const component = getComponent(req.params.name)
+  const component = getComponent(req.params.name);
   if (!component) {
-    return res.status(404).json({ error: "Component not found" })
+    return res.status(404).json({ error: "Component not found" });
   }
 
-  res.json(component)
-})
+  res.json(component);
+});
 ```
 
 ## Advanced Patterns
@@ -136,11 +136,11 @@ Route components based on team membership:
 
 ```typescript
 async function GET(request: NextRequest) {
-  const token = extractToken(request)
-  const team = await getTeamFromToken(token)
+  const token = extractToken(request);
+  const team = await getTeamFromToken(token);
 
-  const components = await getComponentsForTeam(team)
-  return NextResponse.json(components)
+  const components = await getComponentsForTeam(team);
+  return NextResponse.json(components);
 }
 ```
 
@@ -150,12 +150,12 @@ Deliver customized component versions:
 
 ```typescript
 async function GET(request: NextRequest) {
-  const user = await authenticateUser(request)
+  const user = await authenticateUser(request);
 
-  const preferences = await getUserPreferences(user.id)
-  const component = await getPersonalizedComponent(params.name, preferences)
+  const preferences = await getUserPreferences(user.id);
+  const component = await getPersonalizedComponent(params.name, preferences);
 
-  return NextResponse.json(component)
+  return NextResponse.json(component);
 }
 ```
 
@@ -165,18 +165,18 @@ Implement time-limited tokens for enhanced security:
 
 ```typescript
 interface TemporaryToken {
-  token: string
-  expiresAt: Date
-  scope: string[]
+  token: string;
+  expiresAt: Date;
+  scope: string[];
 }
 
 async function validateTemporaryToken(token: string) {
-  const tokenData = await getTokenData(token)
+  const tokenData = await getTokenData(token);
 
-  if (!tokenData) return false
-  if (new Date() > tokenData.expiresAt) return false
+  if (!tokenData) return false;
+  if (new Date() > tokenData.expiresAt) return false;
 
-  return true
+  return true;
 }
 ```
 
@@ -230,14 +230,14 @@ Always use encrypted connections:
 Protect against abuse:
 
 ```typescript
-import rateLimit from "express-rate-limit"
+import rateLimit from "express-rate-limit";
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100
-})
+  max: 100,
+});
 
-app.use("/registry", limiter)
+app.use("/registry", limiter);
 ```
 
 ### Token Rotation
@@ -246,10 +246,10 @@ Generate expiring credentials regularly:
 
 ```typescript
 function generateToken() {
-  const token = crypto.randomBytes(32).toString("hex")
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-  return { token, expiresAt }
+  return { token, expiresAt };
 }
 ```
 
@@ -264,8 +264,8 @@ async function logAccess(request: Request, component: string, userId: string) {
     userId,
     component,
     ip: request.ip,
-    userAgent: request.headers["user-agent"]
-  })
+    userAgent: request.headers["user-agent"],
+  });
 }
 ```
 
@@ -297,29 +297,29 @@ if (!token) {
   return NextResponse.json(
     {
       error: "Unauthorized",
-      message: "Set REGISTRY_TOKEN in .env.local"
+      message: "Set REGISTRY_TOKEN in .env.local",
     },
-    { status: 401 }
-  )
+    { status: 401 },
+  );
 }
 
 if (isExpiredToken(token)) {
   return NextResponse.json(
     {
       error: "Unauthorized",
-      message: "Token expired. Request new token at company.com/tokens"
+      message: "Token expired. Request new token at company.com/tokens",
     },
-    { status: 401 }
-  )
+    { status: 401 },
+  );
 }
 
 if (!hasTeamAccess(token, component)) {
   return NextResponse.json(
     {
       error: "Forbidden",
-      message: `Component '${component}' restricted to Design team`
+      message: `Component '${component}' restricted to Design team`,
     },
-    { status: 403 }
-  )
+    { status: 403 },
+  );
 }
 ```

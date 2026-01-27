@@ -52,7 +52,7 @@ export const updateMe = mutation({
       // Validate username format
       if (!isValidUsername(args.username)) {
         throw new ConvexError(
-          "Invalid username. Must be 3-39 characters, lowercase alphanumeric and hyphens only, no consecutive hyphens."
+          "Invalid username. Must be 3-39 characters, lowercase alphanumeric and hyphens only, no consecutive hyphens.",
         );
       }
 
@@ -73,7 +73,9 @@ export const updateMe = mutation({
         .unique();
 
       if (existingOrg) {
-        throw new ConvexError("Username conflicts with an existing organization");
+        throw new ConvexError(
+          "Username conflicts with an existing organization",
+        );
       }
 
       updates.username = args.username;
@@ -105,7 +107,7 @@ export const setUsername = mutation({
     // Validate username format
     if (!isValidUsername(args.username)) {
       throw new ConvexError(
-        "Invalid username. Must be 3-39 characters, lowercase alphanumeric and hyphens only, no consecutive hyphens."
+        "Invalid username. Must be 3-39 characters, lowercase alphanumeric and hyphens only, no consecutive hyphens.",
       );
     }
 
@@ -209,7 +211,7 @@ export const validateAuthToken = internalQuery({
         {
           model: "session",
           where: [{ field: "_id", operator: "eq", value: sessionId }],
-        }
+        },
       );
 
       if (!session) {

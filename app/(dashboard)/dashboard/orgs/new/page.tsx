@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useConvexMutation } from "@convex-dev/react-query";
@@ -61,16 +61,14 @@ function validateSlug(slug: string): string | null {
 export default function NewOrgPage() {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [manualSlug, setManualSlug] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Auto-generate slug from name unless manually edited
-  useEffect(() => {
-    if (!slugManuallyEdited) {
-      setSlug(toKebabCase(name));
-    }
-  }, [name, slugManuallyEdited]);
+  const slug = useMemo(
+    () => (manualSlug !== null ? manualSlug : toKebabCase(name)),
+    [manualSlug, name],
+  );
 
   const createOrgMutationFn = useConvexMutation(api.organizations.create);
   const { mutate: createOrg, isPending } = useMutation({
@@ -111,8 +109,7 @@ export default function NewOrgPage() {
 
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase();
-    setSlug(value);
-    setSlugManuallyEdited(true);
+    setManualSlug(value);
     setError(null);
   };
 

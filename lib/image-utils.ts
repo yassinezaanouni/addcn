@@ -2,7 +2,11 @@
  * Browser-only image utilities for converting images to WebP.
  */
 
-import { isImageType, MAX_IMAGE_SIZE, formatFileSize } from "./upload-constants";
+import {
+  isImageType,
+  MAX_IMAGE_SIZE,
+  formatFileSize,
+} from "./upload-constants";
 
 export interface ConversionResult {
   file: File;
@@ -21,7 +25,7 @@ const MODERN_IMAGE_FORMATS = ["image/webp", "image/avif"];
  */
 export async function convertToWebP(
   file: File,
-  quality = 0.85
+  quality = 0.85,
 ): Promise<ConversionResult> {
   // Skip if not an image or already a modern format
   if (!isImageType(file.type) || MODERN_IMAGE_FORMATS.includes(file.type)) {
@@ -114,7 +118,7 @@ export async function processImageFile(file: File): Promise<{
   if (result.file.size > MAX_IMAGE_SIZE) {
     throw new Error(
       `Image is too large after conversion (${formatFileSize(result.file.size)}). ` +
-        `Maximum size is ${formatFileSize(MAX_IMAGE_SIZE)}.`
+        `Maximum size is ${formatFileSize(MAX_IMAGE_SIZE)}.`,
     );
   }
 

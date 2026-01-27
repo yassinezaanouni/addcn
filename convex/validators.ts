@@ -9,13 +9,13 @@ export const fileTypeValidator = v.union(
   v.literal("component"),
   v.literal("hook"),
   v.literal("util"),
-  v.literal("style")
+  v.literal("style"),
 );
 
 export const languageValidator = v.union(
   v.literal("typescript"),
   v.literal("css"),
-  v.literal("json")
+  v.literal("json"),
 );
 
 export const componentFileValidator = v.object({

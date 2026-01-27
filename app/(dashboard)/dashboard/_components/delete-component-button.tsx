@@ -72,8 +72,8 @@ export function DeleteComponentButton({
           <DialogHeader>
             <DialogTitle>Delete Component</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{componentName}&quot;?
-              This action cannot be undone.
+              Are you sure you want to delete &quot;{componentName}&quot;? This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter showCloseButton>

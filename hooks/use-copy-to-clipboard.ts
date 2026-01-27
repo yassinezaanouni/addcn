@@ -7,9 +7,7 @@ interface UseCopyToClipboardReturn {
   copy: (text: string) => Promise<boolean>;
 }
 
-export function useCopyToClipboard(
-  timeout = 2000
-): UseCopyToClipboardReturn {
+export function useCopyToClipboard(timeout = 2000): UseCopyToClipboardReturn {
   const [copied, setCopied] = useState(false);
 
   const copy = useCallback(
@@ -30,7 +28,7 @@ export function useCopyToClipboard(
         return false;
       }
     },
-    [timeout]
+    [timeout],
   );
 
   return { copied, copy };

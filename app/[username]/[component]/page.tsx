@@ -160,9 +160,7 @@ function FilePreview({ files }: { files: Doc<"components">["files"] }) {
                 <IconFile />
               </EmptyMedia>
               <EmptyTitle>No files</EmptyTitle>
-              <EmptyDescription>
-                This component has no files.
-              </EmptyDescription>
+              <EmptyDescription>This component has no files.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </CardContent>
@@ -223,7 +221,7 @@ export default function ComponentDetailPage() {
     convexQuery(api.components.getByNamespaceAndName, {
       namespace: username,
       name: componentName,
-    })
+    }),
   );
 
   if (isLoading) {
@@ -306,7 +304,9 @@ export default function ComponentDetailPage() {
           <div className="mb-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Registry Dependencies</CardTitle>
+                <CardTitle className="text-base">
+                  Registry Dependencies
+                </CardTitle>
                 <CardDescription>
                   shadcn/ui components required by this component
                 </CardDescription>

@@ -12,7 +12,7 @@ const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 if (!convexUrl) {
   throw new Error(
     "Missing NEXT_PUBLIC_CONVEX_URL environment variable. " +
-      "Please add it to your .env.local file."
+      "Please add it to your .env.local file.",
   );
 }
 
@@ -43,9 +43,7 @@ export function ConvexClientProvider({
       authClient={authClient}
       initialToken={initialToken}
     >
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </ConvexBetterAuthProvider>
   );
 }

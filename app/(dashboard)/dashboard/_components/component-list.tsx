@@ -9,7 +9,11 @@ import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { useOrgContext } from "@/components/org-switcher";
 import { useRegistryToken } from "@/hooks/use-registry-token";
-import { collectAllFiles, transformCss, generateIframeHtml } from "@/lib/preview";
+import {
+  collectAllFiles,
+  transformCss,
+  generateIframeHtml,
+} from "@/lib/preview";
 import { InstallCommand } from "./install-command";
 import {
   Card,
@@ -94,7 +98,7 @@ function LivePreview({ files }: { files: Doc<"components">["files"] }) {
           observer.disconnect(); // Once visible, stop observing
         }
       },
-      { rootMargin: "100px" } // Start loading slightly before visible
+      { rootMargin: "100px" }, // Start loading slightly before visible
     );
 
     observer.observe(el);
@@ -125,7 +129,7 @@ function LivePreview({ files }: { files: Doc<"components">["files"] }) {
         componentFiles,
         mainFile.path,
         transformCss(cssContent),
-        resolvedTheme || "light"
+        resolvedTheme || "light",
       );
     } catch {
       return null;
@@ -145,7 +149,10 @@ function LivePreview({ files }: { files: Doc<"components">["files"] }) {
   // Still loading (not visible yet)
   if (!isVisible) {
     return (
-      <div ref={containerRef} className="flex h-full w-full items-center justify-center">
+      <div
+        ref={containerRef}
+        className="flex h-full w-full items-center justify-center"
+      >
         <Skeleton className="h-8 w-8 rounded-full" />
       </div>
     );
@@ -209,7 +216,7 @@ function ComponentCard({
               description: "Your component is now private.",
             });
           },
-        }
+        },
       );
     }
   };
@@ -223,7 +230,7 @@ function ComponentCard({
             description: "Your component is now publicly accessible.",
           });
         },
-      }
+      },
     );
     setShowPublishDialog(false);
   };
@@ -267,59 +274,57 @@ function ComponentCard({
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 bg-muted/50">
               <IconPackage className="size-8 text-muted-foreground/40" />
-              <span className="text-xs text-muted-foreground/60">No preview</span>
+              <span className="text-xs text-muted-foreground/60">
+                No preview
+              </span>
             </div>
           )}
         </div>
         <div className="space-y-4">
-        <CardHeader>
-          <CardTitle>{component.title || component.name}</CardTitle>
-          {component.description && (
-            <CardDescription className="line-clamp-2">
-              {component.description}
-            </CardDescription>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Badge variant={component.isPublic ? "default" : "secondary"}>
-                {component.isPublic ? "Public" : "Private"}
-              </Badge>
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <IconDownload className="size-3" />
-                {component.downloads ?? 0}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
-                <Switch
-                  checked={component.isPublic}
-                  onCheckedChange={handleVisibilityToggle}
-                  disabled={updateMutation.isPending}
-                  size="sm"
+          <CardHeader>
+            <CardTitle>{component.title || component.name}</CardTitle>
+            {component.description && (
+              <CardDescription className="line-clamp-2">
+                {component.description}
+              </CardDescription>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant={component.isPublic ? "default" : "secondary"}>
+                  {component.isPublic ? "Public" : "Private"}
+                </Badge>
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <IconDownload className="size-3" />
+                  {component.downloads ?? 0}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                  <Switch
+                    checked={component.isPublic}
+                    onCheckedChange={handleVisibilityToggle}
+                    disabled={updateMutation.isPending}
+                    size="sm"
+                  />
+                  Public
+                </label>
+                <Link href={`/dashboard/editor/${component._id}`}>
+                  <Button variant="ghost" size="icon-sm" title="Edit component">
+                    <IconPencil className="size-4" />
+                  </Button>
+                </Link>
+                <DeleteComponentButton
+                  componentId={component._id}
+                  componentName={component.title || component.name}
                 />
-                Public
-              </label>
-              <Link href={`/dashboard/editor/${component._id}`}>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  title="Edit component"
-                >
-                  <IconPencil className="size-4" />
-                </Button>
-              </Link>
-              <DeleteComponentButton
-                componentId={component._id}
-                componentName={component.title || component.name}
-              />
+              </div>
             </div>
-          </div>
 
-          {/* Install command */}
-          {registryUrl && <InstallCommand registryUrl={registryUrl} />}
-        </CardContent>
+            {/* Install command */}
+            {registryUrl && <InstallCommand registryUrl={registryUrl} />}
+          </CardContent>
         </div>
       </Card>
 
@@ -439,13 +444,15 @@ export function ComponentList() {
   const filteredSearchResults = useMemo(() => {
     if (!searchResults || !debouncedSearch) return [];
 
-    return searchResults.filter((component): component is NonNullable<typeof component> => {
-      if (!component) return false;
-      if (queryContext === "personal") {
-        return !!component.userId;
-      }
-      return component.orgId === queryContext;
-    });
+    return searchResults.filter(
+      (component): component is NonNullable<typeof component> => {
+        if (!component) return false;
+        if (queryContext === "personal") {
+          return !!component.userId;
+        }
+        return component.orgId === queryContext;
+      },
+    );
   }, [searchResults, debouncedSearch, queryContext]);
 
   const isLoading = debouncedSearch ? isSearchLoading : isPaginatedLoading;
@@ -461,7 +468,7 @@ export function ComponentList() {
           fetchNextPage();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     observer.observe(el);
@@ -477,7 +484,7 @@ export function ComponentList() {
       }
       return undefined;
     },
-    [user?.username, orgs]
+    [user?.username, orgs],
   );
 
   // Get components to display based on search state

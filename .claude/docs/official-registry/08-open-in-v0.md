@@ -15,6 +15,7 @@ https://v0.dev/chat/api/open?url=[URL]
 ```
 
 **Example:**
+
 ```
 https://v0.dev/chat/api/open?url=https://ui.shadcn.com/r/styles/new-york/login-01.json
 ```

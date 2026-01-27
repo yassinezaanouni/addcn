@@ -69,7 +69,7 @@ export default defineSchema({
     previewEnabled: v.optional(v.boolean()), // default: false (live preview disabled)
     previewMediaUrl: v.optional(v.string()), // R2 URL for fallback image/video
     previewMediaType: v.optional(
-      v.union(v.literal("image"), v.literal("video"))
+      v.union(v.literal("image"), v.literal("video")),
     ),
     // Combined search field (name + title + description) for full-text search
     searchText: v.string(),

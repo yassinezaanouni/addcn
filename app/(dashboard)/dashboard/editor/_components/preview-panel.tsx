@@ -40,7 +40,10 @@ export function PreviewPanel() {
   const setPreviewMedia = useEditorStore((state) => state.setPreviewMedia);
 
   const { resolvedTheme } = useTheme();
-  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [errorState, setErrorState] = useState<{
+    error: string;
+    key: number;
+  } | null>(null);
 
   // The display URL is either the pending local blob or the saved R2 URL
   const displayMediaUrl = pendingMediaLocalUrl || previewMediaUrl;
@@ -139,20 +142,18 @@ export function PreviewPanel() {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === "preview-error") {
-        setPreviewError(event.data.error);
+        setErrorState({ error: event.data.error, key: iframeKey });
       } else if (event.data?.type === "preview-success") {
-        setPreviewError(null);
+        setErrorState(null);
       }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
-
-  // Clear error when code changes so the iframe can re-render
-  useEffect(() => {
-    setPreviewError(null);
   }, [iframeKey]);
+
+  // Only show error if it matches the current iframe key (auto-clears on code change)
+  const previewError = errorState?.key === iframeKey ? errorState.error : null;
 
   if (!mainFile) {
     return (

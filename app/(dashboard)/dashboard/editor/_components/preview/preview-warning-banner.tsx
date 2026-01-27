@@ -8,7 +8,9 @@ interface PreviewWarningBannerProps {
   unsupportedImports: string[];
 }
 
-export function PreviewWarningBanner({ unsupportedImports }: PreviewWarningBannerProps) {
+export function PreviewWarningBanner({
+  unsupportedImports,
+}: PreviewWarningBannerProps) {
   const [showDetails, setShowDetails] = useState(false);
 
   if (unsupportedImports.length === 0) return null;

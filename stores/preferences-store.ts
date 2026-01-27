@@ -16,6 +16,6 @@ export const usePreferencesStore = create<PreferencesState>()(
     }),
     {
       name: "addcn-preferences",
-    }
-  )
+    },
+  ),
 );

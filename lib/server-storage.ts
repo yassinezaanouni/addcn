@@ -23,7 +23,9 @@ export async function getServerComponents(): Promise<SavedComponent[]> {
   }
 }
 
-export async function saveServerComponent(component: SavedComponent): Promise<void> {
+export async function saveServerComponent(
+  component: SavedComponent,
+): Promise<void> {
   await ensureDataDir();
   const components = await getServerComponents();
 
@@ -37,12 +39,16 @@ export async function saveServerComponent(component: SavedComponent): Promise<vo
   await fs.writeFile(COMPONENTS_FILE, JSON.stringify(components, null, 2));
 }
 
-export async function getServerComponentByName(name: string): Promise<SavedComponent | undefined> {
+export async function getServerComponentByName(
+  name: string,
+): Promise<SavedComponent | undefined> {
   const components = await getServerComponents();
   return components.find((c) => c.name === name);
 }
 
-export async function getServerComponentById(id: string): Promise<SavedComponent | undefined> {
+export async function getServerComponentById(
+  id: string,
+): Promise<SavedComponent | undefined> {
   const components = await getServerComponents();
   return components.find((c) => c.id === id);
 }

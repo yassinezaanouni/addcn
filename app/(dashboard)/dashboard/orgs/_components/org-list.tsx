@@ -22,9 +22,11 @@ import {
   EmptyDescription,
   EmptyMedia,
 } from "@/components/ui/empty";
-import { IconBuilding, IconUsers } from "@tabler/icons-react";
+import { IconBuilding } from "@tabler/icons-react";
 
-type OrgWithRole = Doc<"organizations"> & { role: "owner" | "admin" | "member" };
+type OrgWithRole = Doc<"organizations"> & {
+  role: "owner" | "admin" | "member";
+};
 
 function OrgCardSkeleton() {
   return (
@@ -80,7 +82,9 @@ function OrgCard({ org }: { org: OrgWithRole }) {
             </Avatar>
             <div className="min-w-0 flex-1">
               <CardTitle className="truncate">{org.name}</CardTitle>
-              <CardDescription className="truncate">@{org.slug}</CardDescription>
+              <CardDescription className="truncate">
+                @{org.slug}
+              </CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -96,7 +100,7 @@ function OrgCard({ org }: { org: OrgWithRole }) {
 
 export function OrgList() {
   const { data: orgs, isLoading } = useQuery(
-    convexQuery(api.organizations.getMyOrgs, {})
+    convexQuery(api.organizations.getMyOrgs, {}),
   );
 
   if (isLoading) {

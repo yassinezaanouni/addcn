@@ -2,11 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  IconSelector,
-  IconSettings,
-  IconLogout,
-} from "@tabler/icons-react";
+import { IconSelector, IconSettings, IconLogout } from "@tabler/icons-react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -66,9 +62,7 @@ export function NavUser({ user }: NavUserProps) {
               </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">
-                @{user.username}
-              </span>
+              <span className="truncate font-medium">@{user.username}</span>
               <span className="truncate text-xs text-muted-foreground">
                 {user.email}
               </span>

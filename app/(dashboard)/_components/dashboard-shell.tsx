@@ -1,6 +1,10 @@
 "use client";
 
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import {
@@ -18,7 +22,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <header className="flex h-16 shrink-0 items-center gap-2">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4 self-center!" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 h-4 self-center!"
+            />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>

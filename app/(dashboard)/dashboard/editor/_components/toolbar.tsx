@@ -9,7 +9,10 @@ import { api } from "@/convex/_generated/api";
 import { useEditorStore, useIsNewComponent } from "@/stores/editor-store";
 import { useOrgContext } from "@/components/org-switcher";
 import { useUpload } from "@/hooks/use-upload";
-import { validateComponentMetadata, type ComponentMetadataErrors } from "@/lib/validators";
+import {
+  validateComponentMetadata,
+  type ComponentMetadataErrors,
+} from "@/lib/validators";
 import { Button } from "@/components/ui/button";
 import { DeleteComponentButton } from "../../_components/delete-component-button";
 import { RequiredFieldsDialog } from "./required-fields-dialog";
@@ -58,7 +61,8 @@ export function Toolbar() {
   } = useEditorStore();
 
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ComponentMetadataErrors>({});
+  const [validationErrors, setValidationErrors] =
+    useState<ComponentMetadataErrors>({});
   const { upload } = useUpload();
 
   const createMutationFn = useConvexMutation(api.components.create);
@@ -73,7 +77,8 @@ export function Toolbar() {
     },
     onError: (error) => {
       toast.error("Failed to create component", {
-        description: error instanceof Error ? error.message : "An error occurred",
+        description:
+          error instanceof Error ? error.message : "An error occurred",
       });
     },
   });
@@ -87,12 +92,14 @@ export function Toolbar() {
     },
     onError: (error) => {
       toast.error("Failed to save component", {
-        description: error instanceof Error ? error.message : "An error occurred",
+        description:
+          error instanceof Error ? error.message : "An error occurred",
       });
     },
   });
 
-  const isSaving = createMutation.isPending || updateMutation.isPending || isUploadingMedia;
+  const isSaving =
+    createMutation.isPending || updateMutation.isPending || isUploadingMedia;
 
   const performSave = async () => {
     // Upload pending media first if exists
@@ -114,7 +121,8 @@ export function Toolbar() {
         }
       } catch (error) {
         toast.error("Failed to upload media", {
-          description: error instanceof Error ? error.message : "An error occurred",
+          description:
+            error instanceof Error ? error.message : "An error occurred",
         });
         setIsUploadingMedia(false);
         return;
@@ -251,7 +259,11 @@ export function Toolbar() {
             ) : (
               <IconDeviceFloppy className="size-4" />
             )}
-            {isUploadingMedia ? "Uploading..." : isSaving ? "Saving..." : "Save"}
+            {isUploadingMedia
+              ? "Uploading..."
+              : isSaving
+                ? "Saving..."
+                : "Save"}
           </Button>
         </div>
       </div>

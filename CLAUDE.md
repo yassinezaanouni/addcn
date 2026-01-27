@@ -39,6 +39,7 @@ Standard paths (components/ui, hooks, lib) don't need `target` - shadcn CLI reso
 ### URL Format
 
 Registry components are served at: `/r/{namespace}/{name}.json`
+
 - Namespace is either a username or organization slug
 - Example: `https://addcn.dev/r/johndoe/my-button.json`
 

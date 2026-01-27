@@ -16,11 +16,11 @@ export const r2 = new R2(components.r2);
 
 // Client-side upload API
 export const { generateUploadUrl, syncMetadata } = r2.clientApi({
-  checkUpload: async (_ctx, _bucket) => {
+  checkUpload: async () => {
     // Auth checks could be added here if needed
     // File metadata is not available at this point
   },
-  onUpload: async (_ctx, _bucket, _key) => {
+  onUpload: async () => {
     // Post-upload actions (logging, etc.) could be added here
     // Could also validate file size here and delete if too large
   },

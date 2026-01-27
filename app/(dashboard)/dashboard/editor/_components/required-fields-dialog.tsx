@@ -152,7 +152,8 @@ export function RequiredFieldsDialog({
               {/* Title field */}
               <div className="space-y-2">
                 <Label htmlFor="dialog-title-input">
-                  Title<RequiredIndicator />
+                  Title
+                  <RequiredIndicator />
                 </Label>
                 <Input
                   id="dialog-title-input"

@@ -68,7 +68,8 @@ function parseCssToRegistryFormat(cssContent: string): CssObject | null {
   if (!cleanCss) return null;
 
   // Match top-level blocks: @layer, @keyframes, or selectors
-  const blockRegex = /(@[\w-]+\s+[\w-]+|[^{}]+)\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g;
+  const blockRegex =
+    /(@[\w-]+\s+[\w-]+|[^{}]+)\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g;
   let match;
 
   while ((match = blockRegex.exec(cleanCss)) !== null) {
@@ -76,7 +77,10 @@ function parseCssToRegistryFormat(cssContent: string): CssObject | null {
     const trimmedSelector = selector.trim();
     const trimmedContent = content.trim();
 
-    if (trimmedSelector.startsWith("@layer") || trimmedSelector.startsWith("@keyframes")) {
+    if (
+      trimmedSelector.startsWith("@layer") ||
+      trimmedSelector.startsWith("@keyframes")
+    ) {
       // Handle @layer and @keyframes - parse nested content
       const nested = parseNestedCss(trimmedContent);
       // Only include if there's actual content (skip empty layers)
@@ -99,7 +103,9 @@ function parseCssToRegistryFormat(cssContent: string): CssObject | null {
 /**
  * Parse nested CSS content (inside @layer or @keyframes)
  */
-function parseNestedCss(content: string): Record<string, string | Record<string, string>> {
+function parseNestedCss(
+  content: string,
+): Record<string, string | Record<string, string>> {
   const result: Record<string, string | Record<string, string>> = {};
   const nestedBlockRegex = /([^{}]+)\s*\{([^{}]*)\}/g;
   let match;
@@ -177,14 +183,14 @@ function getRegistryFileInfo(file: Doc<"components">["files"][number]): {
  * Converts a Convex component document to shadcn registry JSON format
  */
 export function componentToRegistryJson(
-  component: Doc<"components">
+  component: Doc<"components">,
 ): RegistryItem {
   // Separate CSS files from other files
   const cssFiles = component.files.filter(
-    (file) => file.type === "style" || file.path.endsWith(".css")
+    (file) => file.type === "style" || file.path.endsWith(".css"),
   );
   const nonCssFiles = component.files.filter(
-    (file) => file.type !== "style" && !file.path.endsWith(".css")
+    (file) => file.type !== "style" && !file.path.endsWith(".css"),
   );
 
   // Convert non-CSS files to registry format
@@ -256,14 +262,14 @@ export const getPublicComponent = internalQuery({
       component = await ctx.db
         .query("components")
         .withIndex("by_userId_name", (q) =>
-          q.eq("userId", owner.user._id).eq("name", args.name)
+          q.eq("userId", owner.user._id).eq("name", args.name),
         )
         .unique();
     } else {
       component = await ctx.db
         .query("components")
         .withIndex("by_orgId_name", (q) =>
-          q.eq("orgId", owner.org._id).eq("name", args.name)
+          q.eq("orgId", owner.org._id).eq("name", args.name),
         )
         .unique();
     }
@@ -294,7 +300,9 @@ export const incrementDownloads = internalMutation({
     const recentAttempt = await ctx.db
       .query("downloadAttempts")
       .withIndex("by_component_fingerprint", (q) =>
-        q.eq("componentId", args.componentId).eq("fingerprint", args.fingerprint)
+        q
+          .eq("componentId", args.componentId)
+          .eq("fingerprint", args.fingerprint),
       )
       .first();
 
@@ -349,14 +357,14 @@ export const getComponentWithAuth = internalQuery({
       component = await ctx.db
         .query("components")
         .withIndex("by_userId_name", (q) =>
-          q.eq("userId", owner.user._id).eq("name", args.name)
+          q.eq("userId", owner.user._id).eq("name", args.name),
         )
         .unique();
     } else {
       component = await ctx.db
         .query("components")
         .withIndex("by_orgId_name", (q) =>
-          q.eq("orgId", owner.org._id).eq("name", args.name)
+          q.eq("orgId", owner.org._id).eq("name", args.name),
         )
         .unique();
     }
@@ -389,7 +397,7 @@ export const getComponentWithAuth = internalQuery({
       const membership = await ctx.db
         .query("orgMembers")
         .withIndex("by_orgId_userId", (q) =>
-          q.eq("orgId", component.orgId!).eq("userId", args.userId!)
+          q.eq("orgId", component.orgId!).eq("userId", args.userId!),
         )
         .unique();
 

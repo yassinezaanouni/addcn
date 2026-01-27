@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ namespace: string; name: string }> }
+  { params }: { params: Promise<{ namespace: string; name: string }> },
 ) {
   try {
     const { namespace, name } = await params;
@@ -17,7 +17,7 @@ export async function GET(
     if (!convexSiteUrl) {
       return NextResponse.json(
         { error: "Server configuration error" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -53,7 +53,7 @@ export async function GET(
     console.error("Registry proxy error:", error);
     return NextResponse.json(
       { error: "Failed to fetch from registry" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

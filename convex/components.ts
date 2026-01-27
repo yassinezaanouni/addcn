@@ -72,8 +72,8 @@ export const getMyComponents = query({
         ctx.db
           .query("components")
           .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
-          .collect()
-      )
+          .collect(),
+      ),
     );
 
     // Combine and sort by updatedAt desc
@@ -102,7 +102,7 @@ export const create = mutation({
     previewEnabled: v.optional(v.boolean()),
     previewMediaUrl: v.optional(v.string()),
     previewMediaType: v.optional(
-      v.union(v.literal("image"), v.literal("video"))
+      v.union(v.literal("image"), v.literal("video")),
     ),
   },
   handler: async (ctx, args) => {
@@ -114,7 +114,7 @@ export const create = mutation({
       const membership = await ctx.db
         .query("orgMembers")
         .withIndex("by_orgId_userId", (q) =>
-          q.eq("orgId", args.orgId!).eq("userId", user._id)
+          q.eq("orgId", args.orgId!).eq("userId", user._id),
         )
         .unique();
 
@@ -126,13 +126,13 @@ export const create = mutation({
       const existingComponent = await ctx.db
         .query("components")
         .withIndex("by_orgId_name", (q) =>
-          q.eq("orgId", args.orgId!).eq("name", args.name)
+          q.eq("orgId", args.orgId!).eq("name", args.name),
         )
         .unique();
 
       if (existingComponent) {
         throw new ConvexError(
-          "A component with this name already exists in the organization"
+          "A component with this name already exists in the organization",
         );
       }
 
@@ -161,7 +161,7 @@ export const create = mutation({
     const existingComponent = await ctx.db
       .query("components")
       .withIndex("by_userId_name", (q) =>
-        q.eq("userId", user._id).eq("name", args.name)
+        q.eq("userId", user._id).eq("name", args.name),
       )
       .unique();
 
@@ -203,7 +203,11 @@ export const get = query({
     }
 
     const user = await getCurrentUser(ctx);
-    const hasAccess = await canAccessComponent(ctx, component, user?._id ?? null);
+    const hasAccess = await canAccessComponent(
+      ctx,
+      component,
+      user?._id ?? null,
+    );
 
     if (!hasAccess) {
       return null;
@@ -212,7 +216,6 @@ export const get = query({
     return component;
   },
 });
-
 
 /**
  * Search components by name, title, and description.
@@ -225,7 +228,9 @@ export const search = query({
 
     const results = await ctx.db
       .query("components")
-      .withSearchIndex("search_components", (q) => q.search("searchText", args.query))
+      .withSearchIndex("search_components", (q) =>
+        q.search("searchText", args.query),
+      )
       .collect();
 
     // Filter by access permissions
@@ -234,10 +239,10 @@ export const search = query({
         const hasAccess = await canAccessComponent(
           ctx,
           component,
-          user?._id ?? null
+          user?._id ?? null,
         );
         return hasAccess ? component : null;
-      })
+      }),
     );
 
     return accessibleComponents.filter(Boolean);
@@ -262,7 +267,7 @@ export const update = mutation({
     previewEnabled: v.optional(v.boolean()),
     previewMediaUrl: v.optional(v.string()),
     previewMediaType: v.optional(
-      v.union(v.literal("image"), v.literal("video"))
+      v.union(v.literal("image"), v.literal("video")),
     ),
   },
   handler: async (ctx, args) => {
@@ -285,7 +290,7 @@ export const update = mutation({
         const existingComponent = await ctx.db
           .query("components")
           .withIndex("by_userId_name", (q) =>
-            q.eq("userId", component.userId!).eq("name", args.name!)
+            q.eq("userId", component.userId!).eq("name", args.name!),
           )
           .unique();
 
@@ -297,13 +302,13 @@ export const update = mutation({
         const existingComponent = await ctx.db
           .query("components")
           .withIndex("by_orgId_name", (q) =>
-            q.eq("orgId", component.orgId!).eq("name", args.name!)
+            q.eq("orgId", component.orgId!).eq("name", args.name!),
           )
           .unique();
 
         if (existingComponent && existingComponent._id !== component._id) {
           throw new ConvexError(
-            "A component with this name already exists in the organization"
+            "A component with this name already exists in the organization",
           );
         }
       }
@@ -311,7 +316,7 @@ export const update = mutation({
 
     const { id, ...updates } = args;
     const filtered = Object.fromEntries(
-      Object.entries(updates).filter(([, value]) => value !== undefined)
+      Object.entries(updates).filter(([, value]) => value !== undefined),
     );
 
     // Update searchText if name, title, or description changed
@@ -357,7 +362,7 @@ export const remove = mutation({
     const hasPermission = await canEditComponent(ctx, component, user._id);
     if (!hasPermission) {
       throw new ConvexError(
-        "You don't have permission to delete this component"
+        "You don't have permission to delete this component",
       );
     }
 
@@ -393,7 +398,7 @@ export const transfer = mutation({
       ctx,
       component,
       user._id,
-      args.targetOrgId
+      args.targetOrgId,
     );
 
     if (!allowed) {
@@ -442,7 +447,9 @@ export const getMyComponentsFiltered = query({
       const membership = await ctx.db
         .query("orgMembers")
         .withIndex("by_orgId_userId", (q) =>
-          q.eq("orgId", args.context as Id<"organizations">).eq("userId", user._id)
+          q
+            .eq("orgId", args.context as Id<"organizations">)
+            .eq("userId", user._id),
         )
         .unique();
 
@@ -452,7 +459,9 @@ export const getMyComponentsFiltered = query({
 
       const orgComponents = await ctx.db
         .query("components")
-        .withIndex("by_orgId", (q) => q.eq("orgId", args.context as Id<"organizations">))
+        .withIndex("by_orgId", (q) =>
+          q.eq("orgId", args.context as Id<"organizations">),
+        )
         .collect();
       return orgComponents.sort((a, b) => b.updatedAt - a.updatedAt);
     }
@@ -475,8 +484,8 @@ export const getMyComponentsFiltered = query({
         ctx.db
           .query("components")
           .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
-          .collect()
-      )
+          .collect(),
+      ),
     );
 
     const allComponents = [...personalComponents, ...orgComponents.flat()];
@@ -512,7 +521,9 @@ export const getMyComponentsPaginated = query({
     const membership = await ctx.db
       .query("orgMembers")
       .withIndex("by_orgId_userId", (q) =>
-        q.eq("orgId", args.context as Id<"organizations">).eq("userId", user._id)
+        q
+          .eq("orgId", args.context as Id<"organizations">)
+          .eq("userId", user._id),
       )
       .unique();
 
@@ -522,7 +533,9 @@ export const getMyComponentsPaginated = query({
 
     return await ctx.db
       .query("components")
-      .withIndex("by_orgId", (q) => q.eq("orgId", args.context as Id<"organizations">))
+      .withIndex("by_orgId", (q) =>
+        q.eq("orgId", args.context as Id<"organizations">),
+      )
       .order("desc")
       .paginate(args.paginationOpts);
   },
@@ -570,14 +583,14 @@ export const getByNamespaceAndName = query({
       component = await ctx.db
         .query("components")
         .withIndex("by_userId_name", (q) =>
-          q.eq("userId", owner.user._id).eq("name", args.name)
+          q.eq("userId", owner.user._id).eq("name", args.name),
         )
         .unique();
     } else {
       component = await ctx.db
         .query("components")
         .withIndex("by_orgId_name", (q) =>
-          q.eq("orgId", owner.org._id).eq("name", args.name)
+          q.eq("orgId", owner.org._id).eq("name", args.name),
         )
         .unique();
     }
@@ -590,4 +603,3 @@ export const getByNamespaceAndName = query({
     return component;
   },
 });
-

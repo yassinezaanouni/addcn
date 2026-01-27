@@ -45,7 +45,7 @@ http.route({
         {
           status: 400,
           headers: REGISTRY_CORS_HEADERS,
-        }
+        },
       );
     }
 
@@ -70,7 +70,7 @@ http.route({
         namespace,
         name,
         userId,
-      }
+      },
     );
 
     if (!component) {
@@ -82,7 +82,7 @@ http.route({
         {
           status: 404,
           headers: REGISTRY_CORS_HEADERS,
-        }
+        },
       );
     }
 

@@ -111,7 +111,7 @@ export default function PublicProfilePage() {
 
   // Fetch user profile
   const { data: user, isLoading: isUserLoading } = useQuery(
-    convexQuery(api.users.getByUsername, { username })
+    convexQuery(api.users.getByUsername, { username }),
   );
 
   // Fetch public components - only when we have a user ID
@@ -119,7 +119,7 @@ export default function PublicProfilePage() {
   const { data: components, isLoading: isComponentsLoading } = useQuery({
     ...convexQuery(
       api.components.getPublicByUserId,
-      userId ? { userId } : "skip"
+      userId ? { userId } : "skip",
     ),
     enabled: !!userId,
   });
@@ -195,10 +195,7 @@ export default function PublicProfilePage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {components.map((component) => (
-              <Link
-                key={component._id}
-                href={`/${username}/${component.name}`}
-              >
+              <Link key={component._id} href={`/${username}/${component.name}`}>
                 <ComponentCard component={component} />
               </Link>
             ))}

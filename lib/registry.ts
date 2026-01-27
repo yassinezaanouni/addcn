@@ -1,5 +1,9 @@
 import type { SavedComponent, ComponentFile } from "@/types/component";
-import type { RegistryItem, RegistryFile, RegistryFileType } from "@/types/registry";
+import type {
+  RegistryItem,
+  RegistryFile,
+  RegistryFileType,
+} from "@/types/registry";
 import { REGISTRY_SCHEMA_URL } from "./constants";
 
 /**
@@ -12,7 +16,10 @@ function getFileName(path: string): string {
 /**
  * Maps internal file type to shadcn registry file type and determines if target is needed
  */
-function getRegistryFileInfo(file: ComponentFile): { type: RegistryFileType; target?: string } {
+function getRegistryFileInfo(file: ComponentFile): {
+  type: RegistryFileType;
+  target?: string;
+} {
   // For standard shadcn paths, use appropriate types (shadcn resolves based on user config)
   if (file.path.startsWith("components/ui/")) {
     return { type: "registry:ui" };
@@ -20,7 +27,11 @@ function getRegistryFileInfo(file: ComponentFile): { type: RegistryFileType; tar
   if (file.path.startsWith("hooks/") || file.type === "hook") {
     return { type: "registry:hook" };
   }
-  if (file.path.startsWith("lib/") || file.path.startsWith("utils/") || file.type === "util") {
+  if (
+    file.path.startsWith("lib/") ||
+    file.path.startsWith("utils/") ||
+    file.type === "util"
+  ) {
     return { type: "registry:lib" };
   }
   if (file.type === "style" || file.path.endsWith(".css")) {
@@ -56,12 +67,14 @@ export function componentToRegistry(component: SavedComponent): RegistryItem {
   });
 
   return {
-    $schema: REGISTRY_SCHEMA_URL as "https://ui.shadcn.com/schema/registry-item.json",
+    $schema:
+      REGISTRY_SCHEMA_URL as "https://ui.shadcn.com/schema/registry-item.json",
     name: component.name,
     type: "registry:ui",
     title: component.title,
     description: component.description,
-    dependencies: component.dependencies.length > 0 ? component.dependencies : undefined,
+    dependencies:
+      component.dependencies.length > 0 ? component.dependencies : undefined,
     registryDependencies:
       component.registryDependencies.length > 0
         ? component.registryDependencies

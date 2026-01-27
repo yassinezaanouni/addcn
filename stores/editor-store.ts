@@ -51,7 +51,11 @@ interface EditorState {
   // Actions
   setConvexId: (id: Id<"components"> | null) => void;
   setValidationDialogOpen: (open: boolean) => void;
-  setMetadata: (data: { name?: string; title?: string; description?: string }) => void;
+  setMetadata: (data: {
+    name?: string;
+    title?: string;
+    description?: string;
+  }) => void;
   setActiveFile: (fileId: string | null) => void;
   setPreviewFile: (fileId: string | null) => void;
   updateFileContent: (fileId: string, content: string) => void;
@@ -165,9 +169,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
 
   updateFileContent: (fileId, content) =>
     set((state) => ({
-      files: state.files.map((f) =>
-        f.id === fileId ? { ...f, content } : f
-      ),
+      files: state.files.map((f) => (f.id === fileId ? { ...f, content } : f)),
       isDirty: true,
     })),
 
@@ -203,11 +205,11 @@ export const useEditorStore = create<EditorState>()((set) => ({
       const newFiles = state.files.filter((f) => f.id !== fileId);
       const newActiveId =
         state.activeFileId === fileId
-          ? newFiles[0]?.id ?? null
+          ? (newFiles[0]?.id ?? null)
           : state.activeFileId;
       const newPreviewId =
         state.previewFileId === fileId
-          ? newFiles.find((f) => f.path.endsWith(".tsx"))?.id ?? null
+          ? (newFiles.find((f) => f.path.endsWith(".tsx"))?.id ?? null)
           : state.previewFileId;
       return {
         files: newFiles,
@@ -227,7 +229,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
               type: getFileType(newPath),
               language: getLanguage(newPath),
             }
-          : f
+          : f,
       ),
       isDirty: true,
     })),

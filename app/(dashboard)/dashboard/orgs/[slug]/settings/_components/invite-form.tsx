@@ -24,7 +24,9 @@ export function InviteForm({ orgId }: { orgId: Id<"organizations"> }) {
   const [role, setRole] = useState<"admin" | "member">("member");
   const [error, setError] = useState<string | null>(null);
 
-  const createInviteMutationFn = useConvexMutation(api.organizations.createInvite);
+  const createInviteMutationFn = useConvexMutation(
+    api.organizations.createInvite,
+  );
   const createInviteMutation = useMutation({
     mutationFn: createInviteMutationFn,
     onSuccess: () => {
@@ -36,7 +38,9 @@ export function InviteForm({ orgId }: { orgId: Id<"organizations"> }) {
       setError(null);
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Failed to send invitation");
+      setError(
+        err instanceof Error ? err.message : "Failed to send invitation",
+      );
     },
   });
 
@@ -65,7 +69,10 @@ export function InviteForm({ orgId }: { orgId: Id<"organizations"> }) {
   return (
     <Card>
       <CardContent className="pt-6">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-4 sm:flex-row sm:items-end"
+        >
           <div className="flex-1 space-y-2">
             <Label htmlFor="email">Email address</Label>
             <Input

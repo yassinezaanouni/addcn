@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
@@ -65,20 +65,16 @@ function ProfileFormSkeleton() {
   );
 }
 
-export default function ProfileSettingsPage() {
-  const { data: user, isPending } = useQuery(convexQuery(api.users.getMe, {}));
+interface User {
+  username: string;
+  email: string;
+  avatarUrl?: string;
+}
 
-  const [username, setUsername] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
+function ProfileForm({ user }: { user: User }) {
+  const [username, setUsername] = useState(user.username);
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? "");
   const [error, setError] = useState<string | null>(null);
-
-  // Populate form with user data when loaded
-  useEffect(() => {
-    if (user) {
-      setUsername(user.username);
-      setAvatarUrl(user.avatarUrl ?? "");
-    }
-  }, [user]);
 
   const updateProfileMutationFn = useConvexMutation(api.users.updateMe);
   const { mutate: updateProfile, isPending: isUpdating } = useMutation({
@@ -105,12 +101,12 @@ export default function ProfileSettingsPage() {
     // Build updates object - only include changed fields
     const updates: { username?: string; avatarUrl?: string } = {};
 
-    if (username !== user?.username) {
+    if (username !== user.username) {
       updates.username = username;
     }
 
     const newAvatarUrl = avatarUrl.trim() || undefined;
-    if (newAvatarUrl !== user?.avatarUrl) {
+    if (newAvatarUrl !== user.avatarUrl) {
       updates.avatarUrl = newAvatarUrl;
     }
 
@@ -134,6 +130,86 @@ export default function ProfileSettingsPage() {
     setError(null);
   };
 
+  const hasChanges =
+    username !== user.username ||
+    (avatarUrl.trim() || undefined) !== user.avatarUrl;
+
+  return (
+    <Card className="max-w-md">
+      <CardHeader>
+        <CardTitle>Profile</CardTitle>
+        <CardDescription>
+          Update your personal information and avatar.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Avatar preview */}
+          <div className="flex items-center gap-4">
+            <Avatar className="size-16">
+              <AvatarImage
+                src={avatarUrl || user.avatarUrl}
+                alt={username || user.username}
+              />
+              <AvatarFallback className="text-lg">
+                {(username || user.username).charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">@{username || user.username}</p>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+            </div>
+          </div>
+
+          {/* Username field */}
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">@</span>
+              <Input
+                id="username"
+                type="text"
+                placeholder="my-username"
+                value={username}
+                onChange={handleUsernameChange}
+                disabled={isUpdating}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              3-39 characters, lowercase letters, numbers, and hyphens only
+            </p>
+          </div>
+
+          {/* Avatar URL field */}
+          <div className="space-y-2">
+            <Label htmlFor="avatarUrl">Avatar URL</Label>
+            <Input
+              id="avatarUrl"
+              type="url"
+              placeholder="https://example.com/avatar.png"
+              value={avatarUrl}
+              onChange={handleAvatarUrlChange}
+              disabled={isUpdating}
+            />
+            <p className="text-xs text-muted-foreground">
+              Enter a URL to an image to use as your avatar
+            </p>
+          </div>
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          <Button type="submit" disabled={isUpdating || !hasChanges}>
+            {isUpdating ? "Saving..." : "Save changes"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function ProfileSettingsPage() {
+  const { data: user, isPending } = useQuery(convexQuery(api.users.getMe, {}));
+
   if (isPending) {
     return (
       <div className="space-y-6">
@@ -152,10 +228,6 @@ export default function ProfileSettingsPage() {
     return null;
   }
 
-  const hasChanges =
-    username !== user.username ||
-    (avatarUrl.trim() || undefined) !== user.avatarUrl;
-
   return (
     <div className="space-y-6">
       <div>
@@ -164,76 +236,7 @@ export default function ProfileSettingsPage() {
           Manage your account settings and profile information.
         </p>
       </div>
-
-      <Card className="max-w-md">
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>
-            Update your personal information and avatar.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Avatar preview */}
-            <div className="flex items-center gap-4">
-              <Avatar className="size-16">
-                <AvatarImage
-                  src={avatarUrl || user.avatarUrl}
-                  alt={username || user.username}
-                />
-                <AvatarFallback className="text-lg">
-                  {(username || user.username).charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium">@{username || user.username}</p>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
-              </div>
-            </div>
-
-            {/* Username field */}
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">@</span>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="my-username"
-                  value={username}
-                  onChange={handleUsernameChange}
-                  disabled={isUpdating}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                3-39 characters, lowercase letters, numbers, and hyphens only
-              </p>
-            </div>
-
-            {/* Avatar URL field */}
-            <div className="space-y-2">
-              <Label htmlFor="avatarUrl">Avatar URL</Label>
-              <Input
-                id="avatarUrl"
-                type="url"
-                placeholder="https://example.com/avatar.png"
-                value={avatarUrl}
-                onChange={handleAvatarUrlChange}
-                disabled={isUpdating}
-              />
-              <p className="text-xs text-muted-foreground">
-                Enter a URL to an image to use as your avatar
-              </p>
-            </div>
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
-
-            <Button type="submit" disabled={isUpdating || !hasChanges}>
-              {isUpdating ? "Saving..." : "Save changes"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <ProfileForm key={user.username} user={user} />
     </div>
   );
 }

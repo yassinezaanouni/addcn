@@ -59,7 +59,7 @@ export function MonacoEditor({ onSave }: MonacoEditorProps) {
         updateFileContent(activeFileId, value);
       }
     },
-    [activeFileId, updateFileContent]
+    [activeFileId, updateFileContent],
   );
 
   if (!activeFile) {

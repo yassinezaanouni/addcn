@@ -30,11 +30,13 @@ export default function OrgDetailPage({
   const { slug } = use(params);
 
   const { data: org, isLoading: orgLoading } = useQuery(
-    convexQuery(api.organizations.getBySlug, { slug })
+    convexQuery(api.organizations.getBySlug, { slug }),
   );
 
   // Get user's role in this org
-  const { data: myOrgs } = useQuery(convexQuery(api.organizations.getMyOrgs, {}));
+  const { data: myOrgs } = useQuery(
+    convexQuery(api.organizations.getMyOrgs, {}),
+  );
   const myOrgWithRole = myOrgs?.find((o) => o.slug === slug);
   const myRole = myOrgWithRole?.role;
 

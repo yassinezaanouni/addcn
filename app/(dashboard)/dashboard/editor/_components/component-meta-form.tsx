@@ -44,7 +44,8 @@ export function ComponentMetaForm() {
       {/* Title field */}
       <div className="space-y-2">
         <Label htmlFor="title">
-          Title<RequiredIndicator />
+          Title
+          <RequiredIndicator />
         </Label>
         <Input
           id="title"

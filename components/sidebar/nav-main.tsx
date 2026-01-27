@@ -46,15 +46,16 @@ export function NavMain({ items }: NavMainProps) {
                 <SidebarMenuItem key={item.title}>
                   <Tooltip>
                     <TooltipTrigger render={<span className="w-full" />}>
-                      <SidebarMenuButton disabled className="pointer-events-none opacity-50">
+                      <SidebarMenuButton
+                        disabled
+                        className="pointer-events-none opacity-50"
+                      >
                         <item.icon />
                         <span>{item.title}</span>
                         <IconLock className="ml-auto size-4" />
                       </SidebarMenuButton>
                     </TooltipTrigger>
-                    <TooltipContent side="right">
-                      {item.tooltip}
-                    </TooltipContent>
+                    <TooltipContent side="right">{item.tooltip}</TooltipContent>
                   </Tooltip>
                 </SidebarMenuItem>
               );

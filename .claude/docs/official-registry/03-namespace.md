@@ -16,6 +16,7 @@ Registry namespaces enable organizing and referencing resources from multiple so
 The system intentionally avoids central authority. You can create any namespace and configure multiple registries for different purposes:
 
 **Organizing strategies:**
+
 - By resource type (UI components, documentation, AI resources)
 - By team or department
 - By visibility (public vs. private)
@@ -84,6 +85,7 @@ Store credentials securely using environment variable expansion:
 ```
 
 Set in `.env.local`:
+
 ```
 REGISTRY_TOKEN=your_secret_token_here
 ```
@@ -196,11 +198,13 @@ Use environment variables for environment-specific versions:
 ## Registry Naming Convention
 
 Valid registry names must:
+
 - Start with `@` symbol
 - Contain only alphanumeric characters, hyphens, and underscores
 - Reference pattern: `@namespace/resource-name`
 
 **Regex pattern:**
+
 ```
 /^(@[a-zA-Z0-9](?:[a-zA-Z0-9-_]*[a-zA-Z0-9])?)\/(.+)$/
 ```
@@ -208,11 +212,13 @@ Valid registry names must:
 ## Error Handling
 
 **Unknown registry:**
+
 ```
 Unknown registry "@non-existent". Configure in components.json
 ```
 
 **Missing environment variables:**
+
 ```
 Registry requires: REGISTRY_TOKEN
 ```
@@ -221,6 +227,7 @@ Registry requires: REGISTRY_TOKEN
 Verify resource name spelling and registry URL pattern correctness.
 
 **Authentication failures:**
+
 - 401 Unauthorized: Check credentials and environment variables
 - 403 Forbidden: Verify API key permissions
 
@@ -235,6 +242,7 @@ To create a compatible registry:
 5. Document namespace configuration for users
 
 Document configuration:
+
 ```json
 {
   "registries": {
@@ -272,16 +280,19 @@ The resolver maintains separate authentication contexts for each registry, dedup
 ## Troubleshooting
 
 **Resources not found:**
+
 - Verify registry URL and `{name}` placeholder inclusion
 - Confirm resource exists in registry
 - Check resource type compatibility
 
 **Authentication issues:**
+
 - Validate environment variables are set correctly
 - Verify API keys haven't expired
 - Check header format correctness
 
 **Dependency conflicts:**
+
 - Review resources with identical names from different registries
 - Use fully qualified names (`@namespace/resource`)
 - Check for circular dependencies

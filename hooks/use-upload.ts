@@ -70,7 +70,7 @@ export function useUpload(options: UseUploadOptions = {}) {
         setIsUploading(false);
       }
     },
-    [uploadFile, options]
+    [uploadFile, options],
   );
 
   return {

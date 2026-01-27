@@ -29,7 +29,7 @@ export function parseImports(code: string): ParsedImport[] {
           .split(",")
           .map((n) => n.trim())
           .filter(Boolean)
-          .map((n) => n.split(" as ").pop()!.trim())
+          .map((n) => n.split(" as ").pop()!.trim()),
       );
     }
 
@@ -51,11 +51,16 @@ export function parseImports(code: string): ParsedImport[] {
 /**
  * Resolve a relative import path based on the current file's location
  */
-export function resolveRelativePath(importPath: string, currentFilePath: string): string {
+export function resolveRelativePath(
+  importPath: string,
+  currentFilePath: string,
+): string {
   const currentDir = currentFilePath.split("/").slice(0, -1).join("/");
 
   if (importPath.startsWith("./")) {
-    return currentDir ? `${currentDir}/${importPath.slice(2)}` : importPath.slice(2);
+    return currentDir
+      ? `${currentDir}/${importPath.slice(2)}`
+      : importPath.slice(2);
   } else if (importPath.startsWith("../")) {
     const parts = currentDir.split("/");
     let path = importPath;
@@ -75,7 +80,7 @@ export function resolveRelativePath(importPath: string, currentFilePath: string)
 export function resolveFile(
   importPath: string,
   files: ComponentFile[],
-  currentFilePath?: string
+  currentFilePath?: string,
 ): ComponentFile | null {
   const resolvedPath = currentFilePath
     ? resolveRelativePath(importPath, currentFilePath)
@@ -90,7 +95,9 @@ export function resolveFile(
   }
 
   file = files.find(
-    (f) => f.path === `${resolvedPath}/index.ts` || f.path === `${resolvedPath}/index.tsx`
+    (f) =>
+      f.path === `${resolvedPath}/index.ts` ||
+      f.path === `${resolvedPath}/index.tsx`,
   );
   if (file) return file;
 
@@ -100,7 +107,10 @@ export function resolveFile(
 /**
  * Get all files from a folder
  */
-export function getFilesFromFolder(folderName: string, files: ComponentFile[]): ComponentFile[] {
+export function getFilesFromFolder(
+  folderName: string,
+  files: ComponentFile[],
+): ComponentFile[] {
   const folder = folderName.replace(/^\.\.?\//, "").replace(/^@\//, "");
   return files.filter((f) => f.path.startsWith(folder + "/"));
 }
@@ -111,7 +121,7 @@ export function getFilesFromFolder(folderName: string, files: ComponentFile[]): 
 export function collectAllFiles(
   mainFile: ComponentFile,
   allFiles: ComponentFile[],
-  collected: Map<string, ComponentFile> = new Map()
+  collected: Map<string, ComponentFile> = new Map(),
 ): Map<string, ComponentFile> {
   if (collected.has(mainFile.path)) return collected;
   collected.set(mainFile.path, mainFile);

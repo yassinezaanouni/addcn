@@ -7,6 +7,7 @@ The registry is a **distribution system for code** that enables developers to ru
 ## Key Features
 
 The registry system allows you to:
+
 - Create and maintain your own component library
 - Distribute custom components across projects
 - Share hooks, pages, and configuration files
@@ -31,6 +32,7 @@ The documentation provides guidance across several key areas:
 ## Use Cases
 
 The registry enables:
+
 - Distribution of organization-specific components
 - Sharing reusable code patterns across teams
 - Management of design system libraries

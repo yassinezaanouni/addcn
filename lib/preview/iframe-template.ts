@@ -9,7 +9,7 @@ export function generateIframeHtml(
   files: Map<string, ComponentFile>,
   mainFilePath: string,
   cssContent: string,
-  theme: string
+  theme: string,
 ): string {
   const mainFile = files.get(mainFilePath);
   if (!mainFile) return "";
@@ -26,7 +26,10 @@ export function generateIframeHtml(
     // Process dependencies first
     const imports = parseImports(file.content);
     for (const imp of imports) {
-      if (imp.path === "react" || (!imp.path.startsWith(".") && !imp.path.startsWith("@/")))
+      if (
+        imp.path === "react" ||
+        (!imp.path.startsWith(".") && !imp.path.startsWith("@/"))
+      )
         continue;
       const depFile = resolveFile(imp.path, Array.from(files.values()), path);
       if (depFile && files.has(depFile.path)) {
@@ -59,7 +62,7 @@ function generateHtmlTemplate(
   combinedCode: string,
   componentName: string,
   cssContent: string,
-  theme: string
+  theme: string,
 ): string {
   const indentedCode = combinedCode
     .split("\n")

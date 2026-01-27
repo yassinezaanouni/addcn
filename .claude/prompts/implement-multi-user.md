@@ -25,6 +25,7 @@ You are implementing a multi-user system for **addcn**, a shadcn component regis
 - **Icons:** Tabler Icons (`@tabler/icons-react`)
 
 **shadcn Rule:** Always install shadcn components via CLI, never copy-paste:
+
 ```bash
 pnpm dlx shadcn@latest add <component-name>
 ```
@@ -103,6 +104,7 @@ pnpm dlx shadcn@latest add <component-name>
 **Data Fetching:** Use TanStack Query's `isPending`, `isError` for loading/error states.
 
 **Mutations:** Use async/await pattern, NOT onSuccess callbacks:
+
 ```typescript
 const { mutateAsync, isPending } = useMutation({
   mutationFn: useConvexMutation(api.components.remove),

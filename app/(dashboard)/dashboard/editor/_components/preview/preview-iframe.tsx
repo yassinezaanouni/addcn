@@ -16,7 +16,7 @@ export function PreviewIframe({ html, iframeKey, theme }: PreviewIframeProps) {
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
         { type: "theme-change", theme },
-        "*"
+        "*",
       );
     }
   }, [theme]);

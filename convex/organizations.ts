@@ -61,13 +61,15 @@ export const getMyOrgs = query({
           ...org,
           role: membership.role,
         };
-      })
+      }),
     );
 
     // Filter out any null values (deleted orgs)
     return orgsWithRole.filter(
-      (org): org is Doc<"organizations"> & { role: "owner" | "admin" | "member" } =>
-        org !== null
+      (
+        org,
+      ): org is Doc<"organizations"> & { role: "owner" | "admin" | "member" } =>
+        org !== null,
     );
   },
 });
@@ -88,7 +90,7 @@ export const create = mutation({
     // Validate slug format
     if (!isValidOrgSlug(args.slug)) {
       throw new ConvexError(
-        "Invalid slug. Must be 3-39 characters, lowercase alphanumeric and hyphens only, no consecutive hyphens."
+        "Invalid slug. Must be 3-39 characters, lowercase alphanumeric and hyphens only, no consecutive hyphens.",
       );
     }
 
@@ -171,7 +173,7 @@ export const remove = mutation({
     const membership = await ctx.db
       .query("orgMembers")
       .withIndex("by_orgId_userId", (q) =>
-        q.eq("orgId", args.orgId).eq("userId", user._id)
+        q.eq("orgId", args.orgId).eq("userId", user._id),
       )
       .unique();
 
@@ -238,7 +240,11 @@ export const getMembers = query({
     }
 
     // Check if current user is a member
-    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    const currentMembership = await getMembership(
+      ctx,
+      args.orgId,
+      currentUser._id,
+    );
     if (!currentMembership) {
       return [];
     }
@@ -268,7 +274,7 @@ export const getMembers = query({
             avatarUrl: user.avatarUrl,
           },
         };
-      })
+      }),
     );
 
     // Filter out any null values (deleted users)
@@ -282,11 +288,13 @@ export const getMembers = query({
 async function getMembership(
   ctx: QueryCtx | MutationCtx,
   orgId: Id<"organizations">,
-  userId: Id<"users">
+  userId: Id<"users">,
 ) {
   return ctx.db
     .query("orgMembers")
-    .withIndex("by_orgId_userId", (q) => q.eq("orgId", orgId).eq("userId", userId))
+    .withIndex("by_orgId_userId", (q) =>
+      q.eq("orgId", orgId).eq("userId", userId),
+    )
     .unique();
 }
 
@@ -310,7 +318,11 @@ export const addMember = mutation({
     }
 
     // Check if current user is admin or owner
-    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    const currentMembership = await getMembership(
+      ctx,
+      args.orgId,
+      currentUser._id,
+    );
     if (!currentMembership || currentMembership.role === "member") {
       throw new ConvexError("Only admins and owners can add members");
     }
@@ -322,7 +334,11 @@ export const addMember = mutation({
     }
 
     // Check if user is already a member
-    const existingMembership = await getMembership(ctx, args.orgId, args.userId);
+    const existingMembership = await getMembership(
+      ctx,
+      args.orgId,
+      args.userId,
+    );
     if (existingMembership) {
       throw new ConvexError("User is already a member of this organization");
     }
@@ -360,7 +376,11 @@ export const removeMember = mutation({
     }
 
     // Check if current user is admin or owner
-    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    const currentMembership = await getMembership(
+      ctx,
+      args.orgId,
+      currentUser._id,
+    );
     if (!currentMembership || currentMembership.role === "member") {
       throw new ConvexError("Only admins and owners can remove members");
     }
@@ -386,12 +406,17 @@ export const removeMember = mutation({
 
       const ownerCount = allMembers.filter((m) => m.role === "owner").length;
       if (ownerCount <= 1) {
-        throw new ConvexError("Cannot remove the last owner of an organization");
+        throw new ConvexError(
+          "Cannot remove the last owner of an organization",
+        );
       }
     }
 
     // Admins cannot remove other admins (only owners can)
-    if (targetMembership.role === "admin" && currentMembership.role !== "owner") {
+    if (
+      targetMembership.role === "admin" &&
+      currentMembership.role !== "owner"
+    ) {
       throw new ConvexError("Only owners can remove admins");
     }
 
@@ -423,7 +448,11 @@ export const updateMemberRole = mutation({
     }
 
     // Only owners can update roles
-    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    const currentMembership = await getMembership(
+      ctx,
+      args.orgId,
+      currentUser._id,
+    );
     if (!currentMembership || currentMembership.role !== "owner") {
       throw new ConvexError("Only owners can update member roles");
     }
@@ -443,7 +472,9 @@ export const updateMemberRole = mutation({
 
       const ownerCount = allMembers.filter((m) => m.role === "owner").length;
       if (ownerCount <= 1) {
-        throw new ConvexError("Cannot demote the last owner of an organization");
+        throw new ConvexError(
+          "Cannot demote the last owner of an organization",
+        );
       }
     }
 
@@ -460,7 +491,8 @@ export const updateMemberRole = mutation({
  * Generate a cryptographically random token for invites.
  */
 function generateInviteToken(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const randomBytes = new Uint8Array(32);
   crypto.getRandomValues(randomBytes);
   return Array.from(randomBytes, (byte) => chars[byte % chars.length]).join("");
@@ -487,7 +519,11 @@ export const createInvite = mutation({
     }
 
     // Check if current user is admin or owner
-    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    const currentMembership = await getMembership(
+      ctx,
+      args.orgId,
+      currentUser._id,
+    );
     if (!currentMembership || currentMembership.role === "member") {
       throw new ConvexError("Only admins and owners can create invites");
     }
@@ -499,7 +535,7 @@ export const createInvite = mutation({
       .collect();
 
     const pendingInvite = existingInvites.find(
-      (invite) => invite.email === args.email && invite.expiresAt > Date.now()
+      (invite) => invite.email === args.email && invite.expiresAt > Date.now(),
     );
 
     if (pendingInvite) {
@@ -513,7 +549,11 @@ export const createInvite = mutation({
       .unique();
 
     if (existingUser) {
-      const existingMembership = await getMembership(ctx, args.orgId, existingUser._id);
+      const existingMembership = await getMembership(
+        ctx,
+        args.orgId,
+        existingUser._id,
+      );
       if (existingMembership) {
         throw new ConvexError("User is already a member of this organization");
       }
@@ -632,7 +672,11 @@ export const acceptInvite = mutation({
     }
 
     // Check if user is already a member
-    const existingMembership = await getMembership(ctx, invite.orgId, currentUser._id);
+    const existingMembership = await getMembership(
+      ctx,
+      invite.orgId,
+      currentUser._id,
+    );
     if (existingMembership) {
       // Delete the invite since they're already a member
       await ctx.db.delete(invite._id);
@@ -680,7 +724,11 @@ export const cancelInvite = mutation({
     }
 
     // Check if current user is admin or owner of the org
-    const currentMembership = await getMembership(ctx, invite.orgId, currentUser._id);
+    const currentMembership = await getMembership(
+      ctx,
+      invite.orgId,
+      currentUser._id,
+    );
     if (!currentMembership || currentMembership.role === "member") {
       throw new ConvexError("Only admins and owners can cancel invites");
     }
@@ -713,7 +761,11 @@ export const getPendingInvites = query({
     }
 
     // Check if current user is admin or owner
-    const currentMembership = await getMembership(ctx, args.orgId, currentUser._id);
+    const currentMembership = await getMembership(
+      ctx,
+      args.orgId,
+      currentUser._id,
+    );
     if (!currentMembership || currentMembership.role === "member") {
       return [];
     }
@@ -744,7 +796,7 @@ export const getPendingInvites = query({
                 }
               : null,
           };
-        })
+        }),
     );
 
     return pendingInvites;

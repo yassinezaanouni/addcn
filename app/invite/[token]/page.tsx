@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 
 function getRoleBadgeVariant(
-  role: "owner" | "admin" | "member"
+  role: "owner" | "admin" | "member",
 ): "default" | "secondary" | "outline" {
   switch (role) {
     case "owner":
@@ -44,11 +44,13 @@ export default function InvitePage() {
 
   // Fetch invite details
   const { data: invite, isLoading: isInviteLoading } = useQuery(
-    convexQuery(api.organizations.getInviteByToken, { token })
+    convexQuery(api.organizations.getInviteByToken, { token }),
   );
 
   // Accept invite mutation
-  const acceptInviteMutation = useConvexMutation(api.organizations.acceptInvite);
+  const acceptInviteMutation = useConvexMutation(
+    api.organizations.acceptInvite,
+  );
   const { mutate: acceptInvite, isPending: isAccepting } = useMutation({
     mutationFn: acceptInviteMutation,
     onSuccess: () => {

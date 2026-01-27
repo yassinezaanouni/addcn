@@ -2,13 +2,15 @@
  * Transform CSS for iframe preview
  */
 export function transformCss(rawCss: string): string {
-  return rawCss
-    // Remove @import statements
-    .replace(/@import\s+["'][^"']+["'];?\s*/g, "")
-    // Remove @custom-variant (handled by CDN config)
-    .replace(/@custom-variant[^;]+;?\s*/g, "")
-    // Remove @theme blocks (we'll define theme in iframe)
-    .replace(/@theme\s+inline\s*\{[\s\S]*?\n\}/g, "");
+  return (
+    rawCss
+      // Remove @import statements
+      .replace(/@import\s+["'][^"']+["'];?\s*/g, "")
+      // Remove @custom-variant (handled by CDN config)
+      .replace(/@custom-variant[^;]+;?\s*/g, "")
+      // Remove @theme blocks (we'll define theme in iframe)
+      .replace(/@theme\s+inline\s*\{[\s\S]*?\n\}/g, "")
+  );
 }
 
 /**
@@ -82,7 +84,9 @@ export function extractImportAliases(code: string): Map<string, string> {
 /**
  * Generate alias declarations (e.g., "const m = motion;")
  */
-export function generateAliasDeclarations(aliases: Map<string, string>): string {
+export function generateAliasDeclarations(
+  aliases: Map<string, string>,
+): string {
   const declarations: string[] = [];
   for (const [original, alias] of aliases) {
     declarations.push(`const ${alias} = ${original};`);
@@ -132,7 +136,10 @@ export function removeImports(code: string): string {
 export function stripTypescript(code: string): string {
   let result = code;
   // Remove type annotations after colons (: Type)
-  result = result.replace(/:\s*[A-Z][a-zA-Z0-9<>,\s\[\]|&]*(?=\s*[=,\)\}\]])/g, "");
+  result = result.replace(
+    /:\s*[A-Z][a-zA-Z0-9<>,\s\[\]|&]*(?=\s*[=,\)\}\]])/g,
+    "",
+  );
   // Remove generic type parameters on function calls like useRef<Type>(
   result = result.replace(/(<[A-Z][a-zA-Z0-9<>,\s\[\]|&]*>)(\s*\()/g, "$2");
   // Remove type assertions (as Type)
@@ -140,7 +147,7 @@ export function stripTypescript(code: string): string {
   // Remove interface and type declarations
   result = result.replace(
     /^(interface|type)\s+\w+[\s\S]*?(?=\n\n|\nexport|\nfunction|\nconst|\nclass)/gm,
-    ""
+    "",
   );
   // Remove generic type parameters on function declarations
   result = result.replace(/function\s+(\w+)\s*<[^>]+>/g, "function $1");

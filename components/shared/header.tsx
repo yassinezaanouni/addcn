@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { IconBrandGithub } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { Logo } from "./logo";

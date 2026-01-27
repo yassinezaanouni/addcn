@@ -20,13 +20,15 @@ export default function OrgSettingsPage({
   const { slug } = use(params);
 
   const { data: org, isLoading: orgLoading } = useQuery(
-    convexQuery(api.organizations.getBySlug, { slug })
+    convexQuery(api.organizations.getBySlug, { slug }),
   );
 
   const { data: user } = useQuery(convexQuery(api.users.getMe, {}));
 
   // Get user's role in this org
-  const { data: myOrgs } = useQuery(convexQuery(api.organizations.getMyOrgs, {}));
+  const { data: myOrgs } = useQuery(
+    convexQuery(api.organizations.getMyOrgs, {}),
+  );
   const myOrgWithRole = myOrgs?.find((o) => o.slug === slug);
   const myRole = myOrgWithRole?.role;
 
@@ -70,7 +72,8 @@ export default function OrgSettingsPage({
       <div className="flex flex-col items-center justify-center py-12">
         <h2 className="text-lg font-medium">Access Denied</h2>
         <p className="text-muted-foreground">
-          You don&apos;t have permission to access this organization&apos;s settings.
+          You don&apos;t have permission to access this organization&apos;s
+          settings.
         </p>
         <Link href={`/dashboard/orgs/${slug}`}>
           <Button variant="outline" className="mt-4">
@@ -132,7 +135,11 @@ export default function OrgSettingsPage({
             Current members of this organization.
           </p>
         </div>
-        <MemberList orgId={org._id} currentUserRole={myRole} currentUserId={user?._id} />
+        <MemberList
+          orgId={org._id}
+          currentUserRole={myRole}
+          currentUserId={user?._id}
+        />
       </section>
     </div>
   );

@@ -65,6 +65,7 @@ Simple utilities define single properties, while complex utilities support neste
 ### CSS Imports
 
 Add imports at the top of CSS files using `@import` syntax, including:
+
 - Basic imports: `"@import \"tailwindcss\""`
 - URL imports: `"@import url(\"https://fonts.googleapis.com/css2?family=Inter\")"`
 - Media queries: `"@import \"print-styles.css\" print"`

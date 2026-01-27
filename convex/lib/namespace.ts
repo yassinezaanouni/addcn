@@ -3,7 +3,7 @@
  * Resolves a namespace string (username or org slug) to its owner
  */
 
-import { Doc, Id } from "../_generated/dataModel";
+import { Doc } from "../_generated/dataModel";
 import { QueryCtx } from "../_generated/server";
 
 /**
@@ -27,7 +27,7 @@ export type NamespaceOwner =
  */
 export async function resolveNamespace(
   ctx: QueryCtx,
-  namespace: string
+  namespace: string,
 ): Promise<NamespaceOwner | null> {
   // Remove @ prefix if present
   const cleanNamespace = namespace.startsWith("@")

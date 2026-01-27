@@ -60,7 +60,9 @@ function formatTimeRemaining(expiresAt: number): string {
   }
 
   const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const hours = Math.floor(
+    (remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+  );
 
   if (days > 0) {
     return `${days}d ${hours}h remaining`;
@@ -74,7 +76,9 @@ function formatTimeRemaining(expiresAt: number): string {
 function InviteCard({ invite }: { invite: PendingInvite }) {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  const cancelInviteMutationFn = useConvexMutation(api.organizations.cancelInvite);
+  const cancelInviteMutationFn = useConvexMutation(
+    api.organizations.cancelInvite,
+  );
   const cancelInviteMutation = useMutation({
     mutationFn: cancelInviteMutationFn,
     onSuccess: () => {
@@ -85,7 +89,8 @@ function InviteCard({ invite }: { invite: PendingInvite }) {
     },
     onError: (error) => {
       toast.error("Failed to cancel invitation", {
-        description: error instanceof Error ? error.message : "An error occurred",
+        description:
+          error instanceof Error ? error.message : "An error occurred",
       });
     },
   });
@@ -135,8 +140,8 @@ function InviteCard({ invite }: { invite: PendingInvite }) {
             <DialogTitle>Cancel Invitation</DialogTitle>
             <DialogDescription>
               Are you sure you want to cancel the invitation to{" "}
-              <strong>{invite.email}</strong>? The invitation link will no longer
-              work.
+              <strong>{invite.email}</strong>? The invitation link will no
+              longer work.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -152,7 +157,9 @@ function InviteCard({ invite }: { invite: PendingInvite }) {
               onClick={handleCancel}
               disabled={cancelInviteMutation.isPending}
             >
-              {cancelInviteMutation.isPending ? "Cancelling..." : "Cancel Invitation"}
+              {cancelInviteMutation.isPending
+                ? "Cancelling..."
+                : "Cancel Invitation"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -163,7 +170,7 @@ function InviteCard({ invite }: { invite: PendingInvite }) {
 
 export function PendingInvites({ orgId }: { orgId: Id<"organizations"> }) {
   const { data: invites, isLoading } = useQuery(
-    convexQuery(api.organizations.getPendingInvites, { orgId })
+    convexQuery(api.organizations.getPendingInvites, { orgId }),
   );
 
   if (isLoading) {
