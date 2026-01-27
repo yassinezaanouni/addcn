@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useConvexMutation } from "@convex-dev/react-query";
+import posthog from "posthog-js";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,9 @@ export function InviteForm({ orgId }: { orgId: Id<"organizations"> }) {
   const createInviteMutation = useMutation({
     mutationFn: createInviteMutationFn,
     onSuccess: () => {
+      posthog.capture("organization_invite_sent", {
+        invited_role: role,
+      });
       toast.success("Invitation sent", {
         description: `An invitation has been sent to ${email}.`,
       });
@@ -38,6 +42,7 @@ export function InviteForm({ orgId }: { orgId: Id<"organizations"> }) {
       setError(null);
     },
     onError: (err) => {
+      posthog.captureException(err);
       setError(
         err instanceof Error ? err.message : "Failed to send invitation",
       );

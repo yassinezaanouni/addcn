@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useConvexMutation, convexQuery } from "@convex-dev/react-query";
 import { motion } from "motion/react";
+import posthog from "posthog-js";
 import { api } from "@/convex/_generated/api";
 import { useEditorStore, useIsNewComponent } from "@/stores/editor-store";
 import { useOrgContext } from "@/components/org-switcher";
@@ -71,11 +72,23 @@ export function Toolbar() {
   const createMutation = useMutation({
     mutationFn: createMutationFn,
     onSuccess: () => {
+      posthog.capture("component_created", {
+        component_name: name,
+        component_title: title,
+        has_description: !!description.trim(),
+        files_count: files.length,
+        dependencies_count: dependencies.length,
+        registry_dependencies_count: registryDependencies.length,
+        preview_enabled: previewEnabled,
+        namespace,
+        is_org_component: context !== "personal",
+      });
       setIsDirty(false);
       toast.success("Component created");
       router.push("/dashboard");
     },
     onError: (error) => {
+      posthog.captureException(error);
       toast.error("Failed to create component", {
         description:
           error instanceof Error ? error.message : "An error occurred",
@@ -86,11 +99,23 @@ export function Toolbar() {
   const updateMutation = useMutation({
     mutationFn: updateMutationFn,
     onSuccess: () => {
+      posthog.capture("component_updated", {
+        component_name: name,
+        component_title: title,
+        has_description: !!description.trim(),
+        files_count: files.length,
+        dependencies_count: dependencies.length,
+        registry_dependencies_count: registryDependencies.length,
+        preview_enabled: previewEnabled,
+        namespace,
+        is_org_component: context !== "personal",
+      });
       setIsDirty(false);
       toast.success("Component saved");
       router.push("/dashboard");
     },
     onError: (error) => {
+      posthog.captureException(error);
       toast.error("Failed to save component", {
         description:
           error instanceof Error ? error.message : "An error occurred",

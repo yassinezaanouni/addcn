@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { motion, AnimatePresence } from "motion/react";
+import posthog from "posthog-js";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { validateUsernameFormat, USERNAME_RULES } from "@/lib/validators";
@@ -105,11 +106,20 @@ export function UsernameForm() {
   const setUsernameMutationFn = useConvexMutation(api.users.setUsername);
   const { mutate: setUsernameMutation, isPending } = useMutation({
     mutationFn: setUsernameMutationFn,
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Identify user in PostHog using username as distinct ID
+      posthog.identify(variables.username, {
+        username: variables.username,
+      });
+      // Capture username claimed event
+      posthog.capture("username_claimed", {
+        username: variables.username,
+      });
       localStorage.removeItem(CLAIMED_USERNAME_KEY);
       router.push("/dashboard");
     },
     onError: (err) => {
+      posthog.captureException(err);
       setClientError(err.message || "Failed to set username");
     },
   });

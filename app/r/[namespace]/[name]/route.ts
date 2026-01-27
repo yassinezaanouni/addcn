@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 /**
  * Proxy registry requests to Convex HTTP endpoint
@@ -41,6 +42,23 @@ export async function GET(
 
     const data = await response.json();
 
+    // Track successful registry component fetches server-side
+    if (response.ok) {
+      const posthog = getPostHogClient();
+      // Remove .json extension from name for cleaner event tracking
+      const componentName = name.replace(/\.json$/, "");
+      posthog.capture({
+        distinctId: clientIp,
+        event: "registry_component_fetched",
+        properties: {
+          namespace,
+          component_name: componentName,
+          client_ip: clientIp,
+          has_token: !!token,
+        },
+      });
+    }
+
     return NextResponse.json(data, {
       status: response.status,
       headers: {
@@ -51,6 +69,14 @@ export async function GET(
     });
   } catch (error) {
     console.error("Registry proxy error:", error);
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: "server",
+      event: "registry_component_fetch_error",
+      properties: {
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+    });
     return NextResponse.json(
       { error: "Failed to fetch from registry" },
       { status: 500 },

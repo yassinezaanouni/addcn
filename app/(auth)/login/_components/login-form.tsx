@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import posthog from "posthog-js";
 import {
   IconBrandGithub,
   IconBrandGoogle,
@@ -20,24 +21,32 @@ export function LoginForm() {
 
   const handleGitHubSignIn = async () => {
     setIsLoading("github");
+    posthog.capture("sign_in_started", {
+      provider: "github",
+    });
     try {
       await authClient.signIn.social({
         provider: "github",
         callbackURL: callbackUrl,
       });
-    } catch {
+    } catch (error) {
+      posthog.captureException(error);
       setIsLoading(null);
     }
   };
 
   const handleGoogleSignIn = async () => {
     setIsLoading("google");
+    posthog.capture("sign_in_started", {
+      provider: "google",
+    });
     try {
       await authClient.signIn.social({
         provider: "google",
         callbackURL: callbackUrl,
       });
-    } catch {
+    } catch (error) {
+      posthog.captureException(error);
       setIsLoading(null);
     }
   };

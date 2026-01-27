@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useConvexMutation } from "@convex-dev/react-query";
+import posthog from "posthog-js";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,9 @@ export function DeleteComponentButton({
   const deleteMutation = useMutation({
     mutationFn: deleteMutationFn,
     onSuccess: () => {
+      posthog.capture("component_deleted", {
+        component_name: componentName,
+      });
       toast.success("Component deleted", {
         description: "Your component has been permanently deleted.",
       });
@@ -49,6 +53,7 @@ export function DeleteComponentButton({
       }
     },
     onError: (error) => {
+      posthog.captureException(error);
       toast.error("Failed to delete component", {
         description:
           error instanceof Error ? error.message : "An error occurred",

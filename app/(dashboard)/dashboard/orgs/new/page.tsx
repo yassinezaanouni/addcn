@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useConvexMutation } from "@convex-dev/react-query";
+import posthog from "posthog-js";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,10 +75,15 @@ export default function NewOrgPage() {
   const { mutate: createOrg, isPending } = useMutation({
     mutationFn: createOrgMutationFn,
     onSuccess: () => {
+      posthog.capture("organization_created", {
+        organization_name: name.trim(),
+        organization_slug: slug,
+      });
       toast.success("Organization created successfully");
       router.push(`/dashboard/orgs/${slug}`);
     },
     onError: (err) => {
+      posthog.captureException(err);
       setError(err.message || "Failed to create organization");
     },
   });

@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import posthog from "posthog-js";
 import { api } from "@/convex/_generated/api";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -56,11 +57,17 @@ export default function InvitePage() {
     onSuccess: () => {
       // Use invite data we already have for success message and navigation
       if (invite) {
+        posthog.capture("organization_invite_accepted", {
+          organization_name: invite.org.name,
+          organization_slug: invite.org.slug,
+          role: invite.role,
+        });
         toast.success(`You've joined ${invite.org.name}!`);
         router.push(`/dashboard/orgs/${invite.org.slug}`);
       }
     },
     onError: (err) => {
+      posthog.captureException(err);
       toast.error(err.message || "Failed to accept invite");
     },
   });
@@ -208,7 +215,14 @@ export default function InvitePage() {
           <Button
             variant="ghost"
             className="w-full"
-            onClick={() => router.push("/dashboard")}
+            onClick={() => {
+              posthog.capture("organization_invite_declined", {
+                organization_name: invite.org.name,
+                organization_slug: invite.org.slug,
+                role: invite.role,
+              });
+              router.push("/dashboard");
+            }}
             disabled={isAccepting}
           >
             Decline

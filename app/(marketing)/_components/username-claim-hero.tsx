@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { motion, AnimatePresence } from "motion/react";
+import posthog from "posthog-js";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/lib/constants";
@@ -90,6 +91,9 @@ export function UsernameClaimHero() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (state !== "available") return;
+    posthog.capture("username_claim_started", {
+      username,
+    });
     localStorage.setItem(CLAIMED_USERNAME_KEY, username);
     router.push("/login?callbackUrl=/onboarding");
   };
