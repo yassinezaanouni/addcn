@@ -17,13 +17,22 @@ export const checkUsernameAvailability = query({
 
     // Validate format first
     if (username.length < 3) {
-      return { available: false, reason: "Username must be at least 3 characters" };
+      return {
+        available: false,
+        reason: "Username must be at least 3 characters",
+      };
     }
     if (username.length > 39) {
-      return { available: false, reason: "Username must be at most 39 characters" };
+      return {
+        available: false,
+        reason: "Username must be at most 39 characters",
+      };
     }
     if (!/^[a-z0-9-]+$/.test(username)) {
-      return { available: false, reason: "Only lowercase letters, numbers, and hyphens allowed" };
+      return {
+        available: false,
+        reason: "Only lowercase letters, numbers, and hyphens allowed",
+      };
     }
     if (username.startsWith("-") || username.endsWith("-")) {
       return { available: false, reason: "Cannot start or end with a hyphen" };

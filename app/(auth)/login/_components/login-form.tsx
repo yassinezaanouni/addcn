@@ -1,8 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { IconBrandGithub, IconBrandGoogle, IconLoader2 } from "@tabler/icons-react";
+import {
+  IconBrandGithub,
+  IconBrandGoogle,
+  IconLoader2,
+} from "@tabler/icons-react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/lib/constants";
@@ -114,13 +119,13 @@ export function LoginForm() {
       {/* Footer text */}
       <p className="text-center text-xs text-muted-foreground">
         By continuing, you agree to our{" "}
-        <a href="/terms" className="link-underline text-foreground">
+        <Link href="/terms" className="link-underline text-foreground">
           Terms of Service
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a href="/privacy" className="link-underline text-foreground">
+        <Link href="/privacy" className="link-underline text-foreground">
           Privacy Policy
-        </a>
+        </Link>
       </p>
     </div>
   );

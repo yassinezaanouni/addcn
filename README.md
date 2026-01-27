@@ -164,6 +164,7 @@ pnpm tsc --noEmit  # Type check
 ### Environment Variables for Production
 
 **Vercel:**
+
 ```bash
 NEXT_PUBLIC_CONVEX_URL=https://your-prod.convex.cloud
 NEXT_PUBLIC_CONVEX_SITE_URL=https://your-prod.convex.site
@@ -173,6 +174,7 @@ CONVEX_DEPLOY_KEY=prod:your-deploy-key
 ```
 
 **Convex (production):**
+
 ```bash
 npx convex env set SITE_URL "https://yourdomain.com" --prod
 npx convex env set BETTER_AUTH_SECRET "new-secret" --prod

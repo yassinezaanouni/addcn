@@ -40,7 +40,11 @@ const defineCustomThemes = (monaco: Monaco) => {
     base: "vs",
     inherit: true,
     rules: [
-      { token: "comment", foreground: colors.light.mutedForeground.slice(1), fontStyle: "italic" },
+      {
+        token: "comment",
+        foreground: colors.light.mutedForeground.slice(1),
+        fontStyle: "italic",
+      },
       { token: "keyword", foreground: colors.light.primary.slice(1) },
       { token: "string", foreground: "b45309" },
       { token: "number", foreground: "be185d" },
@@ -53,7 +57,10 @@ const defineCustomThemes = (monaco: Monaco) => {
       { token: "tag", foreground: colors.light.primary.slice(1) },
       { token: "attribute.name", foreground: "1d4ed8" },
       { token: "attribute.value", foreground: "b45309" },
-      { token: "delimiter.bracket", foreground: colors.light.mutedForeground.slice(1) },
+      {
+        token: "delimiter.bracket",
+        foreground: colors.light.mutedForeground.slice(1),
+      },
     ],
     colors: {
       "editor.background": colors.light.background,
@@ -82,7 +89,11 @@ const defineCustomThemes = (monaco: Monaco) => {
     base: "vs-dark",
     inherit: true,
     rules: [
-      { token: "comment", foreground: colors.dark.mutedForeground.slice(1), fontStyle: "italic" },
+      {
+        token: "comment",
+        foreground: colors.dark.mutedForeground.slice(1),
+        fontStyle: "italic",
+      },
       { token: "keyword", foreground: colors.dark.primary.slice(1) },
       { token: "string", foreground: "fbbf24" },
       { token: "number", foreground: "f472b6" },
@@ -95,7 +106,10 @@ const defineCustomThemes = (monaco: Monaco) => {
       { token: "tag", foreground: colors.dark.primary.slice(1) },
       { token: "attribute.name", foreground: "60a5fa" },
       { token: "attribute.value", foreground: "fbbf24" },
-      { token: "delimiter.bracket", foreground: colors.dark.mutedForeground.slice(1) },
+      {
+        token: "delimiter.bracket",
+        foreground: colors.dark.mutedForeground.slice(1),
+      },
     ],
     colors: {
       "editor.background": colors.dark.background,

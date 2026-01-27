@@ -88,6 +88,7 @@ This project uses Base UI primitives under the hood. Key rules:
 - **Use `render` prop instead of `asChild`** - Base UI uses `render={<Component />}` pattern, not Radix's `asChild`
 - **Use `nativeButton={false}` when rendering non-button elements** - When using `render` prop with `<a>` or other non-button elements, add `nativeButton={false}` to suppress the warning
 - Example:
+
   ```tsx
   // Correct
   <DropdownMenuGroup>

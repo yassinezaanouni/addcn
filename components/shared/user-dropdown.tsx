@@ -67,8 +67,10 @@ export function UserDropdown() {
   const displayName = user?.username ? `@${user.username}` : "Complete setup";
   const displayEmail = user?.email ?? sessionData.user?.email ?? "";
   const avatarUrl = user?.avatarUrl ?? sessionData.user?.image ?? undefined;
-  const avatarFallback = user?.username?.charAt(0).toUpperCase() ??
-    sessionData.user?.name?.charAt(0).toUpperCase() ?? "U";
+  const avatarFallback =
+    user?.username?.charAt(0).toUpperCase() ??
+    sessionData.user?.name?.charAt(0).toUpperCase() ??
+    "U";
 
   return (
     <DropdownMenu>

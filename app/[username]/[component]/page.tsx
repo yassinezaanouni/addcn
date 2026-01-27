@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
@@ -49,24 +49,6 @@ function ComponentSkeleton() {
       </div>
       <Skeleton className="mb-6 h-12 w-full" />
       <Skeleton className="h-64 w-full" />
-    </div>
-  );
-}
-
-function NotFound() {
-  return (
-    <div className="container mx-auto flex min-h-[calc(100vh-200px)] max-w-4xl items-center justify-center px-4 py-8">
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <IconPackage />
-          </EmptyMedia>
-          <EmptyTitle>Component not found</EmptyTitle>
-          <EmptyDescription>
-            The component you are looking for does not exist or is not public.
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
     </div>
   );
 }
@@ -229,7 +211,7 @@ export default function ComponentDetailPage() {
   }
 
   if (!component) {
-    return <NotFound />;
+    notFound();
   }
 
   return (

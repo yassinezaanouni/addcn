@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, startTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useConvexMutation } from "@convex-dev/react-query";
@@ -40,15 +40,19 @@ export function UsernameForm() {
     const urlUsername = searchParams.get("username");
     if (urlUsername) {
       const filtered = urlUsername.toLowerCase().replace(/[^a-z0-9-]/g, "");
-      setUsername(filtered);
-      setDebouncedUsername(filtered);
+      startTransition(() => {
+        setUsername(filtered);
+        setDebouncedUsername(filtered);
+      });
       return;
     }
 
     const storedUsername = localStorage.getItem(CLAIMED_USERNAME_KEY);
     if (storedUsername) {
-      setUsername(storedUsername);
-      setDebouncedUsername(storedUsername);
+      startTransition(() => {
+        setUsername(storedUsername);
+        setDebouncedUsername(storedUsername);
+      });
     }
   }, [searchParams]);
 
@@ -135,7 +139,8 @@ export function UsernameForm() {
 
   // Don't show "taken" error while submitting (race condition with availability check)
   const errorMessage =
-    clientError || (!isPending && state === "taken" && availabilityResult?.reason);
+    clientError ||
+    (!isPending && state === "taken" && availabilityResult?.reason);
   const displayUsername = username || "username";
 
   return (
