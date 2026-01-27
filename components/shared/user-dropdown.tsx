@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, startTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -27,6 +28,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function UserDropdown() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure consistent rendering between server and client
+  useEffect(() => {
+    startTransition(() => {
+      setMounted(true);
+    });
+  }, []);
 
   // Check session (Better Auth) - tells us if they're signed in
   const { data: sessionData, isPending: isSessionPending } =
@@ -43,8 +52,8 @@ export function UserDropdown() {
     router.push("/");
   };
 
-  // Loading state
-  if (isSessionPending) {
+  // Show skeleton until mounted to prevent hydration mismatch
+  if (!mounted || isSessionPending) {
     return <Skeleton className="size-9 rounded-full" />;
   }
 

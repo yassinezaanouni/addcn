@@ -1,5 +1,7 @@
 # addcn
 
+![addcn - Build and Share shadcn Registries](/public/og-image.png)
+
 A multi-user platform for creating and serving custom shadcn/ui registry components. Build your personal component registry and share it with `npx shadcn@latest add`.
 
 ## Features
@@ -10,7 +12,56 @@ A multi-user platform for creating and serving custom shadcn/ui registry compone
 - **shadcn CLI Compatible** - Install components with the standard shadcn CLI
 - **Public & Private Components** - Control visibility with registry tokens
 
-## Tech Stack
+## Usage
+
+### Installing Components
+
+Install any public component from addcn using the shadcn CLI:
+
+```bash
+# Install a public component
+npx shadcn@latest add https://addcn.dev/r/username/button.json
+
+# Install from an organization
+npx shadcn@latest add https://addcn.dev/r/my-org/data-table.json
+```
+
+### Installing Private Components
+
+For private components, you need to include your registry token:
+
+```bash
+# Install a private component with token
+npx shadcn@latest add "https://addcn.dev/r/username/secret-component.json?token=your-registry-token"
+```
+
+You can find your registry token in your dashboard settings.
+
+### Creating Components
+
+1. **Sign in** at [addcn.dev](https://addcn.dev) with GitHub or Google
+2. **Claim your username** - This becomes your registry namespace
+3. **Create a component** - Go to Dashboard → New Component
+4. **Paste your code** - Add your component files (TSX, CSS, etc.)
+5. **Configure metadata** - Set name, description, and dependencies
+6. **Publish** - Your component is now available at `addcn.dev/r/your-username/component-name.json`
+
+### Component Structure
+
+When creating a component, you can add multiple files:
+
+| File Type | Registry Type | Example |
+|-----------|--------------|---------|
+| `components/ui/*` | `registry:ui` | Button, Card, Dialog |
+| `hooks/*` | `registry:hook` | useDebounce, useMediaQuery |
+| `lib/*` | `registry:lib` | utils, helpers |
+| `*.css` | `registry:style` | Custom styles |
+
+---
+
+## Self-Hosting / Development
+
+### Tech Stack
 
 - **Framework**: Next.js 16 (App Router)
 - **Database**: Convex
@@ -20,7 +71,7 @@ A multi-user platform for creating and serving custom shadcn/ui registry compone
 - **UI**: shadcn/ui (Base UI primitives)
 - **Icons**: Tabler Icons
 
-## Prerequisites
+### Prerequisites
 
 - Node.js 18+
 - pnpm
@@ -29,9 +80,9 @@ A multi-user platform for creating and serving custom shadcn/ui registry compone
 - GitHub OAuth app
 - Google OAuth app (optional)
 
-## Getting Started
+### Getting Started
 
-### 1. Clone the repository
+#### 1. Clone the repository
 
 ```bash
 git clone https://github.com/yassinezaanouni/addcn.git
@@ -39,7 +90,7 @@ cd addcn
 pnpm install
 ```
 
-### 2. Set up Convex
+#### 2. Set up Convex
 
 ```bash
 npx convex dev
@@ -47,7 +98,7 @@ npx convex dev
 
 This will prompt you to create a new Convex project and generate your development credentials.
 
-### 3. Set up environment variables
+#### 3. Set up environment variables
 
 Create a `.env.local` file:
 
@@ -64,7 +115,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_R2_PUBLIC_URL=https://your-bucket.r2.dev
 ```
 
-### 4. Set up Convex environment variables
+#### 4. Set up Convex environment variables
 
 ```bash
 # Better Auth
@@ -87,16 +138,16 @@ npx convex env set R2_SECRET_ACCESS_KEY "your-secret-key"
 npx convex env set R2_PUBLIC_URL "https://your-bucket.r2.dev"
 ```
 
-### 5. Set up OAuth providers
+#### 5. Set up OAuth providers
 
-#### GitHub
+**GitHub:**
 
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Create a new OAuth App
 3. Set Homepage URL: `http://localhost:3000`
 4. Set Callback URL: `http://localhost:3000/api/auth/callback/github`
 
-#### Google (optional)
+**Google (optional):**
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com)
 2. Create a new project or select existing
@@ -104,7 +155,7 @@ npx convex env set R2_PUBLIC_URL "https://your-bucket.r2.dev"
 4. Create OAuth 2.0 Client ID
 5. Add Authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
 
-### 6. Set up Cloudflare R2
+#### 6. Set up Cloudflare R2
 
 1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com) → R2
 2. Create a new bucket
@@ -113,7 +164,7 @@ npx convex env set R2_PUBLIC_URL "https://your-bucket.r2.dev"
 5. Copy the Access Key ID and Secret Access Key
 6. For public access, enable "Public Access" on your bucket
 
-### 7. Run the development server
+#### 7. Run the development server
 
 ```bash
 pnpm dev
@@ -121,7 +172,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-## Scripts
+### Scripts
 
 ```bash
 pnpm dev           # Start dev server (Next.js + Convex)
@@ -130,7 +181,7 @@ pnpm lint          # Run ESLint
 pnpm tsc --noEmit  # Type check
 ```
 
-## Project Structure
+### Project Structure
 
 ```
 ├── app/
@@ -151,9 +202,9 @@ pnpm tsc --noEmit  # Type check
 └── types/               # TypeScript types
 ```
 
-## Deployment
+### Deployment
 
-### Vercel + Convex
+#### Vercel + Convex
 
 1. Push to GitHub
 2. Import project in Vercel
@@ -161,7 +212,7 @@ pnpm tsc --noEmit  # Type check
 4. Get production deploy key from Convex dashboard
 5. Add `CONVEX_DEPLOY_KEY` to Vercel
 
-### Environment Variables for Production
+#### Environment Variables for Production
 
 **Vercel:**
 

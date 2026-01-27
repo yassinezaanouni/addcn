@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
@@ -25,7 +25,6 @@ import {
 import {
   IconPackage,
   IconDownload,
-  IconUser,
   IconCalendar,
 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -87,24 +86,6 @@ function ComponentCard({ component }: { component: Doc<"components"> }) {
   );
 }
 
-function NotFound() {
-  return (
-    <div className="container mx-auto flex min-h-[calc(100vh-200px)] max-w-4xl items-center justify-center px-4 py-8">
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <IconUser />
-          </EmptyMedia>
-          <EmptyTitle>User not found</EmptyTitle>
-          <EmptyDescription>
-            The user you are looking for does not exist.
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
-    </div>
-  );
-}
-
 export default function PublicProfilePage() {
   const params = useParams();
   const username = params.username as string;
@@ -131,7 +112,7 @@ export default function PublicProfilePage() {
 
   // User not found
   if (!user) {
-    return <NotFound />;
+    notFound();
   }
 
   return (
