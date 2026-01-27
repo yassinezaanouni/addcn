@@ -16,6 +16,7 @@ const eslintConfig = defineConfig([
     "convex/_generated/**",
     // shadcn/ui components
     "components/ui/**",
+    "package-lock.json",
   ]),
 ]);
 
