@@ -6,11 +6,15 @@ import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { motion, AnimatePresence } from "motion/react";
 import { api } from "@/convex/_generated/api";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/lib/constants";
 import { validateUsernameFormat, USERNAME_RULES } from "@/lib/validators";
-import { IconCheck, IconX, IconLoader2 } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconX,
+  IconLoader2,
+  IconArrowRight,
+} from "@tabler/icons-react";
 
 const DEBOUNCE_MS = 400;
 const CLAIMED_USERNAME_KEY = "addcn_claimed_username";
@@ -27,8 +31,8 @@ export function UsernameClaimHero() {
   const [username, setUsername] = useState("");
   const [debouncedUsername, setDebouncedUsername] = useState("");
   const [clientError, setClientError] = useState<string | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
 
-  // Debounce the username for server-side checking
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedUsername(username);
@@ -36,7 +40,6 @@ export function UsernameClaimHero() {
     return () => clearTimeout(timer);
   }, [username]);
 
-  // Server-side availability check
   const {
     data: availabilityResult,
     isLoading: isChecking,
@@ -49,7 +52,6 @@ export function UsernameClaimHero() {
       debouncedUsername.length >= USERNAME_RULES.minLength && !clientError,
   });
 
-  // Determine current state
   const getState = useCallback((): AvailabilityState => {
     if (!username || username.length < USERNAME_RULES.minLength) {
       return "idle";
@@ -75,12 +77,9 @@ export function UsernameClaimHero() {
 
   const state = getState();
 
-  // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const filtered = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
-
     setUsername(filtered);
-
     if (filtered.length >= USERNAME_RULES.minLength) {
       setClientError(validateUsernameFormat(filtered));
     } else {
@@ -88,7 +87,6 @@ export function UsernameClaimHero() {
     }
   };
 
-  // Handle form submit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (state !== "available") return;
@@ -99,125 +97,244 @@ export function UsernameClaimHero() {
   const errorMessage =
     clientError || (state === "taken" && availabilityResult?.reason);
 
-  const getInputClassName = () => {
-    const base = "h-12 text-base font-mono pl-4 pr-12";
-    switch (state) {
-      case "available":
-        return `${base} border-primary focus-visible:border-primary focus-visible:ring-primary/50`;
-      case "taken":
-      case "invalid":
-        return `${base} border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50`;
-      default:
-        return base;
-    }
-  };
-
-  const displayUsername = username || "your-username";
+  const displayUsername = username || "username";
 
   return (
-    <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+    <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
       {/* Left content */}
       <div>
-        <div className="inline-flex items-center gap-2 font-mono text-xs text-primary">
-          <span className="size-2 animate-pulse rounded-full bg-primary" />
+        <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 font-mono text-xs text-primary">
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75" />
+            <span className="relative inline-flex size-2 rounded-full bg-primary" />
+          </span>
           REGISTRY ONLINE
         </div>
 
-        <h1 className="mt-6 font-mono text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight text-foreground">
-          npm install
+        <h1 className="mt-6 font-mono text-3xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+          <span className="text-muted-foreground/50">$</span> npm install
           <br />
-          <span className="text-primary">your-components</span>
+          <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            your-components
+          </span>
         </h1>
 
-        <p className="mt-6 max-w-md font-mono text-sm leading-relaxed text-muted-foreground">
-          Turn your React components into a personal npm registry. Share with
-          your team or the world. Compatible with shadcn/ui CLI.
+        <p className="mt-4 max-w-md text-muted-foreground sm:text-lg">
+          Turn your React components into a personal registry. Share with your
+          team or the world.{" "}
+          <span className="text-foreground">
+            Compatible with shadcn/ui CLI.
+          </span>
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-8">
           <div className="space-y-2">
-            <div className="relative">
-              <Input
-                type="text"
-                placeholder="your-username"
-                value={username}
-                onChange={handleChange}
-                className={getInputClassName()}
-                maxLength={USERNAME_RULES.maxLength}
-              />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                {state === "checking" && (
-                  <IconLoader2 className="size-5 animate-spin text-muted-foreground" />
-                )}
-                {state === "available" && (
-                  <IconCheck className="size-5 text-primary" />
-                )}
-                {(state === "taken" || state === "invalid") && (
-                  <IconX className="size-5 text-destructive" />
-                )}
+            {/* Command-line style input */}
+            <div
+              className={`
+                group relative overflow-hidden rounded-lg border-2 bg-card/50 backdrop-blur-sm transition-all duration-200
+                ${
+                  state === "available"
+                    ? "border-primary shadow-[0_0_20px_-5px] shadow-primary/25"
+                    : state === "taken" || state === "invalid"
+                      ? "border-destructive shadow-[0_0_20px_-5px] shadow-destructive/25"
+                      : isFocused
+                        ? "border-primary/50"
+                        : "border-border hover:border-border/80"
+                }
+              `}
+            >
+              <div className="flex items-center">
+                {/* Prompt prefix */}
+                <div className="flex items-center gap-2 border-r border-border bg-muted/50 px-3 py-3 font-mono text-sm text-muted-foreground sm:px-4">
+                  <span className="text-primary">~</span>
+                  <span>$</span>
+                </div>
+
+                {/* Input area */}
+                <div className="relative flex flex-1 items-center">
+                  <span className="pointer-events-none pl-3 font-mono text-sm text-muted-foreground sm:pl-4">
+                    claim @
+                  </span>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={handleChange}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    placeholder="username"
+                    maxLength={USERNAME_RULES.maxLength}
+                    className="h-11 flex-1 bg-transparent pl-0 pr-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:pr-4"
+                  />
+
+                  {/* Status indicator */}
+                  <div className="flex items-center gap-2 pr-3 sm:pr-4">
+                    <AnimatePresence mode="wait">
+                      {state === "checking" && (
+                        <motion.div
+                          key="checking"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                        >
+                          <IconLoader2 className="size-5 animate-spin text-muted-foreground" />
+                        </motion.div>
+                      )}
+                      {state === "available" && (
+                        <motion.div
+                          key="available"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5"
+                        >
+                          <IconCheck className="size-3.5 text-primary" />
+                          <span className="hidden font-mono text-xs text-primary sm:inline">
+                            available
+                          </span>
+                        </motion.div>
+                      )}
+                      {(state === "taken" || state === "invalid") && (
+                        <motion.div
+                          key="taken"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="flex items-center gap-1.5 rounded-full bg-destructive/10 px-2 py-0.5"
+                        >
+                          <IconX className="size-3.5 text-destructive" />
+                          <span className="hidden font-mono text-xs text-destructive sm:inline">
+                            taken
+                          </span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
               </div>
             </div>
-            {errorMessage && (
-              <p className="text-sm text-destructive">{errorMessage}</p>
-            )}
+
+            {/* Error message */}
+            <AnimatePresence>
+              {errorMessage && (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="font-mono text-sm text-destructive"
+                >
+                  {errorMessage}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
 
           <Button
             type="submit"
             size="lg"
-            className="rounded-none px-8 font-mono"
             disabled={state !== "available"}
+            className="mt-4 h-11 w-full gap-2 font-mono text-sm sm:w-auto"
           >
-            {state === "available"
-              ? `Claim @${username}`
-              : "Claim your username"}
+            {state === "available" ? (
+              <>
+                Claim @{username}
+                <IconArrowRight className="size-4" />
+              </>
+            ) : (
+              "Enter a username to claim"
+            )}
           </Button>
         </form>
       </div>
 
       {/* Right terminal */}
-      <div className="relative">
-        <div className="overflow-hidden rounded-lg border border-border bg-card font-mono text-sm shadow-2xl">
-          {/* Terminal header */}
-          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-            <div className="size-3 rounded-full bg-destructive/80" />
-            <div className="size-3 rounded-full bg-yellow-500/80" />
-            <div className="size-3 rounded-full bg-primary/80" />
-            <span className="ml-4 text-xs text-muted-foreground">terminal</span>
+      <div className="relative hidden lg:block">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+          {/* Scan line effect */}
+          <div className="pointer-events-none absolute inset-0 z-10">
+            <div
+              className="absolute inset-0 opacity-[0.02]"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(0deg, transparent, transparent 2px, currentColor 2px, currentColor 4px)",
+              }}
+            />
           </div>
-          {/* Terminal content */}
-          <div className="space-y-3 p-4 text-foreground">
-            <div>
-              <span className="text-primary">~</span>{" "}
-              <span className="">$</span> npx shadcn@latest add \
+
+          {/* Terminal header */}
+          <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <div className="size-3 rounded-full bg-destructive/70" />
+              <div className="size-3 rounded-full bg-yellow-500/70" />
+              <div className="size-3 rounded-full bg-primary/70" />
             </div>
-            <div className="pl-4">
-              <span className="">https://{APP_NAME}.dev/r/</span>
+            <span className="font-mono text-xs text-muted-foreground">
+              ~/components
+            </span>
+            <div className="w-[52px]" />
+          </div>
+
+          {/* Terminal content */}
+          <div className="space-y-1 p-5 font-mono text-sm">
+            {/* Command line */}
+            <div className="flex items-start gap-2">
+              <span className="text-primary">~</span>
+              <span className="text-muted-foreground">$</span>
+              <span className="text-foreground">npx shadcn@latest add \</span>
+            </div>
+
+            {/* URL with animated username */}
+            <div className="pl-6 leading-relaxed">
+              <span className="text-muted-foreground">
+                https://{APP_NAME}.dev/r/
+              </span>
               <AnimatePresence mode="wait">
                 <motion.span
                   key={displayUsername}
-                  initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+                  initial={{ opacity: 0, y: 4, filter: "blur(4px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
+                  exit={{ opacity: 0, y: -4, filter: "blur(4px)" }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="text-primary"
+                  className="font-semibold text-primary"
                 >
                   {displayUsername}
                 </motion.span>
               </AnimatePresence>
-              <span className="">/data-table</span>
+              <span className="text-muted-foreground">/data-table</span>
             </div>
-            <div className="mt-4 text-muted-foreground">
-              ✓ Installing dependencies...
+
+            <div className="h-4" />
+
+            {/* Progress output */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="text-primary">✓</span>
+                <span>Fetching registry...</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="text-primary">✓</span>
+                <span>Installing dependencies...</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="text-primary">✓</span>
+                <span>Creating components/ui/data-table.tsx</span>
+              </div>
             </div>
-            <div className="text-muted-foreground">
-              ✓ Creating components/ui/...
+
+            <div className="h-2" />
+
+            {/* Success message */}
+            <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
+              <span className="font-medium text-primary">
+                Done! Component installed successfully.
+              </span>
             </div>
-            <div className="text-primary">✓ Done! Component installed.</div>
-            <div className="mt-2 flex items-center">
-              <span className="text-primary">~</span>{" "}
+
+            {/* New prompt */}
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-primary">~</span>
               <span className="text-muted-foreground">$</span>
-              <span className="ml-2 h-4 w-2 animate-pulse bg-primary" />
+              <span className="ml-0.5 inline-block h-5 w-2 animate-pulse bg-primary" />
             </div>
           </div>
         </div>

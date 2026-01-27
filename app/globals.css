@@ -125,6 +125,27 @@
   }
 }
 
+@layer utilities {
+  .section-padding {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+
+  .hero-padding {
+    @apply py-16 md:py-20 lg:py-24;
+  }
+}
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+  @media (width >= 1400px) {
+    max-width: 1220px;
+  }
+}
+
 /* Theme transition animation - premium blur fade */
 @keyframes theme-blur-out {
   from {

@@ -80,6 +80,30 @@ This is a new project. Don't add:
 - Shared utilities in `lib/`
 - Shared types in `types/`
 
+### Base UI Components (shadcn)
+
+This project uses Base UI primitives under the hood. Key rules:
+
+- **DropdownMenuLabel must be inside DropdownMenuGroup** - Base UI requires `MenuGroupLabel` to be within a `Menu.Group` context
+- **Use `render` prop instead of `asChild`** - Base UI uses `render={<Component />}` pattern, not Radix's `asChild`
+- **Use `nativeButton={false}` when rendering non-button elements** - When using `render` prop with `<a>` or other non-button elements, add `nativeButton={false}` to suppress the warning
+- Example:
+  ```tsx
+  // Correct
+  <DropdownMenuGroup>
+    <DropdownMenuLabel>Label</DropdownMenuLabel>
+  </DropdownMenuGroup>
+  <DropdownMenuItem render={<Link href="/path" />}>Link</DropdownMenuItem>
+
+  // Button as link - needs nativeButton={false}
+  <Button render={<a href="/path" />} nativeButton={false}>Link</Button>
+
+  // Wrong
+  <DropdownMenuLabel>Label</DropdownMenuLabel>  // Error: must be in Group
+  <DropdownMenuItem asChild><Link href="/path" /></DropdownMenuItem>  // Wrong prop
+  <Button render={<a href="/path" />}>Link</Button>  // Missing nativeButton={false}
+  ```
+
 ## Commands
 
 ```bash
