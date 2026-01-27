@@ -50,12 +50,12 @@ You can find your registry token in your dashboard settings.
 
 When creating a component, you can add multiple files:
 
-| File Type | Registry Type | Example |
-|-----------|--------------|---------|
-| `components/ui/*` | `registry:ui` | Button, Card, Dialog |
-| `hooks/*` | `registry:hook` | useDebounce, useMediaQuery |
-| `lib/*` | `registry:lib` | utils, helpers |
-| `*.css` | `registry:style` | Custom styles |
+| File Type         | Registry Type    | Example                    |
+| ----------------- | ---------------- | -------------------------- |
+| `components/ui/*` | `registry:ui`    | Button, Card, Dialog       |
+| `hooks/*`         | `registry:hook`  | useDebounce, useMediaQuery |
+| `lib/*`           | `registry:lib`   | utils, helpers             |
+| `*.css`           | `registry:style` | Custom styles              |
 
 ---
 

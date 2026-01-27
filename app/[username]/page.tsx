@@ -22,11 +22,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import {
-  IconPackage,
-  IconDownload,
-  IconCalendar,
-} from "@tabler/icons-react";
+import { IconPackage, IconDownload, IconCalendar } from "@tabler/icons-react";
 import Link from "next/link";
 
 function formatDate(timestamp: number): string {

@@ -22,7 +22,13 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            render={<a href="https://github.com/yassinezaanouni/addcn" target="_blank" rel="noopener noreferrer" />}
+            render={
+              <a
+                href="https://github.com/yassinezaanouni/addcn"
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            }
             nativeButton={false}
           >
             <IconBrandGithub className="size-5" />
