@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import {
   SidebarInset,
   SidebarProvider,
@@ -8,6 +9,8 @@ import {
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -33,7 +36,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <div className="hidden h-4 w-px bg-border sm:block" />
             <div className="hidden items-center gap-2 font-mono text-xs text-muted-foreground sm:flex">
               <span className="text-primary">~</span>
-              <span>/dashboard</span>
+              <span>{pathname}</span>
             </div>
           </div>
         </header>
