@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
+import { validateUsernameFormat, USERNAME_RULES } from "@/lib/validators";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,31 +18,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-
-const USERNAME_RULES = {
-  minLength: 3,
-  maxLength: 39,
-  pattern: /^[a-z0-9-]+$/,
-};
-
-function validateUsername(username: string): string | null {
-  if (username.length < USERNAME_RULES.minLength) {
-    return `Username must be at least ${USERNAME_RULES.minLength} characters`;
-  }
-  if (username.length > USERNAME_RULES.maxLength) {
-    return `Username must be at most ${USERNAME_RULES.maxLength} characters`;
-  }
-  if (!USERNAME_RULES.pattern.test(username)) {
-    return "Username can only contain lowercase letters, numbers, and hyphens";
-  }
-  if (username.startsWith("-") || username.endsWith("-")) {
-    return "Username cannot start or end with a hyphen";
-  }
-  if (username.includes("--")) {
-    return "Username cannot contain consecutive hyphens";
-  }
-  return null;
-}
 
 function ProfileFormSkeleton() {
   return (
@@ -92,7 +68,7 @@ function ProfileForm({ user }: { user: User }) {
     setError(null);
 
     // Validate username
-    const validationError = validateUsername(username);
+    const validationError = validateUsernameFormat(username);
     if (validationError) {
       setError(validationError);
       return;
@@ -120,8 +96,8 @@ function ProfileForm({ user }: { user: User }) {
   };
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toLowerCase();
-    setUsername(value);
+    const filtered = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    setUsername(filtered);
     setError(null);
   };
 
@@ -172,6 +148,7 @@ function ProfileForm({ user }: { user: User }) {
                 placeholder="my-username"
                 value={username}
                 onChange={handleUsernameChange}
+                maxLength={USERNAME_RULES.maxLength}
                 disabled={isUpdating}
               />
             </div>
