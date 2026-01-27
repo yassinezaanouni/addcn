@@ -29,6 +29,7 @@ function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
+      referrerPolicy="no-referrer"
       className={cn(
         "rounded-full aspect-square size-full object-cover",
         className

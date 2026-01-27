@@ -19,6 +19,7 @@ import {
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 import { Logo } from "../shared/logo";
+import { ThemeToggle } from "../shared/theme-toggle";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: user, isPending } = useQuery(convexQuery(api.users.getMe, {}));
@@ -44,25 +45,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={DASHBOARD_NAV_ITEMS} />
       </SidebarContent>
       <SidebarFooter>
-        {isPending ? (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuSkeleton showIcon />
-            </SidebarMenuItem>
-          </SidebarMenu>
-        ) : (
-          <NavUser
-            user={
-              user
-                ? {
-                    username: user.username ?? null,
-                    email: user.email,
-                    avatarUrl: user.avatarUrl,
-                  }
-                : null
-            }
-          />
-        )}
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            {isPending ? (
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuSkeleton showIcon />
+                </SidebarMenuItem>
+              </SidebarMenu>
+            ) : (
+              <NavUser
+                user={
+                  user
+                    ? {
+                        username: user.username ?? null,
+                        email: user.email,
+                        avatarUrl: user.avatarUrl,
+                      }
+                    : null
+                }
+              />
+            )}
+          </div>
+          <ThemeToggle />
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
