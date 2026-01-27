@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
-import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useConvexMutation, convexQuery } from "@convex-dev/react-query";
 import { motion } from "motion/react";
 import { api } from "@/convex/_generated/api";
 import { useEditorStore, useIsNewComponent } from "@/stores/editor-store";
@@ -29,6 +29,14 @@ export function Toolbar() {
   const router = useRouter();
   const isNew = useIsNewComponent();
   const context = useOrgContext();
+
+  const { data: user } = useQuery(convexQuery(api.users.getMe, {}));
+  const { data: orgs } = useQuery(convexQuery(api.organizations.getMyOrgs, {}));
+
+  const namespace =
+    context === "personal"
+      ? user?.username
+      : orgs?.find((org) => org._id === context)?.slug;
 
   const {
     convexId,
@@ -252,8 +260,12 @@ export function Toolbar() {
         open={validationDialogOpen}
         onOpenChange={setValidationDialogOpen}
         errors={validationErrors}
+        onClearError={(field) =>
+          setValidationErrors((prev) => ({ ...prev, [field]: undefined }))
+        }
         onSave={handleDialogSave}
         isSaving={isSaving}
+        namespace={namespace}
       />
     </>
   );

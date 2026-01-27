@@ -3,20 +3,14 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useEditorStore } from "@/stores/editor-store";
+import { toKebabCase } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { IconDeviceFloppy, IconLoader2, IconX } from "@tabler/icons-react";
+import { DependencyInputs } from "./dependency-inputs";
 import type { ComponentMetadataErrors } from "@/lib/validators";
-
-// Convert to kebab-case
-function toKebabCase(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 function RequiredIndicator() {
   return <span className="text-destructive">*</span>;
@@ -26,18 +20,33 @@ interface RequiredFieldsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   errors: ComponentMetadataErrors;
+  onClearError?: (field: keyof ComponentMetadataErrors) => void;
   onSave: () => void;
   isSaving: boolean;
+  namespace?: string;
 }
 
 export function RequiredFieldsDialog({
   open,
   onOpenChange,
   errors,
+  onClearError,
   onSave,
   isSaving,
+  namespace,
 }: RequiredFieldsDialogProps) {
-  const { name, title, description, setMetadata } = useEditorStore();
+  const {
+    name,
+    title,
+    description,
+    setMetadata,
+    dependencies,
+    registryDependencies,
+    addDependency,
+    removeDependency,
+    addRegistryDependency,
+    removeRegistryDependency,
+  } = useEditorStore();
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Focus the first error field when dialog opens
@@ -85,7 +94,7 @@ export function RequiredFieldsDialog({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-background p-6 shadow-lg ring-1 ring-foreground/10"
+            className="fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl bg-background p-6 shadow-lg ring-1 ring-foreground/10"
             role="dialog"
             aria-modal="true"
             aria-labelledby="dialog-title"
@@ -111,13 +120,9 @@ export function RequiredFieldsDialog({
             </div>
 
             {/* Form fields */}
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto">
               {/* Name field */}
-              <motion.div
-                className="space-y-2"
-                layoutId="field-name"
-                transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-              >
+              <div className="space-y-2">
                 <Label htmlFor="dialog-name">
                   Slug <RequiredIndicator />
                 </Label>
@@ -125,7 +130,10 @@ export function RequiredFieldsDialog({
                   ref={nameInputRef}
                   id="dialog-name"
                   value={name}
-                  onChange={(e) => setMetadata({ name: toKebabCase(e.target.value) })}
+                  onChange={(e) => {
+                    setMetadata({ name: toKebabCase(e.target.value) });
+                    onClearError?.("name");
+                  }}
                   placeholder="my-component"
                   className="font-mono"
                   aria-invalid={!!errors.name}
@@ -140,25 +148,24 @@ export function RequiredFieldsDialog({
                   </motion.p>
                 ) : (
                   <p className="text-[11px] text-muted-foreground">
-                    URL: /r/namespace/
+                    URL: /r/{namespace || "namespace"}/
                     <span className="text-foreground">{name || "slug"}</span>
                   </p>
                 )}
-              </motion.div>
+              </div>
 
               {/* Title field */}
-              <motion.div
-                className="space-y-2"
-                layoutId="field-title"
-                transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-              >
+              <div className="space-y-2">
                 <Label htmlFor="dialog-title-input">
                   Title <RequiredIndicator />
                 </Label>
                 <Input
                   id="dialog-title-input"
                   value={title}
-                  onChange={(e) => setMetadata({ title: e.target.value })}
+                  onChange={(e) => {
+                    setMetadata({ title: e.target.value });
+                    onClearError?.("title");
+                  }}
                   placeholder="My Component"
                   aria-invalid={!!errors.title}
                 />
@@ -171,14 +178,10 @@ export function RequiredFieldsDialog({
                     {errors.title}
                   </motion.p>
                 )}
-              </motion.div>
+              </div>
 
               {/* Description field */}
-              <motion.div
-                className="space-y-2"
-                layoutId="field-description"
-                transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-              >
+              <div className="space-y-2">
                 <Label htmlFor="dialog-description">Description</Label>
                 <Textarea
                   id="dialog-description"
@@ -188,7 +191,20 @@ export function RequiredFieldsDialog({
                   rows={3}
                   className="resize-none"
                 />
-              </motion.div>
+              </div>
+
+              {/* Dependencies section */}
+              <div className="border-t pt-4">
+                <Label className="mb-4 block">Dependencies</Label>
+                <DependencyInputs
+                  dependencies={dependencies}
+                  registryDependencies={registryDependencies}
+                  onAddDependency={addDependency}
+                  onRemoveDependency={removeDependency}
+                  onAddRegistryDependency={addRegistryDependency}
+                  onRemoveRegistryDependency={removeRegistryDependency}
+                />
+              </div>
             </div>
 
             {/* Footer */}
