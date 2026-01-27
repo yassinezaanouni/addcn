@@ -34,14 +34,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-  EmptyDescription,
-  EmptyMedia,
-  EmptyContent,
-} from "@/components/ui/empty";
-import {
   IconPackage,
   IconDownload,
   IconPencil,
@@ -57,11 +49,11 @@ import { DeleteComponentButton } from "./delete-component-button";
 
 function ComponentCardSkeleton() {
   return (
-    <Card size="sm" className="overflow-hidden pt-0!">
+    <Card className="group overflow-hidden border-border/50 bg-card/50 pt-0 transition-all hover:border-border hover:bg-card">
       <Skeleton className="aspect-video w-full" />
       <CardHeader>
         <Skeleton className="h-5 w-32" />
-        <Skeleton className="h-4 w-48 mt-1" />
+        <Skeleton className="mt-1 h-4 w-48" />
       </CardHeader>
       <CardContent className="flex items-center gap-2">
         <Skeleton className="h-5 w-16" />
@@ -248,9 +240,9 @@ function ComponentCard({
 
   return (
     <>
-      <Card size="sm" className="overflow-hidden justify-between pt-0!">
+      <Card className="overflow-hidden justify-between border-border/50 bg-card/50 pt-0">
         {/* Preview: static media or live iframe */}
-        <div className="relative aspect-video w-full overflow-hidden bg-muted">
+        <div className="relative aspect-video w-full overflow-hidden bg-muted/50">
           {component.previewMediaUrl ? (
             component.previewMediaType === "video" ? (
               <video
@@ -368,20 +360,22 @@ function SearchInput({
   onClear: () => void;
 }) {
   return (
-    <div className="relative max-w-sm">
-      <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+    <div className="relative max-w-md">
+      <div className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5 font-mono text-xs text-muted-foreground">
+        <IconSearch className="size-4" />
+      </div>
       <Input
         type="text"
         placeholder="Search components..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-8 pr-8"
+        className="h-10 border-border/50 bg-background/50 pl-9 pr-9 font-mono text-sm transition-colors focus:border-primary/50 focus:bg-background"
       />
       {value && (
         <button
           type="button"
           onClick={onClear}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <IconX className="size-4" />
         </button>
@@ -509,25 +503,21 @@ export function ComponentList() {
   // Empty state when no components exist at all
   if (allComponents.length === 0 && !debouncedSearch) {
     return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <IconPackage />
-          </EmptyMedia>
-          <EmptyTitle>No components yet</EmptyTitle>
-          <EmptyDescription>
-            Create your first component to get started with your registry.
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Link href="/dashboard/editor">
-            <Button>
-              <IconPlus className="size-4" />
-              Create Component
-            </Button>
-          </Link>
-        </EmptyContent>
-      </Empty>
+      <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/20 p-8">
+        <div className="flex size-16 items-center justify-center rounded-full border border-border/50 bg-card">
+          <IconPackage className="size-8 text-muted-foreground" />
+        </div>
+        <h3 className="mt-6 font-mono text-lg font-medium">No components yet</h3>
+        <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">
+          Create your first component to get started with your personal registry.
+        </p>
+        <Link href="/dashboard/editor" className="mt-6">
+          <Button className="gap-2 font-mono">
+            <IconPlus className="size-4" />
+            Create Component
+          </Button>
+        </Link>
+      </div>
     );
   }
 
@@ -541,23 +531,23 @@ export function ComponentList() {
 
       {/* No results for search */}
       {allComponents.length === 0 && debouncedSearch && (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <IconSearch />
-            </EmptyMedia>
-            <EmptyTitle>No results found</EmptyTitle>
-            <EmptyDescription>
-              No components match &quot;{debouncedSearch}&quot;. Try a different
-              search term.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button variant="outline" onClick={() => setSearchQuery("")}>
-              Clear search
-            </Button>
-          </EmptyContent>
-        </Empty>
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/20 p-8">
+          <div className="flex size-12 items-center justify-center rounded-full border border-border/50 bg-card">
+            <IconSearch className="size-5 text-muted-foreground" />
+          </div>
+          <h3 className="mt-4 font-mono text-base font-medium">No results found</h3>
+          <p className="mt-1.5 text-center text-sm text-muted-foreground">
+            No components match &quot;{debouncedSearch}&quot;
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSearchQuery("")}
+            className="mt-4 font-mono"
+          >
+            Clear search
+          </Button>
+        </div>
       )}
 
       {/* Component grid */}

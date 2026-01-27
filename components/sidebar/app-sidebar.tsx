@@ -29,12 +29,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/" />}>
-              <Logo className="[&_.word-mark]:hidden" />
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{APP_NAME}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  Component Registry
+            <SidebarMenuButton
+              size="lg"
+              render={<Link href="/" />}
+              className="group/logo"
+            >
+              <div className="flex size-8 items-center justify-center rounded-md border border-primary/20 bg-primary/10 transition-colors group-hover/logo:border-primary/30 group-hover/logo:bg-primary/15">
+                <Logo className="[&_.word-mark]:hidden [&_svg]:size-4" />
+              </div>
+              <div className="grid flex-1 text-left leading-tight">
+                <span className="truncate font-mono text-sm font-semibold">
+                  {APP_NAME}
+                </span>
+                <span className="truncate font-mono text-xs text-muted-foreground group-hover/logo:text-background/80">
+                  Registry
                 </span>
               </div>
             </SidebarMenuButton>

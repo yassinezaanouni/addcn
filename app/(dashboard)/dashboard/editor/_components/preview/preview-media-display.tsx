@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { IconX } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
 
 interface PreviewMediaDisplayProps {
   mediaUrl: string;
@@ -37,13 +38,15 @@ export function PreviewMediaDisplay({
             className="w-full rounded-xl border border-border/50 shadow-lg"
           />
         )}
-        <button
+        <Button
           onClick={onRemove}
-          className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full border border-border/50 bg-background shadow-md transition-colors hover:bg-destructive hover:text-destructive-foreground"
+          variant="destructive"
+          size="icon"
+          className="absolute -right-2 -top-2 size-7 rounded-full shadow-md"
           title="Remove media"
         >
           <IconX className="size-4" />
-        </button>
+        </Button>
       </motion.div>
 
       {isPending && <PendingIndicator />}

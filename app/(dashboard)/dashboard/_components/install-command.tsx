@@ -87,7 +87,7 @@ export function InstallCommand({ registryUrl }: InstallCommandProps) {
       >
         <span className="sr-only">Copy</span>
         {copied ? (
-          <IconCheck className="size-3.5" />
+          <IconCheck className="size-3.5 text-primary" />
         ) : (
           <IconCopy className="size-3.5" />
         )}
