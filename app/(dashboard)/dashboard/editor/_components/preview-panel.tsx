@@ -214,7 +214,10 @@ export function PreviewPanel() {
                 <div className="flex h-full flex-col items-center gap-6 p-6">
                   <div className="text-center">
                     <h2 className="text-xl font-semibold text-foreground">
-                      Add a preview
+                      Add a preview{" "}
+                      <span className="text-muted-foreground text-lg">
+                        (optional)
+                      </span>
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Displayed on your component card in the dashboard

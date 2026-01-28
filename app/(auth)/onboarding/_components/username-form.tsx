@@ -78,7 +78,36 @@ export function UsernameForm() {
       debouncedUsername.length >= USERNAME_RULES.minLength && !clientError,
   });
 
+  const setUsernameMutationFn = useConvexMutation(api.users.setUsername);
+  const {
+    mutate: setUsernameMutation,
+    isPending,
+    isSuccess,
+  } = useMutation({
+    mutationFn: setUsernameMutationFn,
+    onSuccess: (_, variables) => {
+      // Identify user in PostHog using username as distinct ID
+      posthog.identify(variables.username, {
+        username: variables.username,
+      });
+      // Capture username claimed event
+      posthog.capture("username_claimed", {
+        username: variables.username,
+      });
+      localStorage.removeItem(CLAIMED_USERNAME_KEY);
+      router.push("/dashboard");
+    },
+    onError: (err) => {
+      posthog.captureException(err);
+      setClientError(err.message || "Failed to set username");
+    },
+  });
+
   const getState = useCallback((): AvailabilityState => {
+    // After successful submission, keep showing "available" until redirect completes
+    if (isSuccess) {
+      return "available";
+    }
     if (!username || username.length < USERNAME_RULES.minLength) {
       return "idle";
     }
@@ -99,30 +128,10 @@ export function UsernameForm() {
     isChecking,
     isFetched,
     availabilityResult,
+    isSuccess,
   ]);
 
   const state = getState();
-
-  const setUsernameMutationFn = useConvexMutation(api.users.setUsername);
-  const { mutate: setUsernameMutation, isPending } = useMutation({
-    mutationFn: setUsernameMutationFn,
-    onSuccess: (_, variables) => {
-      // Identify user in PostHog using username as distinct ID
-      posthog.identify(variables.username, {
-        username: variables.username,
-      });
-      // Capture username claimed event
-      posthog.capture("username_claimed", {
-        username: variables.username,
-      });
-      localStorage.removeItem(CLAIMED_USERNAME_KEY);
-      router.push("/dashboard");
-    },
-    onError: (err) => {
-      posthog.captureException(err);
-      setClientError(err.message || "Failed to set username");
-    },
-  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
