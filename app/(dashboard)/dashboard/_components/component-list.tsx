@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { useQuery, useMutation, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useInfiniteQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useConvex } from "convex/react";
 import { useTheme } from "next-themes";
@@ -182,10 +187,15 @@ function ComponentCard({
   registryToken: string | null;
 }) {
   const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const queryClient = useQueryClient();
 
   const updateMutationFn = useConvexMutation(api.components.update);
   const updateMutation = useMutation({
     mutationFn: updateMutationFn,
+    onSuccess: () => {
+      // Invalidate component queries to refetch updated data
+      queryClient.invalidateQueries({ queryKey: ["components"] });
+    },
     onError: (error) => {
       toast.error("Failed to update visibility", {
         description:
@@ -221,10 +231,10 @@ function ComponentCard({
           toast.success("Component published", {
             description: "Your component is now publicly accessible.",
           });
+          setShowPublishDialog(false);
         },
       },
     );
-    setShowPublishDialog(false);
   };
 
   // Build the registry URL for the component
