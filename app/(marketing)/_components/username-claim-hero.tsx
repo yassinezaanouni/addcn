@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
@@ -29,6 +29,7 @@ type AvailabilityState =
 
 export function UsernameClaimHero() {
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [username, setUsername] = useState("");
   const [debouncedUsername, setDebouncedUsername] = useState("");
   const [clientError, setClientError] = useState<string | null>(null);
@@ -135,8 +136,9 @@ export function UsernameClaimHero() {
           <div className="space-y-2">
             {/* Command-line style input */}
             <div
+              onClick={() => inputRef.current?.focus()}
               className={`
-                group relative overflow-hidden rounded-lg border-2 bg-card/50 backdrop-blur-sm transition-all duration-200
+                group relative cursor-text overflow-hidden rounded-lg border-2 bg-card/50 backdrop-blur-sm transition-all duration-200
                 ${
                   state === "available"
                     ? "border-primary shadow-[0_0_20px_-5px] shadow-primary/25"
@@ -161,6 +163,7 @@ export function UsernameClaimHero() {
                     claim @
                   </span>
                   <input
+                    ref={inputRef}
                     type="text"
                     value={username}
                     onChange={handleChange}
