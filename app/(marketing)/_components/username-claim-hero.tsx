@@ -15,6 +15,7 @@ import {
   IconX,
   IconLoader2,
   IconArrowRight,
+  IconSourceCode,
 } from "@tabler/icons-react";
 
 const DEBOUNCE_MS = 400;
@@ -108,12 +109,9 @@ export function UsernameClaimHero() {
     <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
       {/* Left content */}
       <div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 font-mono text-xs text-primary">
-          <span className="relative flex size-2">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75" />
-            <span className="relative inline-flex size-2 rounded-full bg-primary" />
-          </span>
-          REGISTRY ONLINE
+        <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-primary">
+          <IconSourceCode className="size-4" />
+          Free & Open Source
         </div>
 
         <h1 className="mt-6 font-mono text-3xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-4xl lg:text-5xl">
