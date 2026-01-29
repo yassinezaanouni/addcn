@@ -136,9 +136,9 @@ export function UsernameClaimHero() {
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
                 key={wordIndex}
-                initial={{ y: "-100%" }}
+                initial={{ y: "100%" }}
                 animate={{ y: 0 }}
-                exit={{ y: "100%" }}
+                exit={{ y: "-100%" }}
                 transition={{ type: "spring", duration: 0.5, bounce: 0.25 }}
                 className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
               >
