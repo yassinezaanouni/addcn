@@ -118,7 +118,7 @@ export function UsernameClaimHero() {
   const displayUsername = username || "username";
 
   return (
-    <div className="grid gap-12 overflow-hidden lg:grid-cols-2 lg:items-center lg:gap-16">
+    <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
       {/* Left content */}
       <div>
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-primary">
@@ -309,7 +309,7 @@ export function UsernameClaimHero() {
           </div>
 
           {/* Terminal content */}
-          <div className="space-y-1 p-5 font-mono text-sm">
+          <div className="space-y-1 overflow-x-auto p-5 font-mono text-xs sm:text-sm">
             {/* Command line */}
             <div className="flex items-start gap-2">
               <span className="text-primary">~</span>
