@@ -118,9 +118,9 @@ export function UsernameClaimHero() {
   const displayUsername = username || "username";
 
   return (
-    <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+    <div className="grid w-full max-w-full gap-12 overflow-hidden lg:grid-cols-2 lg:items-center lg:gap-16">
       {/* Left content */}
-      <div>
+      <div className="min-w-0">
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-primary">
           <IconStack2 className="size-4" />
           Free & Open Source
