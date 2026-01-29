@@ -132,18 +132,20 @@ export function UsernameClaimHero() {
           <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             your-
           </span>
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={wordIndex}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="inline-block bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
-            >
-              {ROTATING_WORDS[wordIndex]}
-            </motion.span>
-          </AnimatePresence>
+          <span className="relative inline-flex overflow-hidden">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={wordIndex}
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "-100%" }}
+                transition={{ type: "spring", duration: 0.5, bounce: 0.25 }}
+                className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
+              >
+                {ROTATING_WORDS[wordIndex]}
+              </motion.span>
+            </AnimatePresence>
+          </span>
         </h1>
 
         <p className="mt-4 max-w-md text-muted-foreground sm:text-lg">
