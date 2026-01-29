@@ -182,7 +182,7 @@ export function UsernameClaimHero() {
                 </div>
 
                 {/* Input area */}
-                <div className="relative flex flex-1 items-center">
+                <div className="relative flex min-w-0 flex-1 items-center">
                   <span className="pointer-events-none pl-3 font-mono text-sm text-muted-foreground sm:pl-4">
                     claim
                   </span>
@@ -198,7 +198,7 @@ export function UsernameClaimHero() {
                     onBlur={() => setIsFocused(false)}
                     placeholder="username"
                     maxLength={USERNAME_RULES.maxLength}
-                    className="h-11 flex-1 bg-transparent pl-0.5 pr-3 font-mono text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:pr-4 sm:text-sm"
+                    className="h-11 min-w-0 flex-1 bg-transparent pl-0.5 pr-3 font-mono text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:pr-4 sm:text-sm"
                   />
 
                   {/* Status indicator */}
