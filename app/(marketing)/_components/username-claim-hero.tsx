@@ -131,19 +131,19 @@ export function UsernameClaimHero() {
           <br />
           <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             your-
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={ROTATING_WORDS[wordIndex]}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="inline-block"
-              >
-                {ROTATING_WORDS[wordIndex]}
-              </motion.span>
-            </AnimatePresence>
           </span>
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={wordIndex}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="inline-block bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
+            >
+              {ROTATING_WORDS[wordIndex]}
+            </motion.span>
+          </AnimatePresence>
         </h1>
 
         <p className="mt-4 max-w-md text-muted-foreground sm:text-lg">
@@ -182,7 +182,10 @@ export function UsernameClaimHero() {
                 {/* Input area */}
                 <div className="relative flex flex-1 items-center">
                   <span className="pointer-events-none pl-3 font-mono text-sm text-muted-foreground sm:pl-4">
-                    claim @
+                    claim
+                  </span>
+                  <span className="pointer-events-none pl-1.5 font-mono text-sm text-foreground">
+                    @
                   </span>
                   <input
                     ref={inputRef}
@@ -193,7 +196,7 @@ export function UsernameClaimHero() {
                     onBlur={() => setIsFocused(false)}
                     placeholder="username"
                     maxLength={USERNAME_RULES.maxLength}
-                    className="h-11 flex-1 bg-transparent pl-0 pr-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:pr-4"
+                    className="h-11 flex-1 bg-transparent pl-0.5 pr-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:pr-4"
                   />
 
                   {/* Status indicator */}
