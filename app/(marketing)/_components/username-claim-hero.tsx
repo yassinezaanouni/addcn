@@ -198,7 +198,7 @@ export function UsernameClaimHero() {
                     onBlur={() => setIsFocused(false)}
                     placeholder="username"
                     maxLength={USERNAME_RULES.maxLength}
-                    className="h-11 flex-1 bg-transparent pl-0.5 pr-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:pr-4"
+                    className="h-11 flex-1 bg-transparent pl-0.5 pr-3 font-mono text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:pr-4 sm:text-sm"
                   />
 
                   {/* Status indicator */}
@@ -322,18 +322,20 @@ export function UsernameClaimHero() {
               <span className="text-muted-foreground">
                 https://{APP_NAME}.dev/r/
               </span>
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={displayUsername}
-                  initial={{ opacity: 0, y: 4, filter: "blur(4px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: -4, filter: "blur(4px)" }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="font-semibold text-primary"
-                >
-                  {displayUsername}
-                </motion.span>
-              </AnimatePresence>
+              <span className="inline-block min-w-[5ch]">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={displayUsername}
+                    initial={{ opacity: 0, y: 4, filter: "blur(4px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, y: -4, filter: "blur(4px)" }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="inline-block font-semibold text-primary"
+                  >
+                    {displayUsername}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
               <span className="text-muted-foreground">/data-table</span>
             </div>
 
