@@ -118,9 +118,9 @@ export function UsernameClaimHero() {
   const displayUsername = username || "username";
 
   return (
-    <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+    <div className="grid w-full max-w-full gap-12 overflow-hidden lg:grid-cols-2 lg:items-center lg:gap-16">
       {/* Left content */}
-      <div>
+      <div className="min-w-0">
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-primary">
           <IconStack2 className="size-4" />
           Free & Open Source
@@ -129,16 +129,14 @@ export function UsernameClaimHero() {
         <h1 className="mt-6 font-mono text-3xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-4xl lg:text-5xl">
           <span className="text-muted-foreground/50">$</span> npm install
           <br />
-          <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            your-
-          </span>
+          <span className="text-primary">your-</span>
           <span className="relative inline-flex overflow-hidden">
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
                 key={wordIndex}
-                initial={{ y: "100%" }}
+                initial={{ y: "-100%" }}
                 animate={{ y: 0 }}
-                exit={{ y: "-100%" }}
+                exit={{ y: "100%" }}
                 transition={{ type: "spring", duration: 0.5, bounce: 0.25 }}
                 className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
               >
@@ -182,7 +180,7 @@ export function UsernameClaimHero() {
                 </div>
 
                 {/* Input area */}
-                <div className="relative flex flex-1 items-center">
+                <div className="relative flex min-w-0 flex-1 items-center">
                   <span className="pointer-events-none pl-3 font-mono text-sm text-muted-foreground sm:pl-4">
                     claim
                   </span>
@@ -198,7 +196,7 @@ export function UsernameClaimHero() {
                     onBlur={() => setIsFocused(false)}
                     placeholder="username"
                     maxLength={USERNAME_RULES.maxLength}
-                    className="h-11 flex-1 bg-transparent pl-0.5 pr-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:pr-4"
+                    className="h-11 min-w-0 flex-1 bg-transparent pl-0.5 pr-3 font-mono text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:pr-4 sm:text-sm"
                   />
 
                   {/* Status indicator */}
@@ -267,12 +265,12 @@ export function UsernameClaimHero() {
             type="submit"
             size="lg"
             disabled={state !== "available"}
-            className="mt-4 h-11 w-full gap-2 font-mono text-sm sm:w-auto"
+            className="mt-4 h-11 w-full max-w-full gap-2 font-mono text-sm sm:w-auto"
           >
             {state === "available" ? (
               <>
-                Claim @{username}
-                <IconArrowRight className="size-4" />
+                <span className="truncate">Claim @{username}</span>
+                <IconArrowRight className="size-4 shrink-0" />
               </>
             ) : (
               "Enter a username to claim"
@@ -282,8 +280,8 @@ export function UsernameClaimHero() {
       </div>
 
       {/* Right terminal */}
-      <div className="relative hidden lg:block">
-        <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+      <div className="relative w-full min-w-0 max-w-full">
+        <div className="relative w-full overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
           {/* Scan line effect */}
           <div className="pointer-events-none absolute inset-0 z-10">
             <div
@@ -309,7 +307,7 @@ export function UsernameClaimHero() {
           </div>
 
           {/* Terminal content */}
-          <div className="space-y-1 p-5 font-mono text-sm">
+          <div className="space-y-1 overflow-x-auto p-5 font-mono text-xs sm:text-sm">
             {/* Command line */}
             <div className="flex items-start gap-2">
               <span className="text-primary">~</span>
@@ -318,22 +316,24 @@ export function UsernameClaimHero() {
             </div>
 
             {/* URL with animated username */}
-            <div className="pl-6 leading-relaxed">
+            <div className="break-all pl-6 leading-relaxed">
               <span className="text-muted-foreground">
                 https://{APP_NAME}.dev/r/
               </span>
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={displayUsername}
-                  initial={{ opacity: 0, y: 4, filter: "blur(4px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: -4, filter: "blur(4px)" }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="font-semibold text-primary"
-                >
-                  {displayUsername}
-                </motion.span>
-              </AnimatePresence>
+              <span className="inline-block min-w-[5ch]">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={displayUsername}
+                    initial={{ opacity: 0, y: 4, filter: "blur(4px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, y: -4, filter: "blur(4px)" }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="inline-block font-semibold text-primary"
+                  >
+                    {displayUsername}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
               <span className="text-muted-foreground">/data-table</span>
             </div>
 

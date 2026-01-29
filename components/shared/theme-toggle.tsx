@@ -55,8 +55,8 @@ const rayVariant = {
 };
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark";
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const toggleTheme = async () => {
     const newTheme = isDark ? "light" : "dark";
