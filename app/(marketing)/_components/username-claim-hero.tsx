@@ -267,12 +267,12 @@ export function UsernameClaimHero() {
             type="submit"
             size="lg"
             disabled={state !== "available"}
-            className="mt-4 h-11 w-full gap-2 font-mono text-sm sm:w-auto"
+            className="mt-4 h-11 w-full max-w-full gap-2 font-mono text-sm sm:w-auto"
           >
             {state === "available" ? (
               <>
-                Claim @{username}
-                <IconArrowRight className="size-4" />
+                <span className="truncate">Claim @{username}</span>
+                <IconArrowRight className="size-4 shrink-0" />
               </>
             ) : (
               "Enter a username to claim"
