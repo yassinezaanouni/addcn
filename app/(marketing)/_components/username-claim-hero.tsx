@@ -15,8 +15,11 @@ import {
   IconX,
   IconLoader2,
   IconArrowRight,
-  IconSourceCode,
+  IconStack2,
 } from "@tabler/icons-react";
+
+const ROTATING_WORDS = ["components", "files", "utilities"] as const;
+const WORD_ROTATION_MS = 2500;
 
 const DEBOUNCE_MS = 400;
 const CLAIMED_USERNAME_KEY = "addcn_claimed_username";
@@ -35,6 +38,15 @@ export function UsernameClaimHero() {
   const [debouncedUsername, setDebouncedUsername] = useState("");
   const [clientError, setClientError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [wordIndex, setWordIndex] = useState(0);
+
+  // Rotate through words
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWordIndex((prev) => (prev + 1) % ROTATING_WORDS.length);
+    }, WORD_ROTATION_MS);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -110,7 +122,7 @@ export function UsernameClaimHero() {
       {/* Left content */}
       <div>
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-primary">
-          <IconSourceCode className="size-4" />
+          <IconStack2 className="size-4" />
           Free & Open Source
         </div>
 
@@ -118,7 +130,19 @@ export function UsernameClaimHero() {
           <span className="text-muted-foreground/50">$</span> npm install
           <br />
           <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            your-components
+            your-
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={ROTATING_WORDS[wordIndex]}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="inline-block"
+              >
+                {ROTATING_WORDS[wordIndex]}
+              </motion.span>
+            </AnimatePresence>
           </span>
         </h1>
 

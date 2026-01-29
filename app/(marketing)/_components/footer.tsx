@@ -6,7 +6,7 @@ export function Footer() {
     <footer className="border-t border-border bg-card/30">
       <div className="container flex flex-col items-center justify-between gap-4 py-6 md:flex-row">
         <p className="text-sm text-muted-foreground">
-          Built with care for the shadcn community
+          Open source component registry for shadcn/ui
         </p>
         <div className="flex items-center gap-6">
           <Link
