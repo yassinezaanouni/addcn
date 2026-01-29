@@ -15,8 +15,11 @@ import {
   IconX,
   IconLoader2,
   IconArrowRight,
-  IconSourceCode,
+  IconStack2,
 } from "@tabler/icons-react";
+
+const ROTATING_WORDS = ["components", "files", "utilities"] as const;
+const WORD_ROTATION_MS = 2500;
 
 const DEBOUNCE_MS = 400;
 const CLAIMED_USERNAME_KEY = "addcn_claimed_username";
@@ -35,6 +38,15 @@ export function UsernameClaimHero() {
   const [debouncedUsername, setDebouncedUsername] = useState("");
   const [clientError, setClientError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [wordIndex, setWordIndex] = useState(0);
+
+  // Rotate through words
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWordIndex((prev) => (prev + 1) % ROTATING_WORDS.length);
+    }, WORD_ROTATION_MS);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -110,7 +122,7 @@ export function UsernameClaimHero() {
       {/* Left content */}
       <div>
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-primary">
-          <IconSourceCode className="size-4" />
+          <IconStack2 className="size-4" />
           Free & Open Source
         </div>
 
@@ -118,7 +130,21 @@ export function UsernameClaimHero() {
           <span className="text-muted-foreground/50">$</span> npm install
           <br />
           <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            your-components
+            your-
+          </span>
+          <span className="relative inline-flex overflow-hidden">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={wordIndex}
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "-100%" }}
+                transition={{ type: "spring", duration: 0.5, bounce: 0.25 }}
+                className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
+              >
+                {ROTATING_WORDS[wordIndex]}
+              </motion.span>
+            </AnimatePresence>
           </span>
         </h1>
 
@@ -158,7 +184,10 @@ export function UsernameClaimHero() {
                 {/* Input area */}
                 <div className="relative flex flex-1 items-center">
                   <span className="pointer-events-none pl-3 font-mono text-sm text-muted-foreground sm:pl-4">
-                    claim @
+                    claim
+                  </span>
+                  <span className="pointer-events-none pl-1.5 font-mono text-sm text-foreground">
+                    @
                   </span>
                   <input
                     ref={inputRef}
@@ -169,7 +198,7 @@ export function UsernameClaimHero() {
                     onBlur={() => setIsFocused(false)}
                     placeholder="username"
                     maxLength={USERNAME_RULES.maxLength}
-                    className="h-11 flex-1 bg-transparent pl-0 pr-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:pr-4"
+                    className="h-11 flex-1 bg-transparent pl-0.5 pr-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:pr-4"
                   />
 
                   {/* Status indicator */}
