@@ -282,8 +282,8 @@ export function UsernameClaimHero() {
       </div>
 
       {/* Right terminal */}
-      <div className="relative min-w-0">
-        <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+      <div className="relative w-full min-w-0 max-w-full">
+        <div className="relative w-full overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
           {/* Scan line effect */}
           <div className="pointer-events-none absolute inset-0 z-10">
             <div
