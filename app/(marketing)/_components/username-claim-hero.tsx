@@ -129,9 +129,7 @@ export function UsernameClaimHero() {
         <h1 className="mt-6 font-mono text-3xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-4xl lg:text-5xl">
           <span className="text-muted-foreground/50">$</span> npm install
           <br />
-          <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            your-
-          </span>
+          <span className="text-primary">your-</span>
           <span className="relative inline-flex overflow-hidden">
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
