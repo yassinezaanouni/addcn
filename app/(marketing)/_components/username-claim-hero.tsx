@@ -118,7 +118,7 @@ export function UsernameClaimHero() {
   const displayUsername = username || "username";
 
   return (
-    <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+    <div className="grid gap-12 overflow-hidden lg:grid-cols-2 lg:items-center lg:gap-16">
       {/* Left content */}
       <div>
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-primary">
@@ -282,7 +282,7 @@ export function UsernameClaimHero() {
       </div>
 
       {/* Right terminal */}
-      <div className="relative">
+      <div className="relative min-w-0">
         <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
           {/* Scan line effect */}
           <div className="pointer-events-none absolute inset-0 z-10">
@@ -318,7 +318,7 @@ export function UsernameClaimHero() {
             </div>
 
             {/* URL with animated username */}
-            <div className="pl-6 leading-relaxed">
+            <div className="break-all pl-6 leading-relaxed">
               <span className="text-muted-foreground">
                 https://{APP_NAME}.dev/r/
               </span>
