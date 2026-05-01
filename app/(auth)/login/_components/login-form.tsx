@@ -6,6 +6,9 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 
 const CLAIMED_USERNAME_KEY = "addcn_claimed_username";
+const LAST_PROVIDER_KEY = "addcn_last_provider";
+
+type Provider = "github" | "google";
 import posthog from "posthog-js";
 import {
   IconBrandGithub,
@@ -27,10 +30,24 @@ function BlinkingCursor() {
   );
 }
 
+function LastUsedBadge() {
+  return (
+    <motion.span
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
+      className="absolute -top-2 right-3 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-medium leading-none text-primary"
+    >
+      Last used
+    </motion.span>
+  );
+}
+
 export function LoginForm() {
   const searchParams = useSearchParams();
-  const [isLoading, setIsLoading] = useState<"github" | "google" | null>(null);
+  const [isLoading, setIsLoading] = useState<Provider | null>(null);
   const [claimedUsername, setClaimedUsername] = useState<string | null>(null);
+  const [lastProvider, setLastProvider] = useState<Provider | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
   const [showSubtitle, setShowSubtitle] = useState(false);
 
@@ -40,7 +57,10 @@ export function LoginForm() {
     // Read from localStorage after hydration to avoid SSR mismatch
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: syncing localStorage on mount
     setClaimedUsername(localStorage.getItem(CLAIMED_USERNAME_KEY));
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: tracking hydration state
+    const stored = localStorage.getItem(LAST_PROVIDER_KEY);
+    if (stored === "github" || stored === "google") {
+      setLastProvider(stored);
+    }
     setHasMounted(true);
   }, []);
 
@@ -84,14 +104,16 @@ export function LoginForm() {
     return displayText;
   };
 
-  const handleGitHubSignIn = async () => {
-    setIsLoading("github");
-    posthog.capture("sign_in_started", {
-      provider: "github",
-    });
+  const signIn = async (provider: Provider) => {
+    setIsLoading(provider);
+    posthog.capture("sign_in_started", { provider });
     try {
+      // Remember the chosen provider so the "Last used" badge can highlight
+      // it on the next visit. Done before the redirect so it persists even
+      // if auth fails away from this tab.
+      localStorage.setItem(LAST_PROVIDER_KEY, provider);
       await authClient.signIn.social({
-        provider: "github",
+        provider,
         callbackURL: callbackUrl,
       });
     } catch (error) {
@@ -100,21 +122,8 @@ export function LoginForm() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading("google");
-    posthog.capture("sign_in_started", {
-      provider: "google",
-    });
-    try {
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: callbackUrl,
-      });
-    } catch (error) {
-      posthog.captureException(error);
-      setIsLoading(null);
-    }
-  };
+  const handleGitHubSignIn = () => signIn("github");
+  const handleGoogleSignIn = () => signIn("google");
 
   return (
     <div className="w-full max-w-sm">
@@ -156,7 +165,30 @@ export function LoginForm() {
         <Button
           variant="outline"
           size="lg"
-          className="h-12 w-full gap-3 border-2 font-medium transition-all hover:border-primary/50 hover:bg-primary/5"
+          className="relative h-12 w-full gap-3 border-2 font-medium transition-all hover:border-primary/50 hover:bg-primary/5"
+          onClick={handleGoogleSignIn}
+          disabled={isLoading !== null}
+        >
+          {isLoading === "google" ? (
+            <>
+              <IconLoader2 className="size-5 animate-spin" />
+              Connecting...
+            </>
+          ) : (
+            <>
+              <IconBrandGoogle className="size-5" />
+              Continue with Google
+            </>
+          )}
+          {hasMounted && lastProvider === "google" && isLoading === null && (
+            <LastUsedBadge />
+          )}
+        </Button>
+
+        <Button
+          variant="outline"
+          size="lg"
+          className="relative h-12 w-full gap-3 border-2 font-medium transition-all hover:border-primary/50 hover:bg-primary/5"
           onClick={handleGitHubSignIn}
           disabled={isLoading !== null}
         >
@@ -171,25 +203,8 @@ export function LoginForm() {
               Continue with GitHub
             </>
           )}
-        </Button>
-
-        <Button
-          variant="outline"
-          size="lg"
-          className="h-12 w-full gap-3 border-2 font-medium transition-all hover:border-primary/50 hover:bg-primary/5"
-          onClick={handleGoogleSignIn}
-          disabled={isLoading !== null}
-        >
-          {isLoading === "google" ? (
-            <>
-              <IconLoader2 className="size-5 animate-spin" />
-              Connecting...
-            </>
-          ) : (
-            <>
-              <IconBrandGoogle className="size-5" />
-              Continue with Google
-            </>
+          {hasMounted && lastProvider === "github" && isLoading === null && (
+            <LastUsedBadge />
           )}
         </Button>
       </div>
