@@ -9,7 +9,7 @@ import { joinSteps, type CommandResolvers } from "@/lib/command-utils";
 import { CopyCommandButton } from "../../_components/copy-command-button";
 import { IconTerminal2 } from "@tabler/icons-react";
 
-const SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? "";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
 export function WorkflowPreview() {
   const steps = useCommandEditorStore((s) => s.steps);

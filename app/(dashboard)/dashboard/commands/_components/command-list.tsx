@@ -29,7 +29,7 @@ import { joinSteps, type CommandResolvers } from "@/lib/command-utils";
 import { CopyCommandButton } from "./copy-command-button";
 import { DeleteCommandButton } from "./delete-command-button";
 
-const SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? "";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
 function CommandCardSkeleton() {
   return (

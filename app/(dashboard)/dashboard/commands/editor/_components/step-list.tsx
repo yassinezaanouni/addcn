@@ -16,7 +16,7 @@ import { StepRowSnippetRef } from "./step-row-snippet-ref";
 import { OperatorPicker } from "./operator-picker";
 import { AddStepMenu } from "./add-step-menu";
 
-const SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? "";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
 export function StepList() {
   const steps = useCommandEditorStore((s) => s.steps);
