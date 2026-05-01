@@ -23,7 +23,6 @@ interface StepRowSnippetRefProps {
   index: number;
   resolved: Doc<"snippets"> | null;
   resolvedPreview: string;
-  resolvedNamespace: string;
   isFirst: boolean;
   isLast: boolean;
   canRemove: boolean;
@@ -33,7 +32,6 @@ export function StepRowSnippetRef({
   index,
   resolved,
   resolvedPreview,
-  resolvedNamespace,
   isFirst,
   isLast,
   canRemove,
@@ -82,9 +80,9 @@ export function StepRowSnippetRef({
           )}
         </div>
         <div className="flex items-center gap-0.5">
-          {!isBroken && resolvedNamespace && (
+          {!isBroken && (
             <Link
-              href={`/${resolvedNamespace}/${resolved!.name}`}
+              href={`/dashboard/editor/${resolved!._id}`}
               target="_blank"
               rel="noreferrer"
             >
@@ -92,7 +90,7 @@ export function StepRowSnippetRef({
                 type="button"
                 size="icon-sm"
                 variant="ghost"
-                title="Open snippet"
+                title="Open snippet in editor"
                 className="size-6"
               >
                 <IconArrowUpRight className="size-3.5" />

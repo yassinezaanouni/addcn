@@ -139,7 +139,6 @@ export function StepList() {
                 index={index}
                 resolved={resolved}
                 resolvedPreview={preview}
-                resolvedNamespace={namespace}
                 isFirst={isFirst}
                 isLast={isLast}
                 canRemove={canRemove}
