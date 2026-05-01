@@ -2,15 +2,6 @@ import { create } from "zustand";
 import type { SnippetFile } from "@/types/snippet";
 import type { Id } from "@/convex/_generated/dataModel";
 
-const DEFAULT_FILE_CONTENT = `export default function Component() {
-  return (
-    <div className="p-4 rounded-lg border">
-      <h1 className="text-xl font-bold">Hello World</h1>
-      <p className="text-muted-foreground">Edit this snippet to get started.</p>
-    </div>
-  );
-}`;
-
 const DEFAULT_GLOBALS_CSS = `/* Styles will be appended to globals.css when installed */
 @layer components {
   /* Add your snippet-specific styles here */
@@ -105,28 +96,16 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
-function createDefaultFile(): SnippetFile {
-  return {
-    id: generateId(),
-    path: "components/component.tsx",
-    content: DEFAULT_FILE_CONTENT,
-    type: "component",
-    language: "typescript",
-  };
-}
-
-function createDefaultGlobalsCss(): SnippetFile {
-  return {
-    id: generateId(),
-    path: "globals.css",
-    content: DEFAULT_GLOBALS_CSS,
-    type: "style",
-    language: "css",
-  };
-}
-
 function createDefaultFiles(): SnippetFile[] {
-  return [createDefaultFile(), createDefaultGlobalsCss()];
+  return [
+    {
+      id: generateId(),
+      path: "globals.css",
+      content: DEFAULT_GLOBALS_CSS,
+      type: "style",
+      language: "css",
+    },
+  ];
 }
 
 const defaultFiles = createDefaultFiles();

@@ -155,15 +155,7 @@ export function PreviewPanel() {
   // Only show error if it matches the current iframe key (auto-clears on code change)
   const previewError = errorState?.key === iframeKey ? errorState.error : null;
 
-  if (!mainFile) {
-    return (
-      <div className="flex h-full items-center justify-center text-muted-foreground">
-        No component file to preview
-      </div>
-    );
-  }
-
-  const fileName = mainFile.path.split("/").pop() || "";
+  const fileName = mainFile?.path.split("/").pop() ?? "";
 
   return (
     <LayoutGroup>
@@ -183,7 +175,11 @@ export function PreviewPanel() {
         <div className="relative flex-1 overflow-hidden">
           {previewEnabled ? (
             // Live preview mode
-            previewError ? (
+            !mainFile ? (
+              <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                Add a .tsx file to enable live preview
+              </div>
+            ) : previewError ? (
               <PreviewError error={previewError} />
             ) : (
               <PreviewIframe
