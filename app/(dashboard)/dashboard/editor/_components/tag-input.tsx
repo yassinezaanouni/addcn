@@ -210,13 +210,12 @@ export function TagInput() {
                 }}
                 onMouseEnter={() => setHighlighted(i)}
                 className={cn(
-                  "flex cursor-pointer items-center gap-1.5 rounded-sm px-2 py-1 font-mono text-[11px]",
-                  highlighted === i
-                    ? "bg-accent text-accent-foreground"
-                    : "text-foreground/80",
+                  "flex cursor-pointer items-center gap-1.5 rounded-sm px-2 py-1 font-mono text-[11px] text-foreground/80 transition-colors",
+                  highlighted === i &&
+                    "bg-foreground/8 text-foreground dark:bg-foreground/10",
                 )}
               >
-                <IconHash className="size-3 text-emerald-500/80" />
+                <IconHash className="size-3 text-emerald-500" />
                 {tag}
               </li>
             ))}
@@ -232,14 +231,16 @@ export function TagInput() {
                 }}
                 onMouseEnter={() => setHighlighted(suggestions.length)}
                 className={cn(
-                  "flex cursor-pointer items-center gap-1.5 rounded-sm px-2 py-1 font-mono text-[11px]",
-                  highlighted === suggestions.length
-                    ? "bg-accent text-accent-foreground"
-                    : "text-foreground/70",
+                  "flex cursor-pointer items-center gap-1.5 rounded-sm px-2 py-1 font-mono text-[11px] text-muted-foreground transition-colors",
+                  highlighted === suggestions.length &&
+                    "bg-foreground/8 text-foreground dark:bg-foreground/10",
                 )}
               >
-                <IconPlus className="size-3 text-emerald-500/80" />
-                Create &quot;{normalized}&quot;
+                <IconPlus className="size-3 text-emerald-500" />
+                Create{" "}
+                <span className="text-foreground">
+                  &quot;{normalized}&quot;
+                </span>
               </li>
             )}
           </motion.ul>
