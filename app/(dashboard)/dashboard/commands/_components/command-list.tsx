@@ -9,7 +9,6 @@ import { useOrgContext } from "@/components/org-switcher";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -33,14 +32,14 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
 function CommandCardSkeleton() {
   return (
-    <Card className="border-border/50 bg-card/50">
-      <CardHeader>
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="mt-1 h-4 w-56" />
+    <Card className="overflow-hidden border-border/50 bg-card/50 pt-0">
+      <Skeleton className="h-16 w-full rounded-none" />
+      <CardHeader className="py-2">
+        <Skeleton className="h-4 w-32" />
       </CardHeader>
-      <CardContent className="space-y-2">
-        <Skeleton className="h-7 w-full rounded-md" />
-        <Skeleton className="h-5 w-24" />
+      <CardContent className="space-y-2 pb-3">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-7 w-full" />
       </CardContent>
     </Card>
   );
@@ -60,23 +59,30 @@ function CommandCard({
   );
 
   return (
-    <Card className="border-border/50 bg-card/50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-mono text-base">
-          <IconTerminal2 className="size-4 text-emerald-500" />
+    <Card className="group overflow-hidden border-border/50 bg-card/50 pt-0 transition-colors hover:border-border">
+      {/* Joined-command preview as the equivalent of the snippet's image */}
+      <div className="relative flex min-h-[64px] items-center border-b border-border/50 bg-muted/40 px-3 py-3">
+        <code className="block min-w-0 flex-1 truncate font-mono text-xs text-foreground/90">
+          {joined || (
+            <span className="text-muted-foreground/60">(empty)</span>
+          )}
+        </code>
+        <span className="ml-2 shrink-0 rounded bg-background/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+          {command.steps.length}
+          <span className="ml-0.5 opacity-70">
+            {command.steps.length === 1 ? "step" : "steps"}
+          </span>
+        </span>
+      </div>
+
+      <CardHeader className="py-2.5">
+        <CardTitle className="flex items-center gap-2 font-mono text-sm">
+          <IconTerminal2 className="size-3.5 text-emerald-500" />
           {command.name}
         </CardTitle>
-        {command.description && (
-          <CardDescription className="line-clamp-1">
-            {command.description}
-          </CardDescription>
-        )}
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="group relative rounded-md border border-border/50 bg-muted/40 px-3 py-2">
-          <code className="block truncate font-mono text-xs">{joined}</code>
-        </div>
 
+      <CardContent className="space-y-2 pb-3">
         {command.tags && command.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {command.tags.slice(0, 3).map((tag) => (
@@ -95,25 +101,20 @@ function CommandCard({
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-[10px] text-muted-foreground">
-            {command.steps.length} step{command.steps.length !== 1 ? "s" : ""}
-          </span>
-          <div className="flex items-center gap-1">
-            <CopyCommandButton text={joined} />
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              title="Edit command"
-              onClick={() => open(command._id)}
-            >
-              <IconPencil className="size-4" />
-            </Button>
-            <DeleteCommandButton
-              commandId={command._id}
-              commandName={command.name}
-            />
-          </div>
+        <div className="flex items-center justify-end gap-1">
+          <CopyCommandButton text={joined} />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title="Edit command"
+            onClick={() => open(command._id)}
+          >
+            <IconPencil className="size-4" />
+          </Button>
+          <DeleteCommandButton
+            commandId={command._id}
+            commandName={command.name}
+          />
         </div>
       </CardContent>
     </Card>
