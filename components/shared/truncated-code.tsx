@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -17,10 +17,15 @@ interface TruncatedCodeProps {
   className?: string;
 }
 
+// useLayoutEffect on the client, no-op on the server.
+const useIsoLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 /**
- * Inline single-line `<code>` that auto-truncates with ellipsis. If the
- * rendered width exceeds the available space, hovering reveals the full
- * text via a tooltip. No tooltip is shown when the text fits.
+ * Single-line truncated `<code>`. Hovering pops a tooltip with the full
+ * text — only when the rendered text actually overflows. Always renders
+ * the same DOM tree (just controls the Tooltip's `open` prop) so the ref
+ * and ResizeObserver stay attached to the same element across state flips.
  */
 export function TruncatedCode({
   text,
@@ -30,40 +35,39 @@ export function TruncatedCode({
   const ref = useRef<HTMLElement | null>(null);
   const [isTruncated, setIsTruncated] = useState(false);
 
-  useEffect(() => {
+  useIsoLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
 
     const check = () => {
-      setIsTruncated(el.scrollWidth > el.clientWidth + 1);
+      const truncated = el.scrollWidth > el.clientWidth + 1;
+      setIsTruncated((prev) => (prev === truncated ? prev : truncated));
     };
-    // Defer the initial measurement to the next paint so setState doesn't
-    // run synchronously inside the effect body (avoids the
-    // react-hooks/set-state-in-effect lint rule and any layout thrash).
-    const id = requestAnimationFrame(check);
+
+    check();
     const observer = new ResizeObserver(check);
     observer.observe(el);
-    return () => {
-      cancelAnimationFrame(id);
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [text]);
 
-  const code = (
-    <code
-      ref={ref}
-      className={cn("block min-w-0 truncate font-mono", className)}
-    >
-      {text}
-    </code>
-  );
-
-  if (!isTruncated) return code;
-
   return (
-    <Tooltip>
-      <TooltipTrigger render={<span className="block min-w-0 cursor-help" />}>
-        {code}
+    <Tooltip open={isTruncated ? undefined : false}>
+      <TooltipTrigger
+        render={
+          <span
+            className={cn(
+              "block min-w-0",
+              isTruncated && "cursor-help",
+            )}
+          />
+        }
+      >
+        <code
+          ref={ref}
+          className={cn("block min-w-0 truncate font-mono", className)}
+        >
+          {text}
+        </code>
       </TooltipTrigger>
       <TooltipContent
         side={side}
