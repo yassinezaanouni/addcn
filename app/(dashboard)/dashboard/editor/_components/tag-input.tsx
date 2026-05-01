@@ -228,7 +228,7 @@ export function TagInput() {
               width: fieldRect.width,
               maxHeight: "12rem",
             }}
-            className="z-50 space-y-0.5 overflow-y-auto"
+            className="z-50 space-y-0.5 overflow-y-auto rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/5"
             // Prevent the input's blur firing before our onMouseDown
             onMouseDown={(e) => e.preventDefault()}
           >
