@@ -33,13 +33,12 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 function CommandCardSkeleton() {
   return (
     <Card className="border-border/50 bg-card/50">
-      <CardHeader className="pb-2">
+      <CardHeader className="px-3 py-2">
         <Skeleton className="h-4 w-32" />
       </CardHeader>
-      <CardContent className="space-y-2 pb-3">
-        <Skeleton className="h-4 w-24" />
+      <CardContent className="space-y-1.5 px-3 pb-2.5">
+        <Skeleton className="h-5 w-full" />
         <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-9 w-full rounded-md" />
       </CardContent>
     </Card>
   );
@@ -60,8 +59,8 @@ function CommandCard({
 
   return (
     <Card className="group overflow-hidden border-border/50 bg-card/50 transition-colors hover:border-border">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 font-mono text-sm">
+      <CardHeader className="px-3 py-2">
+        <CardTitle className="flex items-center gap-1.5 font-mono text-sm">
           <IconTerminal2 className="size-3.5 text-emerald-500" />
           <span className="min-w-0 flex-1 truncate">{command.name}</span>
           <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] font-normal text-muted-foreground">
@@ -70,44 +69,43 @@ function CommandCard({
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-2 pb-3">
-        {command.tags && command.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {command.tags.slice(0, 3).map((tag) => (
+      <CardContent className="space-y-1.5 px-3 pb-2.5">
+        {/* Tags + actions on a single row to save vertical space */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap gap-1">
+            {command.tags?.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400"
+                className="rounded bg-emerald-500/10 px-1 py-0.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400"
               >
                 #{tag}
               </span>
             ))}
-            {command.tags.length > 3 && (
-              <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+            {command.tags && command.tags.length > 3 && (
+              <span className="rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
                 +{command.tags.length - 3}
               </span>
             )}
           </div>
-        )}
-
-        <div className="flex items-center justify-end gap-1">
-          <CopyCommandButton text={joined} />
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            title="Edit command"
-            onClick={() => open(command._id)}
-          >
-            <IconPencil className="size-4" />
-          </Button>
-          <DeleteCommandButton
-            commandId={command._id}
-            commandName={command.name}
-          />
+          <div className="flex shrink-0 items-center">
+            <CopyCommandButton text={joined} />
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              title="Edit command"
+              onClick={() => open(command._id)}
+            >
+              <IconPencil className="size-3.5" />
+            </Button>
+            <DeleteCommandButton
+              commandId={command._id}
+              commandName={command.name}
+            />
+          </div>
         </div>
 
-        {/* Joined command at the bottom — same visual role as the install
-            command bar on a snippet card. */}
-        <div className="rounded-md border border-border/50 bg-muted/30 px-2.5 py-1.5">
+        {/* Joined command — same visual role as snippet's install bar */}
+        <div className="rounded border border-border/50 bg-muted/30 px-2 py-1">
           <code className="block truncate font-mono text-[11px] leading-tight text-foreground/90">
             {joined || (
               <span className="text-muted-foreground/60">(empty)</span>
