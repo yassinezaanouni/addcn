@@ -1,7 +1,7 @@
 "use client";
 
-import { useId, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 
@@ -27,9 +27,36 @@ export function TagInput() {
   const [input, setInput] = useState("");
   const [highlighted, setHighlighted] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [fieldRect, setFieldRect] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fieldRef = useRef<HTMLDivElement>(null);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listboxId = useId();
+
+  // Track the input field's screen position while the dropdown is open. The
+  // initial read is intentional — this is the documented "sync with the DOM"
+  // pattern, the only thing the rule prohibits is inadvertent re-render loops
+  // which we don't trigger here.
+  useEffect(() => {
+    if (!isOpen) return;
+    const update = () => {
+      const el = fieldRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setFieldRect({ top: rect.bottom, left: rect.left, width: rect.width });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [isOpen]);
 
   const reachedMax = tags.length >= MAX_TAGS_PER_SNIPPET;
   const remaining = MAX_TAGS_PER_SNIPPET - tags.length;
@@ -87,7 +114,6 @@ export function TagInput() {
       } else if (showCreate && normalized) {
         commit(normalized);
       } else if (input.trim()) {
-        // last-ditch — try to commit whatever they typed
         commit(input);
       }
     } else if (e.key === "Backspace" && input === "" && tags.length > 0) {
@@ -110,10 +136,21 @@ export function TagInput() {
     blurTimer.current = setTimeout(() => setIsOpen(false), 120);
   };
 
+  // Show the portaled dropdown only once we have a measured rect (which
+  // implicitly waits for hydration, since the effect that measures only runs
+  // on the client).
+  const showDropdown =
+    isOpen &&
+    totalOptions > 0 &&
+    !reachedMax &&
+    fieldRect &&
+    typeof document !== "undefined";
+
   return (
     <div className="space-y-1.5">
       {/* Combobox: pills + input on one line */}
       <div
+        ref={fieldRef}
         onClick={() => inputRef.current?.focus()}
         className={cn(
           "flex flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5 text-xs transition-colors",
@@ -121,33 +158,26 @@ export function TagInput() {
           reachedMax && "border-amber-500/40",
         )}
       >
-        <AnimatePresence mode="popLayout" initial={false}>
-          {tags.map((tag) => (
-            <motion.span
-              key={tag}
-              layout
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ duration: 0.12 }}
-              className="group flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] text-emerald-600 dark:text-emerald-400"
+        {tags.map((tag) => (
+          <span
+            key={tag}
+            className="group flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] text-emerald-600 dark:text-emerald-400"
+          >
+            <IconHash className="size-3 opacity-60" />
+            {tag}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                removeTag(tag);
+              }}
+              aria-label={`Remove tag ${tag}`}
+              className="ml-0.5 rounded p-0.5 opacity-60 transition-all hover:bg-emerald-500/20 hover:opacity-100"
             >
-              <IconHash className="size-3 opacity-60" />
-              {tag}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeTag(tag);
-                }}
-                aria-label={`Remove tag ${tag}`}
-                className="ml-0.5 rounded p-0.5 opacity-60 transition-all hover:bg-emerald-500/20 hover:opacity-100"
-              >
-                <IconX className="size-3" />
-              </button>
-            </motion.span>
-          ))}
-        </AnimatePresence>
+              <IconX className="size-3" />
+            </button>
+          </span>
+        ))}
 
         <input
           ref={inputRef}
@@ -185,17 +215,22 @@ export function TagInput() {
           : `Press Enter to add. ${remaining} ${remaining === 1 ? "tag" : "tags"} left.`}
       </p>
 
-      {/* Suggestions dropdown */}
-      <AnimatePresence>
-        {isOpen && totalOptions > 0 && !reachedMax && (
-          <motion.ul
+      {/* Suggestions dropdown — portaled, fixed-positioned over the input */}
+      {showDropdown &&
+        createPortal(
+          <ul
             id={listboxId}
             role="listbox"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.12 }}
-            className="max-h-48 space-y-0.5 overflow-y-auto"
+            style={{
+              position: "fixed",
+              top: fieldRect.top + 4,
+              left: fieldRect.left,
+              width: fieldRect.width,
+              maxHeight: "12rem",
+            }}
+            className="z-50 space-y-0.5 overflow-y-auto"
+            // Prevent the input's blur firing before our onMouseDown
+            onMouseDown={(e) => e.preventDefault()}
           >
             {suggestions.map((tag, i) => (
               <li
@@ -203,8 +238,7 @@ export function TagInput() {
                 id={`${listboxId}-${i}`}
                 role="option"
                 aria-selected={highlighted === i}
-                onMouseDown={(e) => {
-                  e.preventDefault();
+                onMouseDown={() => {
                   commit(tag);
                   inputRef.current?.focus();
                 }}
@@ -224,8 +258,7 @@ export function TagInput() {
                 id={`${listboxId}-${suggestions.length}`}
                 role="option"
                 aria-selected={highlighted === suggestions.length}
-                onMouseDown={(e) => {
-                  e.preventDefault();
+                onMouseDown={() => {
                   commit(normalized);
                   inputRef.current?.focus();
                 }}
@@ -243,9 +276,9 @@ export function TagInput() {
                 </span>
               </li>
             )}
-          </motion.ul>
+          </ul>,
+          document.body,
         )}
-      </AnimatePresence>
     </div>
   );
 }
