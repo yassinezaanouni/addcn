@@ -8,6 +8,7 @@ import { MonacoEditor } from "./monaco-editor";
 import { SnippetMetaForm } from "./snippet-meta-form";
 import { DependencyManager } from "./dependency-manager";
 import { PreviewMediaSection } from "./preview-media-section";
+import { TagInput } from "./tag-input";
 
 // Shared panel styles
 const PANEL_BASE =
@@ -50,6 +51,19 @@ export function EditorLayout() {
                 </span>
               </div>
               <SnippetMetaForm />
+            </div>
+
+            {/* Tags Section */}
+            <div className={cn(PANEL_BASE, PANEL_BG)}>
+              <div className="flex items-center gap-2 px-4 py-3">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Tags
+                </span>
+              </div>
+              <div className="px-4 pb-4">
+                <TagInput />
+              </div>
             </div>
 
             {/* Preview Media Section */}

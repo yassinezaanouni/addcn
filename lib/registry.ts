@@ -81,6 +81,7 @@ export function snippetToRegistry(snippet: SavedSnippet): RegistryItem {
       snippet.registryDependencies.length > 0
         ? snippet.registryDependencies
         : undefined,
+    categories: snippet.tags.length > 0 ? snippet.tags : undefined,
     files,
   };
 }

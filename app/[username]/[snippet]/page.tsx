@@ -236,6 +236,19 @@ export default function SnippetDetailPage() {
         {snippet.description && (
           <p className="mb-4 text-muted-foreground">{snippet.description}</p>
         )}
+        {snippet.tags && snippet.tags.length > 0 && (
+          <div className="mb-4 flex flex-wrap gap-1.5">
+            {snippet.tags.map((tag) => (
+              <Badge
+                key={tag}
+                variant="outline"
+                className="border-emerald-500/30 bg-emerald-500/10 font-mono text-[11px] text-emerald-600 dark:text-emerald-400"
+              >
+                #{tag}
+              </Badge>
+            ))}
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-3">
           <Badge variant="default">Public</Badge>
           <span className="flex items-center gap-1.5 text-sm text-muted-foreground">

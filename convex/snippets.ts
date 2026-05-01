@@ -97,6 +97,7 @@ export const create = mutation({
     dependencies: v.array(v.string()),
     devDependencies: v.array(v.string()),
     registryDependencies: v.array(v.string()),
+    tags: v.array(v.string()),
     orgId: v.optional(v.id("organizations")),
     isPublic: v.boolean(),
     // Preview media
@@ -144,6 +145,7 @@ export const create = mutation({
         dependencies: args.dependencies,
         devDependencies: args.devDependencies,
         registryDependencies: args.registryDependencies,
+        tags: args.tags,
         orgId: args.orgId,
         createdBy: user._id,
         isPublic: args.isPublic,
@@ -177,6 +179,7 @@ export const create = mutation({
       dependencies: args.dependencies,
       devDependencies: args.devDependencies,
       registryDependencies: args.registryDependencies,
+      tags: args.tags,
       userId: user._id,
       createdBy: user._id,
       isPublic: args.isPublic,
@@ -263,6 +266,7 @@ export const update = mutation({
     dependencies: v.optional(v.array(v.string())),
     devDependencies: v.optional(v.array(v.string())),
     registryDependencies: v.optional(v.array(v.string())),
+    tags: v.optional(v.array(v.string())),
     isPublic: v.optional(v.boolean()),
     // Preview media
     previewMediaUrl: v.optional(v.string()),
@@ -601,5 +605,40 @@ export const getByNamespaceAndName = query({
     }
 
     return snippet;
+  },
+});
+
+/**
+ * Get the distinct, sorted set of tags this user has used across their
+ * personal snippets and any orgs they belong to.
+ * Used to power autocomplete suggestions in the editor's tag input.
+ */
+export const getMyTags = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
+
+    const personal = await ctx.db
+      .query("snippets")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const memberships = await ctx.db
+      .query("orgMembers")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const orgSnippets = await Promise.all(
+      memberships.map((m) =>
+        ctx.db
+          .query("snippets")
+          .withIndex("by_orgId", (q) => q.eq("orgId", m.orgId))
+          .collect(),
+      ),
+    );
+
+    const all = [...personal, ...orgSnippets.flat()];
+    return Array.from(new Set(all.flatMap((s) => s.tags ?? []))).sort();
   },
 });

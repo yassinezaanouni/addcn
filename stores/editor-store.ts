@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { SnippetFile } from "@/types/snippet";
 import type { Id } from "@/convex/_generated/dataModel";
+import { MAX_TAGS_PER_SNIPPET, normalizeTag } from "@/lib/validators";
 
 const DEFAULT_GLOBALS_CSS = `/* Styles will be appended to globals.css when installed */
 @layer components {
@@ -25,6 +26,9 @@ interface EditorState {
   dependencies: string[];
   devDependencies: string[];
   registryDependencies: string[];
+
+  // Tags (free-form taxonomy, serialized as `categories` in registry JSON)
+  tags: string[];
 
   // Preview media (static image/video shown on the snippet card)
   previewMediaUrl: string | null; // R2 URL (after save)
@@ -57,6 +61,8 @@ interface EditorState {
   removeDevDependency: (dep: string) => void;
   addRegistryDependency: (dep: string) => void;
   removeRegistryDependency: (dep: string) => void;
+  addTag: (tag: string) => void;
+  removeTag: (tag: string) => void;
   setIsDirty: (dirty: boolean) => void;
   setPreviewMedia: (url: string | null, type: "image" | "video" | null) => void;
   setPendingMedia: (file: File | null) => void;
@@ -72,6 +78,7 @@ interface EditorState {
     dependencies: string[];
     devDependencies?: string[];
     registryDependencies: string[];
+    tags?: string[];
     previewMediaUrl?: string;
     previewMediaType?: "image" | "video";
   }) => void;
@@ -119,6 +126,7 @@ const initialState = {
   dependencies: [],
   devDependencies: [],
   registryDependencies: [],
+  tags: [],
   previewMediaUrl: null,
   previewMediaType: null,
   pendingMediaFile: null,
@@ -245,6 +253,24 @@ export const useEditorStore = create<EditorState>()((set) => ({
       isDirty: true,
     })),
 
+  addTag: (raw) =>
+    set((state) => {
+      const tag = normalizeTag(raw);
+      if (!tag) return {};
+      if (state.tags.includes(tag)) return {};
+      if (state.tags.length >= MAX_TAGS_PER_SNIPPET) return {};
+      return {
+        tags: [...state.tags, tag],
+        isDirty: true,
+      };
+    }),
+
+  removeTag: (tag) =>
+    set((state) => ({
+      tags: state.tags.filter((t) => t !== tag),
+      isDirty: true,
+    })),
+
   setIsDirty: (dirty) => set({ isDirty: dirty }),
 
   setValidationDialogOpen: (open) => set({ validationDialogOpen: open }),
@@ -343,6 +369,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
         dependencies: snippet.dependencies,
         devDependencies: snippet.devDependencies ?? [],
         registryDependencies: snippet.registryDependencies,
+        tags: snippet.tags ?? [],
         previewMediaUrl: snippet.previewMediaUrl ?? null,
         previewMediaType: snippet.previewMediaType ?? null,
         pendingMediaFile: null,

@@ -58,6 +58,8 @@ export default defineSchema({
     dependencies: v.array(v.string()),
     devDependencies: v.optional(v.array(v.string())),
     registryDependencies: v.array(v.string()),
+    // Free-form taxonomy. Serialized to `categories` in the registry JSON.
+    tags: v.optional(v.array(v.string())),
     // Multi-user fields
     userId: v.optional(v.id("users")), // Owner if personal snippet
     orgId: v.optional(v.id("organizations")), // Owner if org snippet

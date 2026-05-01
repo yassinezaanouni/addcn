@@ -185,6 +185,23 @@ function SnippetCard({
             )}
           </CardHeader>
           <CardContent className="space-y-2">
+            {snippet.tags && snippet.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {snippet.tags.slice(0, 3).map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+                {snippet.tags.length > 3 && (
+                  <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                    +{snippet.tags.length - 3}
+                  </span>
+                )}
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Badge variant={snippet.isPublic ? "default" : "secondary"}>

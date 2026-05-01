@@ -28,5 +28,6 @@ export interface RegistryItem {
   dependencies?: string[];
   devDependencies?: string[];
   registryDependencies?: string[];
+  categories?: string[];
   files: RegistryFile[];
 }

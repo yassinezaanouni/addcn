@@ -15,6 +15,7 @@ export interface SavedSnippet {
   dependencies: string[];
   devDependencies: string[];
   registryDependencies: string[];
+  tags: string[];
   createdAt: string;
   updatedAt: string;
 }

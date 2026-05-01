@@ -67,6 +67,30 @@ export function validateUsernameFormat(username: string): string | null {
   return null;
 }
 
+// Tag validation rules: lowercase letters, numbers, single hyphens, 1-30 chars,
+// no leading/trailing or consecutive hyphens. Same shape as username slugs.
+export const TAG_RULES = {
+  minLength: 1,
+  maxLength: 30,
+  pattern: /^[a-z0-9-]+$/,
+} as const;
+
+export const MAX_TAGS_PER_SNIPPET = 8;
+
+/**
+ * Normalize a raw tag input to a valid snippet tag, or return null if it
+ * cannot be coerced (empty, too long, invalid characters).
+ */
+export function normalizeTag(raw: string): string | null {
+  const cleaned = raw.trim().toLowerCase().replace(/\s+/g, "-");
+  if (cleaned.length < TAG_RULES.minLength) return null;
+  if (cleaned.length > TAG_RULES.maxLength) return null;
+  if (!TAG_RULES.pattern.test(cleaned)) return null;
+  if (cleaned.startsWith("-") || cleaned.endsWith("-")) return null;
+  if (cleaned.includes("--")) return null;
+  return cleaned;
+}
+
 export const snippetMetadataSchema = z.object({
   name: z
     .string()

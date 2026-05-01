@@ -41,6 +41,7 @@ interface RegistryItem {
   dependencies?: string[];
   devDependencies?: string[];
   registryDependencies?: string[];
+  categories?: string[];
   files: RegistryFile[];
   css?: CssObject;
 }
@@ -240,6 +241,8 @@ export function snippetToRegistryJson(
       snippet.registryDependencies.length > 0
         ? snippet.registryDependencies
         : undefined,
+    categories:
+      snippet.tags && snippet.tags.length > 0 ? snippet.tags : undefined,
     files,
     css,
   };
