@@ -52,7 +52,7 @@ export function SavedCommandPicker({
             className="w-full justify-start gap-2 font-normal"
           />
         }
-        nativeButton={false}
+        nativeButton
       >
         <IconLink className="size-3.5 text-violet-500" />
         Insert saved command…

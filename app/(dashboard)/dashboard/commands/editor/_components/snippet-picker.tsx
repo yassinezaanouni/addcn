@@ -43,7 +43,7 @@ export function SnippetPicker({ onPick }: SnippetPickerProps) {
             className="w-full justify-start gap-2 font-normal"
           />
         }
-        nativeButton={false}
+        nativeButton
       >
         <IconPackage className="size-3.5 text-emerald-500" />
         Insert snippet install command…

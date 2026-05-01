@@ -34,6 +34,7 @@ export function AddStepMenu({
             className="gap-2 font-mono text-xs"
           />
         }
+        nativeButton
       >
         <IconPlus className="size-4" />
         Add step
