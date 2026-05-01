@@ -34,6 +34,7 @@ export function TruncatedCode({
 }: TruncatedCodeProps) {
   const ref = useRef<HTMLElement | null>(null);
   const [isTruncated, setIsTruncated] = useState(false);
+  const [isHoverOpen, setIsHoverOpen] = useState(false);
 
   useIsoLayoutEffect(() => {
     const el = ref.current;
@@ -50,15 +51,17 @@ export function TruncatedCode({
     return () => observer.disconnect();
   }, [text]);
 
+  // Always-controlled: tooltip opens only when both the trigger says so AND
+  // the text actually overflows. Avoids switching the `open` prop between
+  // controlled and uncontrolled (Base UI rightly warns about that).
+  const open = isTruncated && isHoverOpen;
+
   return (
-    <Tooltip open={isTruncated ? undefined : false}>
+    <Tooltip open={open} onOpenChange={setIsHoverOpen}>
       <TooltipTrigger
         render={
           <span
-            className={cn(
-              "block min-w-0",
-              isTruncated && "cursor-help",
-            )}
+            className={cn("block min-w-0", isTruncated && "cursor-help")}
           />
         }
       >
