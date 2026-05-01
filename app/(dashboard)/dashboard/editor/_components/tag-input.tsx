@@ -195,7 +195,7 @@ export function TagInput() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 space-y-0.5 overflow-y-auto rounded-md border border-border/50 bg-popover/95 p-1 shadow-md backdrop-blur-sm"
+            className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 space-y-0.5 overflow-y-auto rounded-md border border-border/50 bg-popover p-1 shadow-lg ring-1 ring-foreground/5"
           >
             {suggestions.map((tag, i) => (
               <li

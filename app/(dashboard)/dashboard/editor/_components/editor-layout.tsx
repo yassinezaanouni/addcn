@@ -53,8 +53,14 @@ export function EditorLayout() {
               <SnippetMetaForm />
             </div>
 
-            {/* Tags Section */}
-            <div className={cn(PANEL_BASE, PANEL_BG)}>
+            {/* Tags Section — overflow-visible so the autocomplete dropdown
+                can spill below the panel without being clipped. */}
+            <div
+              className={cn(
+                PANEL_BG,
+                "relative rounded-xl border border-border/50 shadow-lg shadow-black/5",
+              )}
+            >
               <div className="flex items-center gap-2 px-4 py-3">
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
