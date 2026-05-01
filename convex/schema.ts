@@ -56,6 +56,7 @@ export default defineSchema({
     description: v.string(),
     files: snippetFilesValidator,
     dependencies: v.array(v.string()),
+    devDependencies: v.optional(v.array(v.string())),
     registryDependencies: v.array(v.string()),
     // Multi-user fields
     userId: v.optional(v.id("users")), // Owner if personal snippet

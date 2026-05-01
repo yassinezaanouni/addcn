@@ -38,9 +38,12 @@ export function RequiredFieldsDialog({
     description,
     setMetadata,
     dependencies,
+    devDependencies,
     registryDependencies,
     addDependency,
     removeDependency,
+    addDevDependency,
+    removeDevDependency,
     addRegistryDependency,
     removeRegistryDependency,
   } = useEditorStore();
@@ -194,9 +197,12 @@ export function RequiredFieldsDialog({
                 <Label className="mb-4 block">Dependencies</Label>
                 <DependencyInputs
                   dependencies={dependencies}
+                  devDependencies={devDependencies}
                   registryDependencies={registryDependencies}
                   onAddDependency={addDependency}
                   onRemoveDependency={removeDependency}
+                  onAddDevDependency={addDevDependency}
+                  onRemoveDevDependency={removeDevDependency}
                   onAddRegistryDependency={addRegistryDependency}
                   onRemoveRegistryDependency={removeRegistryDependency}
                   twoColumns

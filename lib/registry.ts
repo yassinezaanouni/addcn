@@ -75,6 +75,8 @@ export function snippetToRegistry(snippet: SavedSnippet): RegistryItem {
     description: snippet.description,
     dependencies:
       snippet.dependencies.length > 0 ? snippet.dependencies : undefined,
+    devDependencies:
+      snippet.devDependencies.length > 0 ? snippet.devDependencies : undefined,
     registryDependencies:
       snippet.registryDependencies.length > 0
         ? snippet.registryDependencies

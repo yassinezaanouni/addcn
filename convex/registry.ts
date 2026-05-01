@@ -39,6 +39,7 @@ interface RegistryItem {
   title: string;
   description: string;
   dependencies?: string[];
+  devDependencies?: string[];
   registryDependencies?: string[];
   files: RegistryFile[];
   css?: CssObject;
@@ -231,6 +232,10 @@ export function snippetToRegistryJson(
     description: snippet.description,
     dependencies:
       snippet.dependencies.length > 0 ? snippet.dependencies : undefined,
+    devDependencies:
+      snippet.devDependencies && snippet.devDependencies.length > 0
+        ? snippet.devDependencies
+        : undefined,
     registryDependencies:
       snippet.registryDependencies.length > 0
         ? snippet.registryDependencies

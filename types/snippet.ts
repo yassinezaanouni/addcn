@@ -13,6 +13,7 @@ export interface SavedSnippet {
   description: string;
   files: SnippetFile[];
   dependencies: string[];
+  devDependencies: string[];
   registryDependencies: string[];
   createdAt: string;
   updatedAt: string;

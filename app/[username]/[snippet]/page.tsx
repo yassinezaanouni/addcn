@@ -280,6 +280,29 @@ export default function SnippetDetailPage() {
         </div>
       )}
 
+      {/* Dev Dependencies */}
+      {snippet.devDependencies && snippet.devDependencies.length > 0 && (
+        <div className="mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Dev Dependencies</CardTitle>
+              <CardDescription>
+                npm packages required only for development
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {snippet.devDependencies.map((dep) => (
+                  <Badge key={dep} variant="secondary">
+                    {dep}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Registry Dependencies */}
       {snippet.registryDependencies &&
         snippet.registryDependencies.length > 0 && (

@@ -23,6 +23,7 @@ interface EditorState {
 
   // Dependencies
   dependencies: string[];
+  devDependencies: string[];
   registryDependencies: string[];
 
   // Preview media (static image/video shown on the snippet card)
@@ -52,6 +53,8 @@ interface EditorState {
   renamePath: (fileId: string, newPath: string) => void;
   addDependency: (dep: string) => void;
   removeDependency: (dep: string) => void;
+  addDevDependency: (dep: string) => void;
+  removeDevDependency: (dep: string) => void;
   addRegistryDependency: (dep: string) => void;
   removeRegistryDependency: (dep: string) => void;
   setIsDirty: (dirty: boolean) => void;
@@ -67,6 +70,7 @@ interface EditorState {
     description: string;
     files: SnippetFile[];
     dependencies: string[];
+    devDependencies?: string[];
     registryDependencies: string[];
     previewMediaUrl?: string;
     previewMediaType?: "image" | "video";
@@ -113,6 +117,7 @@ const initialState = {
   files: defaultFiles,
   activeFileId: defaultFiles[0].id,
   dependencies: [],
+  devDependencies: [],
   registryDependencies: [],
   previewMediaUrl: null,
   previewMediaType: null,
@@ -209,6 +214,20 @@ export const useEditorStore = create<EditorState>()((set) => ({
   removeDependency: (dep) =>
     set((state) => ({
       dependencies: state.dependencies.filter((d) => d !== dep),
+      isDirty: true,
+    })),
+
+  addDevDependency: (dep) =>
+    set((state) => ({
+      devDependencies: state.devDependencies.includes(dep)
+        ? state.devDependencies
+        : [...state.devDependencies, dep],
+      isDirty: true,
+    })),
+
+  removeDevDependency: (dep) =>
+    set((state) => ({
+      devDependencies: state.devDependencies.filter((d) => d !== dep),
       isDirty: true,
     })),
 
@@ -322,6 +341,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
         files: snippet.files,
         activeFileId,
         dependencies: snippet.dependencies,
+        devDependencies: snippet.devDependencies ?? [],
         registryDependencies: snippet.registryDependencies,
         previewMediaUrl: snippet.previewMediaUrl ?? null,
         previewMediaType: snippet.previewMediaType ?? null,
