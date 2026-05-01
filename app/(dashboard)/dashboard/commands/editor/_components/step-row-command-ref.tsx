@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useCommandEditorStore } from "@/stores/command-editor-store";
+import { useCommandEditor } from "../../_components/command-editor-context";
 import { Button } from "@/components/ui/button";
 import {
   IconArrowDown,
@@ -35,6 +35,7 @@ export function StepRowCommandRef({
 }: StepRowCommandRefProps) {
   const removeStep = useCommandEditorStore((s) => s.removeStep);
   const moveStep = useCommandEditorStore((s) => s.moveStep);
+  const { open } = useCommandEditor();
 
   const isBroken = resolved === null;
 
@@ -65,17 +66,16 @@ export function StepRowCommandRef({
         </div>
         <div className="flex items-center gap-0.5">
           {!isBroken && (
-            <Link href={`/dashboard/commands?edit=${refCommandId}`}>
-              <Button
-                type="button"
-                size="icon-sm"
-                variant="ghost"
-                title="Open referenced command"
-                className="size-6"
-              >
-                <IconArrowUpRight className="size-3.5" />
-              </Button>
-            </Link>
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              title="Open referenced command"
+              className="size-6"
+              onClick={() => open(refCommandId)}
+            >
+              <IconArrowUpRight className="size-3.5" />
+            </Button>
           )}
           <Button
             type="button"

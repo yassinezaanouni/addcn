@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 import {
   Sheet,
   SheetContent,
@@ -14,21 +12,19 @@ import {
 } from "@/components/ui/sheet";
 import { useCommandEditorStore } from "@/stores/command-editor-store";
 import { CommandEditorLayout } from "../editor/_components/command-editor-layout";
-
-const SHEET_PARAM = "edit";
+import { useCommandEditor } from "./command-editor-context";
 
 /**
- * Hosts the command editor in a side sheet. The open state is driven by the
- * `?edit=<id|new>` URL search param so deep links and "Open ↗" jumps from
- * inside the editor route naturally.
+ * Hosts the command editor in a side sheet. Open state is plain React state
+ * (managed by CommandEditorProvider); the URL reflects it via
+ * window.history.replaceState. We deliberately do NOT use Next's router /
+ * useSearchParams for this — those would trigger RSC refetches on every
+ * toggle.
  */
 export function CommandEditorSheet() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const editParam = searchParams.get(SHEET_PARAM);
-  const isOpen = editParam !== null;
-  const isNew = editParam === "new";
-  const editingId = !isNew && editParam ? (editParam as Id<"commands">) : null;
+  const { editingId, close } = useCommandEditor();
+  const isOpen = editingId !== null;
+  const isNew = editingId === "new";
 
   const reset = useCommandEditorStore((s) => s.reset);
   const loadCommand = useCommandEditorStore((s) => s.loadCommand);
@@ -37,7 +33,7 @@ export function CommandEditorSheet() {
   const { data: command } = useQuery(
     convexQuery(
       api.commands.get,
-      editingId ? { id: editingId } : "skip",
+      editingId && editingId !== "new" ? { id: editingId } : "skip",
     ),
   );
 
@@ -56,20 +52,11 @@ export function CommandEditorSheet() {
     }
   }, [command, convexId, loadCommand]);
 
-  const close = () => {
-    const next = new URLSearchParams(searchParams);
-    next.delete(SHEET_PARAM);
-    const qs = next.toString();
-    router.replace(`/dashboard/commands${qs ? `?${qs}` : ""}`, {
-      scroll: false,
-    });
-  };
-
   return (
     <Sheet
       open={isOpen}
-      onOpenChange={(open: boolean) => {
-        if (!open) close();
+      onOpenChange={(nextOpen: boolean) => {
+        if (!nextOpen) close();
       }}
     >
       <SheetContent
@@ -85,7 +72,10 @@ export function CommandEditorSheet() {
           operators.
         </SheetDescription>
         {isOpen && (
-          <CommandEditorLayout onClose={close} isLoading={!isNew && !command} />
+          <CommandEditorLayout
+            onClose={close}
+            isLoading={!isNew && !command}
+          />
         )}
       </SheetContent>
     </Sheet>

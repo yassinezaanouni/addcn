@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
@@ -28,6 +27,7 @@ import {
 import { joinSteps, type CommandResolvers } from "@/lib/command-utils";
 import { CopyCommandButton } from "./copy-command-button";
 import { DeleteCommandButton } from "./delete-command-button";
+import { useCommandEditor } from "./command-editor-context";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
@@ -53,6 +53,7 @@ function CommandCard({
   command: Doc<"commands">;
   resolvers: CommandResolvers;
 }) {
+  const { open } = useCommandEditor();
   const joined = useMemo(
     () => joinSteps(command.steps, resolvers),
     [command.steps, resolvers],
@@ -100,11 +101,14 @@ function CommandCard({
           </span>
           <div className="flex items-center gap-1">
             <CopyCommandButton text={joined} />
-            <Link href={`/dashboard/commands?edit=${command._id}`}>
-              <Button variant="ghost" size="icon-sm" title="Edit command">
-                <IconPencil className="size-4" />
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              title="Edit command"
+              onClick={() => open(command._id)}
+            >
+              <IconPencil className="size-4" />
+            </Button>
             <DeleteCommandButton
               commandId={command._id}
               commandName={command.name}
@@ -152,6 +156,7 @@ function SearchInput({
 
 export function CommandList() {
   const context = useOrgContext();
+  const { open } = useCommandEditor();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -251,12 +256,13 @@ export function CommandList() {
           Save your first command or build a workflow that chains commands
           together.
         </p>
-        <Link href="/dashboard/commands?edit=new" className="mt-6">
-          <Button className="gap-2 font-mono">
-            <IconPlus className="size-4" />
-            New Command
-          </Button>
-        </Link>
+        <Button
+          onClick={() => open("new")}
+          className="mt-6 gap-2 font-mono"
+        >
+          <IconPlus className="size-4" />
+          New Command
+        </Button>
       </div>
     );
   }
