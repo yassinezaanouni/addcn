@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -46,6 +47,16 @@ export function CommandEditorProvider({
 }) {
   const [editingId, setEditingId] = useState<EditingTarget>(() => readFromUrl());
 
+  // Mirror state in a ref so we can read the previous value from inside event
+  // handlers without putting side-effects in a setState updater (React can
+  // re-run those during render and Next's patched history would then trigger
+  // a Router setState mid-render → "Cannot update a component while
+  // rendering" warning).
+  const editingIdRef = useRef<EditingTarget>(editingId);
+  useEffect(() => {
+    editingIdRef.current = editingId;
+  }, [editingId]);
+
   const writeUrl = useCallback(
     (target: EditingTarget, mode: "push" | "replace") => {
       if (typeof window === "undefined") return;
@@ -67,19 +78,20 @@ export function CommandEditorProvider({
 
   const open = useCallback(
     (target: Id<"commands"> | "new") => {
-      setEditingId((prev) => {
-        // First open → push so the back button closes the sheet.
-        // Switching commands while open → replace, so back skips the chain.
-        writeUrl(target, prev === null ? "push" : "replace");
-        return target;
-      });
+      const wasOpen = editingIdRef.current !== null;
+      // First open → push so the back button closes the sheet. Switching
+      // commands while open → replace, so the back stack doesn't grow.
+      writeUrl(target, wasOpen ? "replace" : "push");
+      editingIdRef.current = target;
+      setEditingId(target);
     },
     [writeUrl],
   );
 
   const close = useCallback(() => {
-    setEditingId(null);
     writeUrl(null, "replace");
+    editingIdRef.current = null;
+    setEditingId(null);
   }, [writeUrl]);
 
   // React to back/forward navigation so the sheet follows the URL.
