@@ -18,6 +18,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { ExtensionTokensCard } from "./_components/extension-tokens-card";
 
 function ProfileFormSkeleton() {
   return (
@@ -214,6 +215,7 @@ export default function SettingsPage() {
         </p>
       </div>
       <ProfileForm key={user.username} user={user} />
+      <ExtensionTokensCard />
     </div>
   );
 }

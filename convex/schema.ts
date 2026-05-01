@@ -94,6 +94,22 @@ export default defineSchema({
     timestamp: v.number(),
   }).index("by_snippet_fingerprint", ["snippetId", "fingerprint"]),
 
+  // Long-lived tokens issued by the user from the dashboard so external
+  // tools (today: the VS Code extension) can call our REST shim. Each row
+  // is a hashed secret + user-friendly metadata. The plaintext token is
+  // only ever returned once at creation time.
+  extensionTokens: defineTable({
+    userId: v.id("users"),
+    name: v.string(), // user-visible label, e.g. "Personal laptop"
+    tokenHash: v.string(), // SHA-256 hex of the bearer token
+    prefix: v.string(), // first 12 chars of the token, for the UI to show
+    createdAt: v.number(),
+    lastUsedAt: v.optional(v.number()),
+    revokedAt: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_tokenHash", ["tokenHash"]),
+
   // Saved CLI commands and command workflows. A command with one step is a
   // single CLI line; a command with multiple steps is a workflow joined by
   // shell operators. Steps reference inline text, another saved command, or
