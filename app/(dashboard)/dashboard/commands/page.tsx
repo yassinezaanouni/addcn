@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { CommandList } from "./_components/command-list";
+import { CommandEditorSheet } from "./_components/command-editor-sheet";
 import { Button } from "@/components/ui/button";
 import { IconPlus } from "@tabler/icons-react";
 
@@ -15,7 +17,7 @@ export default function CommandsPage() {
             Save CLI commands and chain them into workflows with shell operators
           </p>
         </div>
-        <Link href="/dashboard/commands/editor">
+        <Link href="/dashboard/commands?edit=new">
           <Button className="gap-2 font-mono text-sm">
             <IconPlus className="size-4" />
             New Command
@@ -24,6 +26,11 @@ export default function CommandsPage() {
       </div>
 
       <CommandList />
+
+      {/* Sheet reads `?edit=…` from the URL — no separate route needed. */}
+      <Suspense fallback={null}>
+        <CommandEditorSheet />
+      </Suspense>
     </div>
   );
 }

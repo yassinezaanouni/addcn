@@ -65,11 +65,7 @@ export function StepRowCommandRef({
         </div>
         <div className="flex items-center gap-0.5">
           {!isBroken && (
-            <Link
-              href={`/dashboard/commands/editor/${refCommandId}`}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <Link href={`/dashboard/commands?edit=${refCommandId}`}>
               <Button
                 type="button"
                 size="icon-sm"

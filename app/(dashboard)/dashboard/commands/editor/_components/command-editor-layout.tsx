@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { useCommandEditorStore } from "@/stores/command-editor-store";
 import { TagInput as SharedTagInput } from "@/components/shared/tag-input";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { Toolbar } from "./toolbar";
 import { CommandMetaForm } from "./command-meta-form";
@@ -37,13 +38,32 @@ function TagsSection() {
   );
 }
 
-export function CommandEditorLayout() {
+interface CommandEditorLayoutProps {
+  onClose: () => void;
+  isLoading?: boolean;
+}
+
+export function CommandEditorLayout({
+  onClose,
+  isLoading = false,
+}: CommandEditorLayoutProps) {
+  if (isLoading) {
+    return (
+      <div className="flex h-full flex-col gap-3 p-4">
+        <Skeleton className="h-10 w-40" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    );
+  }
+
   return (
     <LayoutGroup>
-      <div className="@container relative flex h-full flex-col bg-linear-to-br from-background via-background to-muted/30">
-        <Toolbar />
+      <div className="@container relative flex h-full flex-col gap-3 bg-linear-to-br from-background via-background to-muted/30 p-3">
+        <Toolbar onClose={onClose} />
 
-        <div className="flex h-full flex-1 flex-col gap-2 @4xl:flex-row">
+        <div className="flex h-full flex-1 flex-col gap-2 overflow-hidden @4xl:flex-row">
           {/* Left pane: preview + step list */}
           <div
             className={cn(
@@ -57,7 +77,7 @@ export function CommandEditorLayout() {
           </div>
 
           {/* Right sidebar */}
-          <div className="flex shrink-0 flex-col gap-3 overflow-y-auto @4xl:w-[min(100%,20rem)]">
+          <div className="flex shrink-0 flex-col gap-3 overflow-y-auto @4xl:w-[min(100%,18rem)]">
             <div className={cn(PANEL_BASE, PANEL_BG)}>
               <div className="flex items-center gap-2 px-4 py-3">
                 <div className="h-1.5 w-1.5 rounded-full bg-primary" />

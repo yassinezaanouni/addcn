@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { motion } from "motion/react";
 import posthog from "posthog-js";
@@ -18,18 +17,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  IconArrowLeft,
-  IconDeviceFloppy,
-  IconLoader2,
-} from "@tabler/icons-react";
+import { IconDeviceFloppy, IconLoader2, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { stepsAreReady } from "@/lib/command-utils";
 
-export function Toolbar() {
-  const router = useRouter();
+interface ToolbarProps {
+  onClose: () => void;
+}
+
+export function Toolbar({ onClose }: ToolbarProps) {
   const isNew = useIsNewCommand();
   const context = useOrgContext();
+  const queryClient = useQueryClient();
 
   const {
     convexId,
@@ -54,8 +53,9 @@ export function Toolbar() {
         is_org_command: context !== "personal",
       });
       setIsDirty(false);
+      queryClient.invalidateQueries({ queryKey: ["commands"] });
       toast.success("Command created");
-      router.push("/dashboard/commands");
+      onClose();
     },
     onError: (error) => {
       posthog.captureException(error);
@@ -76,8 +76,9 @@ export function Toolbar() {
         is_org_command: context !== "personal",
       });
       setIsDirty(false);
+      queryClient.invalidateQueries({ queryKey: ["commands"] });
       toast.success("Command saved");
-      router.push("/dashboard/commands");
+      onClose();
     },
     onError: (error) => {
       posthog.captureException(error);
@@ -114,31 +115,31 @@ export function Toolbar() {
   };
 
   return (
-    <div className="relative z-10 flex h-14 items-center justify-between">
-      <div className="flex items-center gap-4">
+    <div className="relative z-10 flex h-12 items-center justify-between border-b border-border/40 px-1 pb-3">
+      <div className="flex items-center gap-3">
         <Tooltip>
           <TooltipTrigger
-            className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            onClick={() => router.push("/dashboard/commands")}
+            className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            onClick={onClose}
           >
-            <IconArrowLeft className="size-5" />
+            <IconX className="size-4" />
           </TooltipTrigger>
-          <TooltipContent side="bottom">Back to commands</TooltipContent>
+          <TooltipContent side="bottom">Close</TooltipContent>
         </Tooltip>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <motion.h1
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="font-mono text-lg font-semibold tracking-tight"
+            className="font-mono text-base font-semibold tracking-tight"
           >
-            {name || "Untitled"}
+            {name || (isNew ? "New command" : "Untitled")}
           </motion.h1>
           {isDirty && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-600 dark:text-amber-400"
+              className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400"
             >
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
@@ -161,7 +162,8 @@ export function Toolbar() {
         <Button
           onClick={handleSave}
           disabled={!canSave || isSaving}
-          className="gap-2 rounded-lg px-4 font-medium"
+          size="sm"
+          className="gap-2 font-medium"
         >
           {isSaving ? (
             <IconLoader2 className="size-4 animate-spin" />

@@ -100,7 +100,7 @@ function CommandCard({
           </span>
           <div className="flex items-center gap-1">
             <CopyCommandButton text={joined} />
-            <Link href={`/dashboard/commands/editor/${command._id}`}>
+            <Link href={`/dashboard/commands?edit=${command._id}`}>
               <Button variant="ghost" size="icon-sm" title="Edit command">
                 <IconPencil className="size-4" />
               </Button>
@@ -251,7 +251,7 @@ export function CommandList() {
           Save your first command or build a workflow that chains commands
           together.
         </p>
-        <Link href="/dashboard/commands/editor" className="mt-6">
+        <Link href="/dashboard/commands?edit=new" className="mt-6">
           <Button className="gap-2 font-mono">
             <IconPlus className="size-4" />
             New Command
