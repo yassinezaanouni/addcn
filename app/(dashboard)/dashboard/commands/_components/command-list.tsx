@@ -24,6 +24,7 @@ import {
 } from "@tabler/icons-react";
 
 import { joinSteps, type CommandResolvers } from "@/lib/command-utils";
+import { TruncatedCode } from "@/components/shared/truncated-code";
 import { CopyCommandButton } from "./copy-command-button";
 import { DeleteCommandButton } from "./delete-command-button";
 import { useCommandEditor } from "./command-editor-context";
@@ -107,11 +108,13 @@ function CommandCard({
 
         {/* Joined command — same visual role as snippet's install bar */}
         <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2">
-          <code className="block truncate font-mono text-xs text-foreground/90">
-            {joined || (
-              <span className="text-muted-foreground/60">(empty)</span>
-            )}
-          </code>
+          {joined ? (
+            <TruncatedCode text={joined} className="text-xs text-foreground/90" />
+          ) : (
+            <span className="block font-mono text-xs text-muted-foreground/60">
+              (empty)
+            </span>
+          )}
         </div>
       </CardContent>
     </Card>

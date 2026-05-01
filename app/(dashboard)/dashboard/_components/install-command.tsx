@@ -6,6 +6,7 @@ import { IconTerminal, IconCopy, IconCheck } from "@tabler/icons-react";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { usePreferencesStore } from "@/stores/preferences-store";
 import { toast } from "sonner";
+import { TruncatedCode } from "@/components/shared/truncated-code";
 
 type PackageManager = "pnpm" | "npm" | "yarn" | "bun";
 
@@ -72,9 +73,10 @@ export function InstallCommand({ registryUrl }: InstallCommandProps) {
               value={pm.id}
               className="mt-0 px-3 py-2.5 pr-8"
             >
-              <code className="block truncate font-mono text-xs leading-none">
-                {getCommand(pm.id)}
-              </code>
+              <TruncatedCode
+                text={getCommand(pm.id)}
+                className="text-xs leading-none"
+              />
             </TabsContent>
           ))}
         </div>

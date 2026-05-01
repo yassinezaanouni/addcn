@@ -2,6 +2,7 @@
 
 import { useCommandEditorStore } from "@/stores/command-editor-store";
 import { useCommandEditor } from "../../_components/command-editor-context";
+import { TruncatedCode } from "@/components/shared/truncated-code";
 import { Button } from "@/components/ui/button";
 import {
   IconArrowDown,
@@ -116,11 +117,16 @@ export function StepRowCommandRef({
         </div>
       </div>
       <div className="px-3 py-2">
-        <code className="block truncate font-mono text-xs text-muted-foreground">
-          {isBroken
-            ? "(referenced command no longer exists)"
-            : resolvedPreview}
-        </code>
+        {isBroken ? (
+          <code className="block truncate font-mono text-xs text-muted-foreground">
+            (referenced command no longer exists)
+          </code>
+        ) : (
+          <TruncatedCode
+            text={resolvedPreview}
+            className="text-xs text-muted-foreground"
+          />
+        )}
       </div>
     </div>
   );

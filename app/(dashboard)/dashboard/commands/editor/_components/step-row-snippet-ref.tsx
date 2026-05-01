@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
+import { TruncatedCode } from "@/components/shared/truncated-code";
 
 interface StepRowSnippetRefProps {
   index: number;
@@ -136,11 +137,16 @@ export function StepRowSnippetRef({
         </div>
       </div>
       <div className="px-3 py-2">
-        <code className="block truncate font-mono text-xs text-muted-foreground">
-          {isBroken
-            ? "(referenced snippet no longer exists)"
-            : resolvedPreview}
-        </code>
+        {isBroken ? (
+          <code className="block truncate font-mono text-xs text-muted-foreground">
+            (referenced snippet no longer exists)
+          </code>
+        ) : (
+          <TruncatedCode
+            text={resolvedPreview}
+            className="text-xs text-muted-foreground"
+          />
+        )}
       </div>
     </div>
   );
