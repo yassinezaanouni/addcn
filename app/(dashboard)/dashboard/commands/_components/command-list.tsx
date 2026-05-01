@@ -32,14 +32,14 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
 function CommandCardSkeleton() {
   return (
-    <Card className="overflow-hidden border-border/50 bg-card/50 pt-0">
-      <Skeleton className="h-16 w-full rounded-none" />
-      <CardHeader className="py-2">
+    <Card className="border-border/50 bg-card/50">
+      <CardHeader className="pb-2">
         <Skeleton className="h-4 w-32" />
       </CardHeader>
       <CardContent className="space-y-2 pb-3">
         <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-7 w-full" />
+        <Skeleton className="h-6 w-full" />
+        <Skeleton className="h-9 w-full rounded-md" />
       </CardContent>
     </Card>
   );
@@ -59,23 +59,8 @@ function CommandCard({
   );
 
   return (
-    <Card className="group overflow-hidden border-border/50 bg-card/50 pt-0 transition-colors hover:border-border">
-      {/* Joined-command preview as the equivalent of the snippet's image */}
-      <div className="relative flex min-h-[64px] items-center border-b border-border/50 bg-muted/40 px-3 py-3">
-        <code className="block min-w-0 flex-1 truncate font-mono text-xs text-foreground/90">
-          {joined || (
-            <span className="text-muted-foreground/60">(empty)</span>
-          )}
-        </code>
-        <span className="ml-2 shrink-0 rounded bg-background/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-          {command.steps.length}
-          <span className="ml-0.5 opacity-70">
-            {command.steps.length === 1 ? "step" : "steps"}
-          </span>
-        </span>
-      </div>
-
-      <CardHeader className="py-2.5">
+    <Card className="group overflow-hidden border-border/50 bg-card/50 transition-colors hover:border-border">
+      <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 font-mono text-sm">
           <IconTerminal2 className="size-3.5 text-emerald-500" />
           {command.name}
@@ -101,20 +86,36 @@ function CommandCard({
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-1">
-          <CopyCommandButton text={joined} />
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            title="Edit command"
-            onClick={() => open(command._id)}
-          >
-            <IconPencil className="size-4" />
-          </Button>
-          <DeleteCommandButton
-            commandId={command._id}
-            commandName={command.name}
-          />
+        {/* Status row mirrors snippet card: [meta on left] [actions on right] */}
+        <div className="flex items-center justify-between">
+          <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+            {command.steps.length} step{command.steps.length !== 1 ? "s" : ""}
+          </span>
+          <div className="flex items-center gap-1">
+            <CopyCommandButton text={joined} />
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              title="Edit command"
+              onClick={() => open(command._id)}
+            >
+              <IconPencil className="size-4" />
+            </Button>
+            <DeleteCommandButton
+              commandId={command._id}
+              commandName={command.name}
+            />
+          </div>
+        </div>
+
+        {/* Joined command at the bottom — same visual role as the install
+            command bar on a snippet card. */}
+        <div className="rounded-md border border-border/50 bg-muted/30 px-2.5 py-1.5">
+          <code className="block truncate font-mono text-[11px] leading-tight text-foreground/90">
+            {joined || (
+              <span className="text-muted-foreground/60">(empty)</span>
+            )}
+          </code>
         </div>
       </CardContent>
     </Card>
