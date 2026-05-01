@@ -35,7 +35,7 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 
-function ComponentSkeleton() {
+function SnippetSkeleton() {
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <div className="mb-8">
@@ -53,7 +53,7 @@ function ComponentSkeleton() {
   );
 }
 
-function getFileIcon(file: Doc<"components">["files"][number]) {
+function getFileIcon(file: Doc<"snippets">["files"][number]) {
   if (file.language === "css" || file.type === "style") {
     return <IconFileTypeCss className="size-4" />;
   }
@@ -100,13 +100,13 @@ function CopyButton({ text }: { text: string }) {
 
 function InstallCommand({
   namespace,
-  componentName,
+  snippetName,
 }: {
   namespace: string;
-  componentName: string;
+  snippetName: string;
 }) {
   const siteUrl = process.env.NEXT_PUBLIC_CONVEX_SITE_URL || "";
-  const registryUrl = `${siteUrl}/r/${namespace}/${componentName}.json`;
+  const registryUrl = `${siteUrl}/r/${namespace}/${snippetName}.json`;
   const installCommand = `pnpm dlx shadcn@latest add ${registryUrl}`;
 
   return (
@@ -114,7 +114,7 @@ function InstallCommand({
       <CardHeader>
         <CardTitle className="text-base">Installation</CardTitle>
         <CardDescription>
-          Install this component using the shadcn CLI
+          Install this snippet using the shadcn CLI
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -129,7 +129,7 @@ function InstallCommand({
   );
 }
 
-function FilePreview({ files }: { files: Doc<"components">["files"] }) {
+function FilePreview({ files }: { files: Doc<"snippets">["files"] }) {
   const [selectedFileId, setSelectedFileId] = useState(files[0]?.id || "");
 
   if (files.length === 0) {
@@ -142,7 +142,7 @@ function FilePreview({ files }: { files: Doc<"components">["files"] }) {
                 <IconFile />
               </EmptyMedia>
               <EmptyTitle>No files</EmptyTitle>
-              <EmptyDescription>This component has no files.</EmptyDescription>
+              <EmptyDescription>This snippet has no files.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </CardContent>
@@ -155,7 +155,7 @@ function FilePreview({ files }: { files: Doc<"components">["files"] }) {
       <CardHeader>
         <CardTitle className="text-base">Files</CardTitle>
         <CardDescription>
-          {files.length} file{files.length !== 1 ? "s" : ""} in this component
+          {files.length} file{files.length !== 1 ? "s" : ""} in this snippet
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
@@ -194,23 +194,23 @@ function FilePreview({ files }: { files: Doc<"components">["files"] }) {
   );
 }
 
-export default function ComponentDetailPage() {
+export default function SnippetDetailPage() {
   const params = useParams();
   const username = params.username as string;
-  const componentName = params.component as string;
+  const snippetName = params.snippet as string;
 
-  const { data: component, isLoading } = useQuery(
-    convexQuery(api.components.getByNamespaceAndName, {
+  const { data: snippet, isLoading } = useQuery(
+    convexQuery(api.snippets.getByNamespaceAndName, {
       namespace: username,
-      name: componentName,
+      name: snippetName,
     }),
   );
 
   if (isLoading) {
-    return <ComponentSkeleton />;
+    return <SnippetSkeleton />;
   }
 
-  if (!component) {
+  if (!snippet) {
     notFound();
   }
 
@@ -225,28 +225,28 @@ export default function ComponentDetailPage() {
           @{username}
         </Link>
         <span className="mx-1 text-muted-foreground">/</span>
-        <span className="text-sm font-medium">{componentName}</span>
+        <span className="text-sm font-medium">{snippetName}</span>
       </div>
 
       {/* Header */}
       <div className="mb-8">
         <h1 className="mb-2 text-2xl font-bold">
-          {component.title || component.name}
+          {snippet.title || snippet.name}
         </h1>
-        {component.description && (
-          <p className="mb-4 text-muted-foreground">{component.description}</p>
+        {snippet.description && (
+          <p className="mb-4 text-muted-foreground">{snippet.description}</p>
         )}
         <div className="flex flex-wrap items-center gap-3">
           <Badge variant="default">Public</Badge>
           <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <IconDownload className="size-4" />
-            {component.downloads ?? 0} downloads
+            {snippet.downloads ?? 0} downloads
           </span>
-          {component.dependencies && component.dependencies.length > 0 && (
+          {snippet.dependencies && snippet.dependencies.length > 0 && (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <IconPackage className="size-4" />
-              {component.dependencies.length} dependenc
-              {component.dependencies.length !== 1 ? "ies" : "y"}
+              {snippet.dependencies.length} dependenc
+              {snippet.dependencies.length !== 1 ? "ies" : "y"}
             </div>
           )}
         </div>
@@ -254,22 +254,22 @@ export default function ComponentDetailPage() {
 
       {/* Install Command */}
       <div className="mb-6">
-        <InstallCommand namespace={username} componentName={componentName} />
+        <InstallCommand namespace={username} snippetName={snippetName} />
       </div>
 
       {/* Dependencies */}
-      {component.dependencies && component.dependencies.length > 0 && (
+      {snippet.dependencies && snippet.dependencies.length > 0 && (
         <div className="mb-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Dependencies</CardTitle>
               <CardDescription>
-                npm packages required by this component
+                npm packages required by this snippet
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {component.dependencies.map((dep) => (
+                {snippet.dependencies.map((dep) => (
                   <Badge key={dep} variant="secondary">
                     {dep}
                   </Badge>
@@ -281,8 +281,8 @@ export default function ComponentDetailPage() {
       )}
 
       {/* Registry Dependencies */}
-      {component.registryDependencies &&
-        component.registryDependencies.length > 0 && (
+      {snippet.registryDependencies &&
+        snippet.registryDependencies.length > 0 && (
           <div className="mb-6">
             <Card>
               <CardHeader>
@@ -290,12 +290,12 @@ export default function ComponentDetailPage() {
                   Registry Dependencies
                 </CardTitle>
                 <CardDescription>
-                  shadcn/ui components required by this component
+                  shadcn/ui components required by this snippet
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {component.registryDependencies.map((dep) => (
+                  {snippet.registryDependencies.map((dep) => (
                     <Badge key={dep} variant="outline">
                       {dep}
                     </Badge>
@@ -307,7 +307,7 @@ export default function ComponentDetailPage() {
         )}
 
       {/* File Preview */}
-      <FilePreview files={component.files} />
+      <FilePreview files={snippet.files} />
     </div>
   );
 }

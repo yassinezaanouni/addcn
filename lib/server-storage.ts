@@ -1,9 +1,9 @@
 import { promises as fs } from "fs";
 import path from "path";
-import type { SavedComponent } from "@/types/component";
+import type { SavedSnippet } from "@/types/snippet";
 
 const DATA_DIR = path.join(process.cwd(), ".addcn-data");
-const COMPONENTS_FILE = path.join(DATA_DIR, "components.json");
+const SNIPPETS_FILE = path.join(DATA_DIR, "snippets.json");
 
 async function ensureDataDir() {
   try {
@@ -13,49 +13,49 @@ async function ensureDataDir() {
   }
 }
 
-export async function getServerComponents(): Promise<SavedComponent[]> {
+export async function getServerSnippets(): Promise<SavedSnippet[]> {
   try {
     await ensureDataDir();
-    const data = await fs.readFile(COMPONENTS_FILE, "utf-8");
+    const data = await fs.readFile(SNIPPETS_FILE, "utf-8");
     return JSON.parse(data);
   } catch {
     return [];
   }
 }
 
-export async function saveServerComponent(
-  component: SavedComponent,
+export async function saveServerSnippet(
+  snippet: SavedSnippet,
 ): Promise<void> {
   await ensureDataDir();
-  const components = await getServerComponents();
+  const snippets = await getServerSnippets();
 
-  const existingIndex = components.findIndex((c) => c.id === component.id);
+  const existingIndex = snippets.findIndex((s) => s.id === snippet.id);
   if (existingIndex >= 0) {
-    components[existingIndex] = component;
+    snippets[existingIndex] = snippet;
   } else {
-    components.push(component);
+    snippets.push(snippet);
   }
 
-  await fs.writeFile(COMPONENTS_FILE, JSON.stringify(components, null, 2));
+  await fs.writeFile(SNIPPETS_FILE, JSON.stringify(snippets, null, 2));
 }
 
-export async function getServerComponentByName(
+export async function getServerSnippetByName(
   name: string,
-): Promise<SavedComponent | undefined> {
-  const components = await getServerComponents();
-  return components.find((c) => c.name === name);
+): Promise<SavedSnippet | undefined> {
+  const snippets = await getServerSnippets();
+  return snippets.find((s) => s.name === name);
 }
 
-export async function getServerComponentById(
+export async function getServerSnippetById(
   id: string,
-): Promise<SavedComponent | undefined> {
-  const components = await getServerComponents();
-  return components.find((c) => c.id === id);
+): Promise<SavedSnippet | undefined> {
+  const snippets = await getServerSnippets();
+  return snippets.find((s) => s.id === id);
 }
 
-export async function deleteServerComponent(id: string): Promise<void> {
+export async function deleteServerSnippet(id: string): Promise<void> {
   await ensureDataDir();
-  const components = await getServerComponents();
-  const filtered = components.filter((c) => c.id !== id);
-  await fs.writeFile(COMPONENTS_FILE, JSON.stringify(filtered, null, 2));
+  const snippets = await getServerSnippets();
+  const filtered = snippets.filter((s) => s.id !== id);
+  await fs.writeFile(SNIPPETS_FILE, JSON.stringify(filtered, null, 2));
 }

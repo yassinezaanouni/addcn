@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { componentFilesValidator } from "./validators";
+import { snippetFilesValidator } from "./validators";
 
 export default defineSchema({
   // Users table - stores user profiles
@@ -49,18 +49,18 @@ export default defineSchema({
     .index("by_token", ["token"])
     .index("by_email", ["email"]),
 
-  // Components table - updated with multi-user fields
-  components: defineTable({
+  // Snippets table - registry items, can hold any file type
+  snippets: defineTable({
     name: v.string(),
     title: v.string(),
     description: v.string(),
-    files: componentFilesValidator,
+    files: snippetFilesValidator,
     dependencies: v.array(v.string()),
     registryDependencies: v.array(v.string()),
     // Multi-user fields
-    userId: v.optional(v.id("users")), // Owner if personal component
-    orgId: v.optional(v.id("organizations")), // Owner if org component
-    createdBy: v.id("users"), // User who created the component
+    userId: v.optional(v.id("users")), // Owner if personal snippet
+    orgId: v.optional(v.id("organizations")), // Owner if org snippet
+    createdBy: v.id("users"), // User who created the snippet
     isPublic: v.boolean(),
     downloads: v.number(),
     createdAt: v.number(),
@@ -79,7 +79,7 @@ export default defineSchema({
     .index("by_orgId", ["orgId"])
     .index("by_userId_name", ["userId", "name"])
     .index("by_orgId_name", ["orgId", "name"])
-    .searchIndex("search_components", {
+    .searchIndex("search_snippets", {
       searchField: "searchText",
       filterFields: ["name"],
     }),
@@ -87,8 +87,8 @@ export default defineSchema({
   // Download attempts for deduplication
   // Tracks recent downloads per IP to prevent multiple counts from CLI burst requests
   downloadAttempts: defineTable({
-    componentId: v.id("components"),
+    snippetId: v.id("snippets"),
     fingerprint: v.string(), // IP address
     timestamp: v.number(),
-  }).index("by_component_fingerprint", ["componentId", "fingerprint"]),
+  }).index("by_snippet_fingerprint", ["snippetId", "fingerprint"]),
 });

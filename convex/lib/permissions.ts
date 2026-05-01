@@ -1,5 +1,5 @@
 /**
- * Permission checking functions for component access
+ * Permission checking functions for snippet access
  */
 
 import { Doc, Id } from "../_generated/dataModel";
@@ -22,36 +22,36 @@ async function getOrgMembership(
 }
 
 /**
- * Check if a user can access a component (view it)
+ * Check if a user can access a snippet (view it)
  *
  * Access is granted if:
- * - Component is public, OR
- * - User is the owner (personal component), OR
+ * - Snippet is public, OR
+ * - User is the owner (personal snippet), OR
  * - User is a member of the owning organization
  */
-export async function canAccessComponent(
+export async function canAccessSnippet(
   ctx: QueryCtx,
-  component: Doc<"components">,
+  snippet: Doc<"snippets">,
   userId: Id<"users"> | null,
 ): Promise<boolean> {
-  // Public components are always accessible
-  if (component.isPublic) {
+  // Public snippets are always accessible
+  if (snippet.isPublic) {
     return true;
   }
 
-  // Anonymous users can't access private components
+  // Anonymous users can't access private snippets
   if (!userId) {
     return false;
   }
 
-  // Personal component: check if user is the owner
-  if (component.userId) {
-    return component.userId === userId;
+  // Personal snippet: check if user is the owner
+  if (snippet.userId) {
+    return snippet.userId === userId;
   }
 
-  // Org component: check if user is a member of the org
-  if (component.orgId) {
-    const membership = await getOrgMembership(ctx, component.orgId, userId);
+  // Org snippet: check if user is a member of the org
+  if (snippet.orgId) {
+    const membership = await getOrgMembership(ctx, snippet.orgId, userId);
     return membership !== null;
   }
 
@@ -59,25 +59,25 @@ export async function canAccessComponent(
 }
 
 /**
- * Check if a user can edit a component
+ * Check if a user can edit a snippet
  *
  * Edit permission is granted if:
- * - Personal component: user is the owner
- * - Org component: user is admin or owner of the org
+ * - Personal snippet: user is the owner
+ * - Org snippet: user is admin or owner of the org
  */
-export async function canEditComponent(
+export async function canEditSnippet(
   ctx: QueryCtx,
-  component: Doc<"components">,
+  snippet: Doc<"snippets">,
   userId: Id<"users">,
 ): Promise<boolean> {
-  // Personal component: must be the owner
-  if (component.userId) {
-    return component.userId === userId;
+  // Personal snippet: must be the owner
+  if (snippet.userId) {
+    return snippet.userId === userId;
   }
 
-  // Org component: must be admin or owner
-  if (component.orgId) {
-    const membership = await getOrgMembership(ctx, component.orgId, userId);
+  // Org snippet: must be admin or owner
+  if (snippet.orgId) {
+    const membership = await getOrgMembership(ctx, snippet.orgId, userId);
     if (!membership) {
       return false;
     }
@@ -88,36 +88,36 @@ export async function canEditComponent(
 }
 
 /**
- * Check if a user can publish a component (change visibility)
+ * Check if a user can publish a snippet (change visibility)
  * Same rules as editing
  */
-export async function canPublishComponent(
+export async function canPublishSnippet(
   ctx: QueryCtx,
-  component: Doc<"components">,
+  snippet: Doc<"snippets">,
   userId: Id<"users">,
 ): Promise<boolean> {
-  return canEditComponent(ctx, component, userId);
+  return canEditSnippet(ctx, snippet, userId);
 }
 
 /**
- * Check if a user can transfer a component to an organization
+ * Check if a user can transfer a snippet to an organization
  *
  * Transfer is allowed if:
- * - User is the owner of the personal component
+ * - User is the owner of the personal snippet
  * - User is a member of the target organization
- * - No component with the same name exists in the target org
+ * - No snippet with the same name exists in the target org
  */
-export async function canTransferComponent(
+export async function canTransferSnippet(
   ctx: QueryCtx,
-  component: Doc<"components">,
+  snippet: Doc<"snippets">,
   userId: Id<"users">,
   targetOrgId: Id<"organizations">,
 ): Promise<{ allowed: boolean; reason?: string }> {
-  // Component must be personal and owned by the user
-  if (!component.userId || component.userId !== userId) {
+  // Snippet must be personal and owned by the user
+  if (!snippet.userId || snippet.userId !== userId) {
     return {
       allowed: false,
-      reason: "Only the owner can transfer a component",
+      reason: "Only the owner can transfer a snippet",
     };
   }
 
@@ -131,17 +131,17 @@ export async function canTransferComponent(
   }
 
   // Check for name conflict in target org
-  const existingComponent = await ctx.db
-    .query("components")
+  const existingSnippet = await ctx.db
+    .query("snippets")
     .withIndex("by_orgId_name", (q) =>
-      q.eq("orgId", targetOrgId).eq("name", component.name),
+      q.eq("orgId", targetOrgId).eq("name", snippet.name),
     )
     .unique();
 
-  if (existingComponent) {
+  if (existingSnippet) {
     return {
       allowed: false,
-      reason: "A component with this name already exists in the organization",
+      reason: "A snippet with this name already exists in the organization",
     };
   }
 

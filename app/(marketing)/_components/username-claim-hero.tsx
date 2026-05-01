@@ -360,7 +360,7 @@ export function UsernameClaimHero() {
             {/* Success message */}
             <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
               <span className="font-medium text-primary">
-                Done! Component installed successfully.
+                Done! Snippet installed successfully.
               </span>
             </div>
 

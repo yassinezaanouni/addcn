@@ -84,12 +84,12 @@ function EditorSkeleton() {
 
         {/* Right Sidebar skeleton */}
         <div className="flex shrink-0 flex-col gap-3 w-64">
-          {/* Component Info Section */}
+          {/* Snippet Info Section */}
           <div className={cn(PANEL_BASE, PANEL_BG)}>
             <div className="flex items-center gap-2 px-4 py-3">
               <div className="h-1.5 w-1.5 rounded-full bg-primary" />
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Component
+                Snippet
               </span>
             </div>
             <div className="px-4 pb-4 space-y-3">
@@ -127,39 +127,39 @@ function EditorSkeleton() {
   );
 }
 
-interface EditComponentPageProps {
+interface EditSnippetPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function EditComponentPage({ params }: EditComponentPageProps) {
+export default function EditSnippetPage({ params }: EditSnippetPageProps) {
   const { id } = use(params);
-  const componentId = id as Id<"components">;
+  const snippetId = id as Id<"snippets">;
 
-  const loadComponent = useEditorStore((state) => state.loadComponent);
+  const loadSnippet = useEditorStore((state) => state.loadSnippet);
   const convexId = useEditorStore((state) => state.convexId);
 
-  const { data: component, isLoading } = useQuery(
-    convexQuery(api.components.get, { id: componentId }),
+  const { data: snippet, isLoading } = useQuery(
+    convexQuery(api.snippets.get, { id: snippetId }),
   );
 
   useEffect(() => {
-    // Only load if we have component data and it's not already loaded
-    if (component && convexId !== component._id) {
-      loadComponent(component);
+    // Only load if we have snippet data and it's not already loaded
+    if (snippet && convexId !== snippet._id) {
+      loadSnippet(snippet);
     }
-  }, [component, convexId, loadComponent]);
+  }, [snippet, convexId, loadSnippet]);
 
   if (isLoading) {
     return <EditorSkeleton />;
   }
 
-  if (!component) {
+  if (!snippet) {
     return (
       <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
         <div className="text-center">
-          <h1 className="text-xl font-semibold">Component not found</h1>
+          <h1 className="text-xl font-semibold">Snippet not found</h1>
           <p className="mt-2 text-muted-foreground">
-            The component you&apos;re looking for doesn&apos;t exist or you
+            The snippet you&apos;re looking for doesn&apos;t exist or you
             don&apos;t have access.
           </p>
         </div>

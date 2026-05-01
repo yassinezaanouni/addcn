@@ -34,6 +34,7 @@ const RESERVED_NAMES = [
   "search",
   "settings",
   "signup",
+  "snippets",
   "status",
   "support",
   "terms",
@@ -66,7 +67,7 @@ export function validateUsernameFormat(username: string): string | null {
   return null;
 }
 
-export const componentMetadataSchema = z.object({
+export const snippetMetadataSchema = z.object({
   name: z
     .string()
     .min(1, "Slug is required")
@@ -78,25 +79,25 @@ export const componentMetadataSchema = z.object({
   description: z.string().optional(),
 });
 
-export type ComponentMetadata = z.infer<typeof componentMetadataSchema>;
+export type SnippetMetadata = z.infer<typeof snippetMetadataSchema>;
 
-export type ComponentMetadataErrors = {
-  [K in keyof ComponentMetadata]?: string;
+export type SnippetMetadataErrors = {
+  [K in keyof SnippetMetadata]?: string;
 };
 
-export function validateComponentMetadata(data: ComponentMetadata): {
+export function validateSnippetMetadata(data: SnippetMetadata): {
   success: boolean;
-  errors: ComponentMetadataErrors;
+  errors: SnippetMetadataErrors;
 } {
-  const result = componentMetadataSchema.safeParse(data);
+  const result = snippetMetadataSchema.safeParse(data);
 
   if (result.success) {
     return { success: true, errors: {} };
   }
 
-  const errors: ComponentMetadataErrors = {};
+  const errors: SnippetMetadataErrors = {};
   for (const issue of result.error.issues) {
-    const field = issue.path[0] as keyof ComponentMetadata;
+    const field = issue.path[0] as keyof SnippetMetadata;
     if (!errors[field]) {
       errors[field] = issue.message;
     }

@@ -1,4 +1,4 @@
-import type { ComponentFile } from "@/types/component";
+import type { SnippetFile } from "@/types/snippet";
 import { parseImports, resolveFile } from "./import-resolver";
 import { transformComponentCode, getComponentName } from "./code-transformer";
 
@@ -6,7 +6,7 @@ import { transformComponentCode, getComponentName } from "./code-transformer";
  * Generate the iframe HTML document for component preview
  */
 export function generateIframeHtml(
-  files: Map<string, ComponentFile>,
+  files: Map<string, SnippetFile>,
   mainFilePath: string,
   cssContent: string,
   theme: string,

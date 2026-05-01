@@ -149,7 +149,7 @@ function getFileName(path: string): string {
 /**
  * Maps internal file type to shadcn registry file type and determines if target is needed
  */
-function getRegistryFileInfo(file: Doc<"components">["files"][number]): {
+function getRegistryFileInfo(file: Doc<"snippets">["files"][number]): {
   type: RegistryFileType;
   target?: string;
 } {
@@ -180,16 +180,16 @@ function getRegistryFileInfo(file: Doc<"components">["files"][number]): {
 }
 
 /**
- * Converts a Convex component document to shadcn registry JSON format
+ * Converts a Convex snippet document to shadcn registry JSON format
  */
-export function componentToRegistryJson(
-  component: Doc<"components">,
+export function snippetToRegistryJson(
+  snippet: Doc<"snippets">,
 ): RegistryItem {
   // Separate CSS files from other files
-  const cssFiles = component.files.filter(
+  const cssFiles = snippet.files.filter(
     (file) => file.type === "style" || file.path.endsWith(".css"),
   );
-  const nonCssFiles = component.files.filter(
+  const nonCssFiles = snippet.files.filter(
     (file) => file.type !== "style" && !file.path.endsWith(".css"),
   );
 
@@ -225,15 +225,15 @@ export function componentToRegistryJson(
 
   return {
     $schema: REGISTRY_SCHEMA_URL,
-    name: component.name,
+    name: snippet.name,
     type: "registry:ui",
-    title: component.title,
-    description: component.description,
+    title: snippet.title,
+    description: snippet.description,
     dependencies:
-      component.dependencies.length > 0 ? component.dependencies : undefined,
+      snippet.dependencies.length > 0 ? snippet.dependencies : undefined,
     registryDependencies:
-      component.registryDependencies.length > 0
-        ? component.registryDependencies
+      snippet.registryDependencies.length > 0
+        ? snippet.registryDependencies
         : undefined,
     files,
     css,
@@ -241,10 +241,10 @@ export function componentToRegistryJson(
 }
 
 /**
- * Get a public component by namespace and name.
+ * Get a public snippet by namespace and name.
  * Used by the HTTP action endpoint.
  */
-export const getPublicComponent = internalQuery({
+export const getPublicSnippet = internalQuery({
   args: {
     namespace: v.string(),
     name: v.string(),
@@ -256,40 +256,40 @@ export const getPublicComponent = internalQuery({
       return null;
     }
 
-    let component: Doc<"components"> | null = null;
+    let snippet: Doc<"snippets"> | null = null;
 
     if (owner.type === "user") {
-      component = await ctx.db
-        .query("components")
+      snippet = await ctx.db
+        .query("snippets")
         .withIndex("by_userId_name", (q) =>
           q.eq("userId", owner.user._id).eq("name", args.name),
         )
         .unique();
     } else {
-      component = await ctx.db
-        .query("components")
+      snippet = await ctx.db
+        .query("snippets")
         .withIndex("by_orgId_name", (q) =>
           q.eq("orgId", owner.org._id).eq("name", args.name),
         )
         .unique();
     }
 
-    // Only return public components
-    if (!component || !component.isPublic) {
+    // Only return public snippets
+    if (!snippet || !snippet.isPublic) {
       return null;
     }
 
-    return component;
+    return snippet;
   },
 });
 
 /**
- * Increment the download count for a component.
+ * Increment the download count for a snippet.
  * Uses 10-second burst deduplication to handle shadcn CLI's multiple requests.
  */
 export const incrementDownloads = internalMutation({
   args: {
-    componentId: v.id("components"),
+    snippetId: v.id("snippets"),
     fingerprint: v.string(),
   },
   handler: async (ctx, args) => {
@@ -299,9 +299,9 @@ export const incrementDownloads = internalMutation({
     // Check for recent download from same IP
     const recentAttempt = await ctx.db
       .query("downloadAttempts")
-      .withIndex("by_component_fingerprint", (q) =>
+      .withIndex("by_snippet_fingerprint", (q) =>
         q
-          .eq("componentId", args.componentId)
+          .eq("snippetId", args.snippetId)
           .eq("fingerprint", args.fingerprint),
       )
       .first();
@@ -316,29 +316,29 @@ export const incrementDownloads = internalMutation({
       await ctx.db.patch(recentAttempt._id, { timestamp: now });
     } else {
       await ctx.db.insert("downloadAttempts", {
-        componentId: args.componentId,
+        snippetId: args.snippetId,
         fingerprint: args.fingerprint,
         timestamp: now,
       });
     }
 
     // Increment download count
-    const component = await ctx.db.get(args.componentId);
-    if (component) {
-      await ctx.db.patch(args.componentId, {
-        downloads: component.downloads + 1,
+    const snippet = await ctx.db.get(args.snippetId);
+    if (snippet) {
+      await ctx.db.patch(args.snippetId, {
+        downloads: snippet.downloads + 1,
       });
     }
   },
 });
 
 /**
- * Get a component with authentication context.
- * Returns component if:
- * - Component is public, OR
+ * Get a snippet with authentication context.
+ * Returns snippet if:
+ * - Snippet is public, OR
  * - User is authenticated AND has access (owner or org member)
  */
-export const getComponentWithAuth = internalQuery({
+export const getSnippetWithAuth = internalQuery({
   args: {
     namespace: v.string(),
     name: v.string(),
@@ -351,60 +351,60 @@ export const getComponentWithAuth = internalQuery({
       return null;
     }
 
-    let component: Doc<"components"> | null = null;
+    let snippet: Doc<"snippets"> | null = null;
 
     if (owner.type === "user") {
-      component = await ctx.db
-        .query("components")
+      snippet = await ctx.db
+        .query("snippets")
         .withIndex("by_userId_name", (q) =>
           q.eq("userId", owner.user._id).eq("name", args.name),
         )
         .unique();
     } else {
-      component = await ctx.db
-        .query("components")
+      snippet = await ctx.db
+        .query("snippets")
         .withIndex("by_orgId_name", (q) =>
           q.eq("orgId", owner.org._id).eq("name", args.name),
         )
         .unique();
     }
 
-    if (!component) {
+    if (!snippet) {
       return null;
     }
 
-    // Public components are always accessible
-    if (component.isPublic) {
-      return component;
+    // Public snippets are always accessible
+    if (snippet.isPublic) {
+      return snippet;
     }
 
-    // Private component - need authentication
+    // Private snippet - need authentication
     if (!args.userId) {
       return null;
     }
 
     // Check access permissions
-    // Personal component: user must be owner
-    if (component.userId) {
-      if (component.userId !== args.userId) {
+    // Personal snippet: user must be owner
+    if (snippet.userId) {
+      if (snippet.userId !== args.userId) {
         return null;
       }
-      return component;
+      return snippet;
     }
 
-    // Org component: user must be a member
-    if (component.orgId) {
+    // Org snippet: user must be a member
+    if (snippet.orgId) {
       const membership = await ctx.db
         .query("orgMembers")
         .withIndex("by_orgId_userId", (q) =>
-          q.eq("orgId", component.orgId!).eq("userId", args.userId!),
+          q.eq("orgId", snippet.orgId!).eq("userId", args.userId!),
         )
         .unique();
 
       if (!membership) {
         return null;
       }
-      return component;
+      return snippet;
     }
 
     return null;

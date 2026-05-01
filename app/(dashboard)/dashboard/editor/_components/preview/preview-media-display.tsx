@@ -34,7 +34,7 @@ export function PreviewMediaDisplay({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={mediaUrl}
-            alt="Component preview"
+            alt="Snippet preview"
             className="w-full rounded-xl border border-border/50 shadow-lg"
           />
         )}

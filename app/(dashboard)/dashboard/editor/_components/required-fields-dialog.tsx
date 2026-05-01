@@ -11,13 +11,13 @@ import { Button } from "@/components/ui/button";
 import { IconDeviceFloppy, IconLoader2, IconX } from "@tabler/icons-react";
 import { DependencyInputs } from "./dependency-inputs";
 import { RequiredIndicator, SlugLabel } from "./form-elements";
-import type { ComponentMetadataErrors } from "@/lib/validators";
+import type { SnippetMetadataErrors } from "@/lib/validators";
 
 interface RequiredFieldsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  errors: ComponentMetadataErrors;
-  onClearError?: (field: keyof ComponentMetadataErrors) => void;
+  errors: SnippetMetadataErrors;
+  onClearError?: (field: keyof SnippetMetadataErrors) => void;
   onSave: () => void;
   isSaving: boolean;
   namespace?: string;
@@ -112,7 +112,7 @@ export function RequiredFieldsDialog({
                 Complete Required Fields
               </h2>
               <p className="text-sm text-muted-foreground">
-                Please fill in the required fields before saving your component.
+                Please fill in the required fields before saving your snippet.
               </p>
             </div>
 
@@ -129,7 +129,7 @@ export function RequiredFieldsDialog({
                     setMetadata({ name: toKebabCase(e.target.value) });
                     onClearError?.("name");
                   }}
-                  placeholder="my-component"
+                  placeholder="my-snippet"
                   className="font-mono"
                   aria-invalid={!!errors.name}
                 />
@@ -162,7 +162,7 @@ export function RequiredFieldsDialog({
                     setMetadata({ title: e.target.value });
                     onClearError?.("title");
                   }}
-                  placeholder="My Component"
+                  placeholder="My Snippet"
                   aria-invalid={!!errors.title}
                 />
                 {errors.title && (
@@ -183,7 +183,7 @@ export function RequiredFieldsDialog({
                   id="dialog-description"
                   value={description}
                   onChange={(e) => setMetadata({ description: e.target.value })}
-                  placeholder="A brief description of your component..."
+                  placeholder="A brief description of your snippet..."
                   rows={3}
                   className="resize-none"
                 />

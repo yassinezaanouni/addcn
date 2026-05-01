@@ -19,42 +19,42 @@ import {
 import { IconTrash } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-interface DeleteComponentButtonProps {
-  componentId: Id<"components">;
-  componentName: string;
+interface DeleteSnippetButtonProps {
+  snippetId: Id<"snippets">;
+  snippetName: string;
   redirectAfterDelete?: boolean;
   size?: "icon-sm" | "icon" | "icon-xs";
 }
 
-export function DeleteComponentButton({
-  componentId,
-  componentName,
+export function DeleteSnippetButton({
+  snippetId,
+  snippetName,
   redirectAfterDelete = false,
   size = "icon-sm",
-}: DeleteComponentButtonProps) {
+}: DeleteSnippetButtonProps) {
   const [showDialog, setShowDialog] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const deleteMutationFn = useConvexMutation(api.components.remove);
+  const deleteMutationFn = useConvexMutation(api.snippets.remove);
   const deleteMutation = useMutation({
     mutationFn: deleteMutationFn,
     onSuccess: () => {
-      posthog.capture("component_deleted", {
-        component_name: componentName,
+      posthog.capture("snippet_deleted", {
+        snippet_name: snippetName,
       });
-      toast.success("Component deleted", {
-        description: "Your component has been permanently deleted.",
+      toast.success("Snippet deleted", {
+        description: "Your snippet has been permanently deleted.",
       });
       setShowDialog(false);
-      queryClient.invalidateQueries({ queryKey: ["components"] });
+      queryClient.invalidateQueries({ queryKey: ["snippets"] });
       if (redirectAfterDelete) {
         router.push("/dashboard");
       }
     },
     onError: (error) => {
       posthog.captureException(error);
-      toast.error("Failed to delete component", {
+      toast.error("Failed to delete snippet", {
         description:
           error instanceof Error ? error.message : "An error occurred",
       });
@@ -67,7 +67,7 @@ export function DeleteComponentButton({
         variant="destructive"
         size={size}
         onClick={() => setShowDialog(true)}
-        title="Delete component"
+        title="Delete snippet"
       >
         <IconTrash className="size-4" />
       </Button>
@@ -75,19 +75,19 @@ export function DeleteComponentButton({
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Component</DialogTitle>
+            <DialogTitle>Delete Snippet</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{componentName}&quot;? This
+              Are you sure you want to delete &quot;{snippetName}&quot;? This
               action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter showCloseButton>
             <Button
               variant="destructive"
-              onClick={() => deleteMutation.mutate({ id: componentId })}
+              onClick={() => deleteMutation.mutate({ id: snippetId })}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? "Deleting..." : "Delete Component"}
+              {deleteMutation.isPending ? "Deleting..." : "Delete Snippet"}
             </Button>
           </DialogFooter>
         </DialogContent>

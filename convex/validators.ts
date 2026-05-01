@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 /**
  * Shared validators for Convex schema and mutations
- * Keep in sync with types/component.ts
+ * Keep in sync with types/snippet.ts
  */
 
 export const fileTypeValidator = v.union(
@@ -18,7 +18,7 @@ export const languageValidator = v.union(
   v.literal("json"),
 );
 
-export const componentFileValidator = v.object({
+export const snippetFileValidator = v.object({
   id: v.string(),
   path: v.string(),
   content: v.string(),
@@ -26,4 +26,4 @@ export const componentFileValidator = v.object({
   language: languageValidator,
 });
 
-export const componentFilesValidator = v.array(componentFileValidator);
+export const snippetFilesValidator = v.array(snippetFileValidator);

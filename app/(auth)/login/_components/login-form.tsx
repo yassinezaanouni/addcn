@@ -147,7 +147,7 @@ export function LoginForm() {
         >
           {claimedUsername
             ? "Sign in to claim your namespace"
-            : "Sign in to access your component registry"}
+            : "Sign in to access your snippet registry"}
         </motion.p>
       </div>
 

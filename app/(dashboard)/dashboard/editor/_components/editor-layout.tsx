@@ -6,7 +6,7 @@ import { Toolbar } from "./toolbar";
 import { FileTree } from "./file-tree";
 import { MonacoEditor } from "./monaco-editor";
 import { PreviewPanel } from "./preview-panel";
-import { ComponentMetaForm } from "./component-meta-form";
+import { SnippetMetaForm } from "./snippet-meta-form";
 import { DependencyManager } from "./dependency-manager";
 
 // Shared panel styles
@@ -49,15 +49,15 @@ export function EditorLayout() {
 
           {/* Right Sidebar */}
           <div className="flex shrink-0 flex-col gap-3 @4xl:w-[min(100%,20rem)]">
-            {/* Component Info Section */}
+            {/* Snippet Info Section */}
             <div className={cn(PANEL_BASE, PANEL_BG)}>
               <div className="flex items-center gap-2 px-4 py-3">
                 <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Component
+                  Snippet
                 </span>
               </div>
-              <ComponentMetaForm />
+              <SnippetMetaForm />
             </div>
 
             {/* Dependencies Section */}

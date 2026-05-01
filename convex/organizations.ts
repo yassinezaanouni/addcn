@@ -201,14 +201,14 @@ export const remove = mutation({
       await ctx.db.delete(invite._id);
     }
 
-    // Delete all components owned by this organization
-    const components = await ctx.db
-      .query("components")
+    // Delete all snippets owned by this organization
+    const snippets = await ctx.db
+      .query("snippets")
       .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
       .collect();
 
-    for (const component of components) {
-      await ctx.db.delete(component._id);
+    for (const snippet of snippets) {
+      await ctx.db.delete(snippet._id);
     }
 
     // Delete the organization

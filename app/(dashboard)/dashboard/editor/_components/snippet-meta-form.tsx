@@ -18,7 +18,7 @@ function toSlug(str: string): string {
     .replace(/--+/g, "-");
 }
 
-export function ComponentMetaForm() {
+export function SnippetMetaForm() {
   const { name, title, description, setMetadata } = useEditorStore();
   const context = useOrgContext();
 
@@ -39,7 +39,7 @@ export function ComponentMetaForm() {
           id="name"
           value={name}
           onChange={(e) => setMetadata({ name: toSlug(e.target.value) })}
-          placeholder="my-component"
+          placeholder="my-snippet"
           className="font-mono"
         />
         <p className="text-[11px] text-muted-foreground">
@@ -58,7 +58,7 @@ export function ComponentMetaForm() {
           id="title"
           value={title}
           onChange={(e) => setMetadata({ title: e.target.value })}
-          placeholder="My Component"
+          placeholder="My Snippet"
         />
       </div>
 
@@ -69,7 +69,7 @@ export function ComponentMetaForm() {
           id="description"
           value={description}
           onChange={(e) => setMetadata({ description: e.target.value })}
-          placeholder="A brief description of your component..."
+          placeholder="A brief description of your snippet..."
           rows={3}
           className="resize-none"
         />

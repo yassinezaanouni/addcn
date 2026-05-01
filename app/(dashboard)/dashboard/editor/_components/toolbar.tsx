@@ -7,15 +7,15 @@ import { useConvexMutation, convexQuery } from "@convex-dev/react-query";
 import { motion } from "motion/react";
 import posthog from "posthog-js";
 import { api } from "@/convex/_generated/api";
-import { useEditorStore, useIsNewComponent } from "@/stores/editor-store";
+import { useEditorStore, useIsNewSnippet } from "@/stores/editor-store";
 import { useOrgContext } from "@/components/org-switcher";
 import { useUpload } from "@/hooks/use-upload";
 import {
-  validateComponentMetadata,
-  type ComponentMetadataErrors,
+  validateSnippetMetadata,
+  type SnippetMetadataErrors,
 } from "@/lib/validators";
 import { Button } from "@/components/ui/button";
-import { DeleteComponentButton } from "../../_components/delete-component-button";
+import { DeleteSnippetButton } from "../../_components/delete-snippet-button";
 import { RequiredFieldsDialog } from "./required-fields-dialog";
 import {
   Tooltip,
@@ -31,7 +31,7 @@ import { toast } from "sonner";
 
 export function Toolbar() {
   const router = useRouter();
-  const isNew = useIsNewComponent();
+  const isNew = useIsNewSnippet();
   const context = useOrgContext();
 
   const { data: user } = useQuery(convexQuery(api.users.getMe, {}));
@@ -63,33 +63,33 @@ export function Toolbar() {
 
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [validationErrors, setValidationErrors] =
-    useState<ComponentMetadataErrors>({});
+    useState<SnippetMetadataErrors>({});
   const { upload } = useUpload();
 
-  const createMutationFn = useConvexMutation(api.components.create);
-  const updateMutationFn = useConvexMutation(api.components.update);
+  const createMutationFn = useConvexMutation(api.snippets.create);
+  const updateMutationFn = useConvexMutation(api.snippets.update);
 
   const createMutation = useMutation({
     mutationFn: createMutationFn,
     onSuccess: () => {
-      posthog.capture("component_created", {
-        component_name: name,
-        component_title: title,
+      posthog.capture("snippet_created", {
+        snippet_name: name,
+        snippet_title: title,
         has_description: !!description.trim(),
         files_count: files.length,
         dependencies_count: dependencies.length,
         registry_dependencies_count: registryDependencies.length,
         preview_enabled: previewEnabled,
         namespace,
-        is_org_component: context !== "personal",
+        is_org_snippet: context !== "personal",
       });
       setIsDirty(false);
-      toast.success("Component created");
+      toast.success("Snippet created");
       router.push("/dashboard");
     },
     onError: (error) => {
       posthog.captureException(error);
-      toast.error("Failed to create component", {
+      toast.error("Failed to create snippet", {
         description:
           error instanceof Error ? error.message : "An error occurred",
       });
@@ -99,24 +99,24 @@ export function Toolbar() {
   const updateMutation = useMutation({
     mutationFn: updateMutationFn,
     onSuccess: () => {
-      posthog.capture("component_updated", {
-        component_name: name,
-        component_title: title,
+      posthog.capture("snippet_updated", {
+        snippet_name: name,
+        snippet_title: title,
         has_description: !!description.trim(),
         files_count: files.length,
         dependencies_count: dependencies.length,
         registry_dependencies_count: registryDependencies.length,
         preview_enabled: previewEnabled,
         namespace,
-        is_org_component: context !== "personal",
+        is_org_snippet: context !== "personal",
       });
       setIsDirty(false);
-      toast.success("Component saved");
+      toast.success("Snippet saved");
       router.push("/dashboard");
     },
     onError: (error) => {
       posthog.captureException(error);
-      toast.error("Failed to save component", {
+      toast.error("Failed to save snippet", {
         description:
           error instanceof Error ? error.message : "An error occurred",
       });
@@ -187,7 +187,7 @@ export function Toolbar() {
 
   const handleSave = async () => {
     // Validate using Zod schema
-    const validation = validateComponentMetadata({
+    const validation = validateSnippetMetadata({
       name: name.trim(),
       title: title.trim(),
       description: description.trim(),
@@ -208,7 +208,7 @@ export function Toolbar() {
 
   const handleDialogSave = async () => {
     // Re-validate from dialog (user may have fixed errors)
-    const validation = validateComponentMetadata({
+    const validation = validateSnippetMetadata({
       name: name.trim(),
       title: title.trim(),
       description: description.trim(),
@@ -268,9 +268,9 @@ export function Toolbar() {
         {/* Right side */}
         <div className="flex items-center gap-2">
           {!isNew && convexId && (
-            <DeleteComponentButton
-              componentId={convexId}
-              componentName={title || name}
+            <DeleteSnippetButton
+              snippetId={convexId}
+              snippetName={title || name}
               redirectAfterDelete
             />
           )}

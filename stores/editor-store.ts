@@ -1,33 +1,33 @@
 import { create } from "zustand";
-import type { ComponentFile } from "@/types/component";
+import type { SnippetFile } from "@/types/snippet";
 import type { Id } from "@/convex/_generated/dataModel";
 
 const DEFAULT_FILE_CONTENT = `export default function Component() {
   return (
     <div className="p-4 rounded-lg border">
       <h1 className="text-xl font-bold">Hello World</h1>
-      <p className="text-muted-foreground">Edit this component to get started.</p>
+      <p className="text-muted-foreground">Edit this snippet to get started.</p>
     </div>
   );
 }`;
 
 const DEFAULT_GLOBALS_CSS = `/* Styles will be appended to globals.css when installed */
 @layer components {
-  /* Add your component-specific styles here */
+  /* Add your snippet-specific styles here */
 }
 `;
 
 interface EditorState {
-  // Convex ID (null for new components)
-  convexId: Id<"components"> | null;
+  // Convex ID (null for new snippets)
+  convexId: Id<"snippets"> | null;
 
-  // Component metadata
+  // Snippet metadata
   name: string;
   title: string;
   description: string;
 
   // Files
-  files: ComponentFile[];
+  files: SnippetFile[];
   activeFileId: string | null;
   previewFileId: string | null;
 
@@ -49,7 +49,7 @@ interface EditorState {
   validationDialogOpen: boolean;
 
   // Actions
-  setConvexId: (id: Id<"components"> | null) => void;
+  setConvexId: (id: Id<"snippets"> | null) => void;
   setValidationDialogOpen: (open: boolean) => void;
   setMetadata: (data: {
     name?: string;
@@ -73,12 +73,12 @@ interface EditorState {
   clearPendingMedia: () => void;
   commitPendingMedia: (r2Url: string) => void;
   reset: () => void;
-  loadComponent: (component: {
-    _id: Id<"components">;
+  loadSnippet: (snippet: {
+    _id: Id<"snippets">;
     name: string;
     title: string;
     description: string;
-    files: ComponentFile[];
+    files: SnippetFile[];
     dependencies: string[];
     registryDependencies: string[];
     previewEnabled?: boolean;
@@ -88,13 +88,13 @@ interface EditorState {
 }
 
 // Helper functions
-function getLanguage(path: string): ComponentFile["language"] {
+function getLanguage(path: string): SnippetFile["language"] {
   if (path.endsWith(".css")) return "css";
   if (path.endsWith(".json")) return "json";
   return "typescript";
 }
 
-function getFileType(path: string): ComponentFile["type"] {
+function getFileType(path: string): SnippetFile["type"] {
   if (path.endsWith(".css")) return "style";
   if (path.includes("/hooks/") || path.startsWith("hooks/")) return "hook";
   if (path.includes("/lib/") || path.startsWith("lib/")) return "util";
@@ -105,7 +105,7 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
-function createDefaultFile(): ComponentFile {
+function createDefaultFile(): SnippetFile {
   return {
     id: generateId(),
     path: "components/component.tsx",
@@ -115,7 +115,7 @@ function createDefaultFile(): ComponentFile {
   };
 }
 
-function createDefaultGlobalsCss(): ComponentFile {
+function createDefaultGlobalsCss(): SnippetFile {
   return {
     id: generateId(),
     path: "globals.css",
@@ -125,7 +125,7 @@ function createDefaultGlobalsCss(): ComponentFile {
   };
 }
 
-function createDefaultFiles(): ComponentFile[] {
+function createDefaultFiles(): SnippetFile[] {
   return [createDefaultFile(), createDefaultGlobalsCss()];
 }
 
@@ -186,7 +186,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
       content = "";
     }
 
-    const newFile: ComponentFile = {
+    const newFile: SnippetFile = {
       id: generateId(),
       path,
       content,
@@ -350,9 +350,9 @@ export const useEditorStore = create<EditorState>()((set) => ({
     });
   },
 
-  loadComponent: (component) => {
-    const firstTsxFile = component.files.find((f) => f.path.endsWith(".tsx"));
-    const activeFileId = component.files[0]?.id ?? null;
+  loadSnippet: (snippet) => {
+    const firstTsxFile = snippet.files.find((f) => f.path.endsWith(".tsx"));
+    const activeFileId = snippet.files[0]?.id ?? null;
     const previewFileId = firstTsxFile?.id ?? activeFileId;
     set((state) => {
       // Cleanup blob URL
@@ -360,18 +360,18 @@ export const useEditorStore = create<EditorState>()((set) => ({
         URL.revokeObjectURL(state.pendingMediaLocalUrl);
       }
       return {
-        convexId: component._id,
-        name: component.name,
-        title: component.title,
-        description: component.description,
-        files: component.files,
+        convexId: snippet._id,
+        name: snippet.name,
+        title: snippet.title,
+        description: snippet.description,
+        files: snippet.files,
         activeFileId,
         previewFileId,
-        dependencies: component.dependencies,
-        registryDependencies: component.registryDependencies,
-        previewEnabled: component.previewEnabled ?? false,
-        previewMediaUrl: component.previewMediaUrl ?? null,
-        previewMediaType: component.previewMediaType ?? null,
+        dependencies: snippet.dependencies,
+        registryDependencies: snippet.registryDependencies,
+        previewEnabled: snippet.previewEnabled ?? false,
+        previewMediaUrl: snippet.previewMediaUrl ?? null,
+        previewMediaType: snippet.previewMediaType ?? null,
         pendingMediaFile: null,
         pendingMediaLocalUrl: null,
         isDirty: false,
@@ -382,7 +382,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
 }));
 
 // Utility to get computed state
-export const useIsNewComponent = () =>
+export const useIsNewSnippet = () =>
   useEditorStore((state) => state.convexId === null);
 
 // Utility to build folder tree from flat file list
@@ -390,10 +390,10 @@ export interface FolderNode {
   name: string;
   path: string;
   children: FolderNode[];
-  file?: ComponentFile;
+  file?: SnippetFile;
 }
 
-export function buildFolderTree(files: ComponentFile[]): FolderNode[] {
+export function buildFolderTree(files: SnippetFile[]): FolderNode[] {
   const root: FolderNode[] = [];
 
   for (const file of files) {

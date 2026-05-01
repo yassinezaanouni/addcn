@@ -60,14 +60,14 @@ function ProfileSkeleton() {
   );
 }
 
-function ComponentCard({ component }: { component: Doc<"components"> }) {
+function SnippetCard({ snippet }: { snippet: Doc<"snippets"> }) {
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle>{component.title || component.name}</CardTitle>
-        {component.description && (
+        <CardTitle>{snippet.title || snippet.name}</CardTitle>
+        {snippet.description && (
           <CardDescription className="line-clamp-2">
-            {component.description}
+            {snippet.description}
           </CardDescription>
         )}
       </CardHeader>
@@ -75,7 +75,7 @@ function ComponentCard({ component }: { component: Doc<"components"> }) {
         <Badge variant="default">Public</Badge>
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <IconDownload className="size-3" />
-          {component.downloads ?? 0}
+          {snippet.downloads ?? 0}
         </span>
       </CardContent>
     </Card>
@@ -91,11 +91,11 @@ export default function PublicProfilePage() {
     convexQuery(api.users.getByUsername, { username }),
   );
 
-  // Fetch public components - only when we have a user ID
+  // Fetch public snippets - only when we have a user ID
   const userId = user?._id as Id<"users"> | undefined;
-  const { data: components, isLoading: isComponentsLoading } = useQuery({
+  const { data: snippets, isLoading: isSnippetsLoading } = useQuery({
     ...convexQuery(
-      api.components.getPublicByUserId,
+      api.snippets.getPublicByUserId,
       userId ? { userId } : "skip",
     ),
     enabled: !!userId,
@@ -132,18 +132,18 @@ export default function PublicProfilePage() {
         </div>
       </div>
 
-      {/* Components Section */}
+      {/* Snippets Section */}
       <div>
         <h2 className="mb-4 text-lg font-semibold">
-          Public Components
-          {components && components.length > 0 && (
+          Public Snippets
+          {snippets && snippets.length > 0 && (
             <span className="ml-2 text-sm font-normal text-muted-foreground">
-              ({components.length})
+              ({snippets.length})
             </span>
           )}
         </h2>
 
-        {isComponentsLoading ? (
+        {isSnippetsLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Card size="sm" key={i}>
@@ -157,23 +157,23 @@ export default function PublicProfilePage() {
               </Card>
             ))}
           </div>
-        ) : !components || components.length === 0 ? (
+        ) : !snippets || snippets.length === 0 ? (
           <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <IconPackage />
               </EmptyMedia>
-              <EmptyTitle>No public components</EmptyTitle>
+              <EmptyTitle>No public snippets</EmptyTitle>
               <EmptyDescription>
-                This user has not published any components yet.
+                This user has not published any snippets yet.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {components.map((component) => (
-              <Link key={component._id} href={`/${username}/${component.name}`}>
-                <ComponentCard component={component} />
+            {snippets.map((snippet) => (
+              <Link key={snippet._id} href={`/${username}/${snippet.name}`}>
+                <SnippetCard snippet={snippet} />
               </Link>
             ))}
           </div>

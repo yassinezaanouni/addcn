@@ -1,4 +1,4 @@
-export interface ComponentFile {
+export interface SnippetFile {
   id: string;
   path: string; // Full path including folders, e.g. "components/ui/button.tsx"
   content: string;
@@ -6,12 +6,12 @@ export interface ComponentFile {
   language: "typescript" | "css" | "json";
 }
 
-export interface SavedComponent {
+export interface SavedSnippet {
   id: string;
   name: string;
   title: string;
   description: string;
-  files: ComponentFile[];
+  files: SnippetFile[];
   dependencies: string[];
   registryDependencies: string[];
   createdAt: string;

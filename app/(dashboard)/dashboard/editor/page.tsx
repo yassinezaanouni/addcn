@@ -4,11 +4,11 @@ import { useEffect } from "react";
 import { useEditorStore } from "@/stores/editor-store";
 import { EditorLayout } from "./_components/editor-layout";
 
-export default function NewComponentPage() {
+export default function NewSnippetPage() {
   const reset = useEditorStore((state) => state.reset);
 
   useEffect(() => {
-    // Reset the editor store for a new component
+    // Reset the editor store for a new snippet
     reset();
   }, [reset]);
 

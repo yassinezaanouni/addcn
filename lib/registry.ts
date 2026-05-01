@@ -1,4 +1,4 @@
-import type { SavedComponent, ComponentFile } from "@/types/component";
+import type { SavedSnippet, SnippetFile } from "@/types/snippet";
 import type {
   RegistryItem,
   RegistryFile,
@@ -16,7 +16,7 @@ function getFileName(path: string): string {
 /**
  * Maps internal file type to shadcn registry file type and determines if target is needed
  */
-function getRegistryFileInfo(file: ComponentFile): {
+function getRegistryFileInfo(file: SnippetFile): {
   type: RegistryFileType;
   target?: string;
 } {
@@ -46,8 +46,8 @@ function getRegistryFileInfo(file: ComponentFile): {
   };
 }
 
-export function componentToRegistry(component: SavedComponent): RegistryItem {
-  const files: RegistryFile[] = component.files.map((file) => {
+export function snippetToRegistry(snippet: SavedSnippet): RegistryItem {
+  const files: RegistryFile[] = snippet.files.map((file) => {
     const { type, target } = getRegistryFileInfo(file);
 
     const registryFile: RegistryFile = {
@@ -69,15 +69,15 @@ export function componentToRegistry(component: SavedComponent): RegistryItem {
   return {
     $schema:
       REGISTRY_SCHEMA_URL as "https://ui.shadcn.com/schema/registry-item.json",
-    name: component.name,
+    name: snippet.name,
     type: "registry:ui",
-    title: component.title,
-    description: component.description,
+    title: snippet.title,
+    description: snippet.description,
     dependencies:
-      component.dependencies.length > 0 ? component.dependencies : undefined,
+      snippet.dependencies.length > 0 ? snippet.dependencies : undefined,
     registryDependencies:
-      component.registryDependencies.length > 0
-        ? component.registryDependencies
+      snippet.registryDependencies.length > 0
+        ? snippet.registryDependencies
         : undefined,
     files,
   };

@@ -29,7 +29,7 @@ export function PreviewIframe({ html, iframeKey, theme }: PreviewIframeProps) {
         srcDoc={html}
         className="h-full w-full rounded-lg border-0 bg-background"
         sandbox="allow-scripts"
-        title="Component Preview"
+        title="Snippet Preview"
       />
     </div>
   );

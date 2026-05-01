@@ -1,4 +1,4 @@
-import type { ComponentFile } from "@/types/component";
+import type { SnippetFile } from "@/types/snippet";
 
 interface ParsedImport {
   names: string[];
@@ -79,9 +79,9 @@ export function resolveRelativePath(
  */
 export function resolveFile(
   importPath: string,
-  files: ComponentFile[],
+  files: SnippetFile[],
   currentFilePath?: string,
-): ComponentFile | null {
+): SnippetFile | null {
   const resolvedPath = currentFilePath
     ? resolveRelativePath(importPath, currentFilePath)
     : importPath.replace(/^\.\.?\//, "").replace(/^@\//, "");
@@ -109,8 +109,8 @@ export function resolveFile(
  */
 export function getFilesFromFolder(
   folderName: string,
-  files: ComponentFile[],
-): ComponentFile[] {
+  files: SnippetFile[],
+): SnippetFile[] {
   const folder = folderName.replace(/^\.\.?\//, "").replace(/^@\//, "");
   return files.filter((f) => f.path.startsWith(folder + "/"));
 }
@@ -119,10 +119,10 @@ export function getFilesFromFolder(
  * Collect all component files that need to be bundled (main + dependencies)
  */
 export function collectAllFiles(
-  mainFile: ComponentFile,
-  allFiles: ComponentFile[],
-  collected: Map<string, ComponentFile> = new Map(),
-): Map<string, ComponentFile> {
+  mainFile: SnippetFile,
+  allFiles: SnippetFile[],
+  collected: Map<string, SnippetFile> = new Map(),
+): Map<string, SnippetFile> {
   if (collected.has(mainFile.path)) return collected;
   collected.set(mainFile.path, mainFile);
 

@@ -2,12 +2,12 @@ import { ConvexError, v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
-import { componentFilesValidator } from "./validators";
+import { snippetFilesValidator } from "./validators";
 import { authComponent } from "./auth";
 import {
-  canAccessComponent,
-  canEditComponent,
-  canTransferComponent,
+  canAccessSnippet,
+  canEditSnippet,
+  canTransferSnippet,
 } from "./lib/permissions";
 import { resolveNamespace } from "./lib/namespace";
 import { r2Client } from "./r2";
@@ -42,9 +42,9 @@ async function requireCurrentUser(ctx: QueryCtx | MutationCtx) {
 }
 
 /**
- * Get all components for the current user (personal + org components).
+ * Get all snippets for the current user (personal + org snippets).
  */
-export const getMyComponents = query({
+export const getMySnippets = query({
   args: {},
   handler: async (ctx) => {
     const user = await getCurrentUser(ctx);
@@ -52,9 +52,9 @@ export const getMyComponents = query({
       return [];
     }
 
-    // Get personal components
-    const personalComponents = await ctx.db
-      .query("components")
+    // Get personal snippets
+    const personalSnippets = await ctx.db
+      .query("snippets")
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .collect();
 
@@ -66,34 +66,34 @@ export const getMyComponents = query({
 
     const orgIds = memberships.map((m) => m.orgId);
 
-    // Get org components
-    const orgComponents = await Promise.all(
+    // Get org snippets
+    const orgSnippets = await Promise.all(
       orgIds.map((orgId) =>
         ctx.db
-          .query("components")
+          .query("snippets")
           .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
           .collect(),
       ),
     );
 
     // Combine and sort by updatedAt desc
-    const allComponents = [...personalComponents, ...orgComponents.flat()];
-    allComponents.sort((a, b) => b.updatedAt - a.updatedAt);
+    const allSnippets = [...personalSnippets, ...orgSnippets.flat()];
+    allSnippets.sort((a, b) => b.updatedAt - a.updatedAt);
 
-    return allComponents;
+    return allSnippets;
   },
 });
 
 /**
- * Create a new component.
- * If orgId is provided, creates an org component; otherwise creates a personal component.
+ * Create a new snippet.
+ * If orgId is provided, creates an org snippet; otherwise creates a personal snippet.
  */
 export const create = mutation({
   args: {
     name: v.string(),
     title: v.string(),
     description: v.string(),
-    files: componentFilesValidator,
+    files: snippetFilesValidator,
     dependencies: v.array(v.string()),
     registryDependencies: v.array(v.string()),
     orgId: v.optional(v.id("organizations")),
@@ -123,20 +123,20 @@ export const create = mutation({
       }
 
       // Check for name conflict in org
-      const existingComponent = await ctx.db
-        .query("components")
+      const existingSnippet = await ctx.db
+        .query("snippets")
         .withIndex("by_orgId_name", (q) =>
           q.eq("orgId", args.orgId!).eq("name", args.name),
         )
         .unique();
 
-      if (existingComponent) {
+      if (existingSnippet) {
         throw new ConvexError(
-          "A component with this name already exists in the organization",
+          "A snippet with this name already exists in the organization",
         );
       }
 
-      return await ctx.db.insert("components", {
+      return await ctx.db.insert("snippets", {
         name: args.name,
         title: args.title,
         description: args.description,
@@ -156,20 +156,20 @@ export const create = mutation({
       });
     }
 
-    // Personal component
-    // Check for name conflict in user's personal components
-    const existingComponent = await ctx.db
-      .query("components")
+    // Personal snippet
+    // Check for name conflict in user's personal snippets
+    const existingSnippet = await ctx.db
+      .query("snippets")
       .withIndex("by_userId_name", (q) =>
         q.eq("userId", user._id).eq("name", args.name),
       )
       .unique();
 
-    if (existingComponent) {
-      throw new ConvexError("You already have a component with this name");
+    if (existingSnippet) {
+      throw new ConvexError("You already have a snippet with this name");
     }
 
-    return await ctx.db.insert("components", {
+    return await ctx.db.insert("snippets", {
       name: args.name,
       title: args.title,
       description: args.description,
@@ -191,21 +191,21 @@ export const create = mutation({
 });
 
 /**
- * Get a component by ID.
+ * Get a snippet by ID.
  * Checks access permissions.
  */
 export const get = query({
-  args: { id: v.id("components") },
+  args: { id: v.id("snippets") },
   handler: async (ctx, args) => {
-    const component = await ctx.db.get(args.id);
-    if (!component) {
+    const snippet = await ctx.db.get(args.id);
+    if (!snippet) {
       return null;
     }
 
     const user = await getCurrentUser(ctx);
-    const hasAccess = await canAccessComponent(
+    const hasAccess = await canAccessSnippet(
       ctx,
-      component,
+      snippet,
       user?._id ?? null,
     );
 
@@ -213,13 +213,13 @@ export const get = query({
       return null;
     }
 
-    return component;
+    return snippet;
   },
 });
 
 /**
- * Search components by name, title, and description.
- * Only returns components the user has access to.
+ * Search snippets by name, title, and description.
+ * Only returns snippets the user has access to.
  */
 export const search = query({
   args: { query: v.string() },
@@ -227,39 +227,39 @@ export const search = query({
     const user = await getCurrentUser(ctx);
 
     const results = await ctx.db
-      .query("components")
-      .withSearchIndex("search_components", (q) =>
+      .query("snippets")
+      .withSearchIndex("search_snippets", (q) =>
         q.search("searchText", args.query),
       )
       .collect();
 
     // Filter by access permissions
-    const accessibleComponents = await Promise.all(
-      results.map(async (component) => {
-        const hasAccess = await canAccessComponent(
+    const accessibleSnippets = await Promise.all(
+      results.map(async (snippet) => {
+        const hasAccess = await canAccessSnippet(
           ctx,
-          component,
+          snippet,
           user?._id ?? null,
         );
-        return hasAccess ? component : null;
+        return hasAccess ? snippet : null;
       }),
     );
 
-    return accessibleComponents.filter(Boolean);
+    return accessibleSnippets.filter(Boolean);
   },
 });
 
 /**
- * Update a component.
+ * Update a snippet.
  * Requires edit permission.
  */
 export const update = mutation({
   args: {
-    id: v.id("components"),
+    id: v.id("snippets"),
     name: v.optional(v.string()),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
-    files: v.optional(componentFilesValidator),
+    files: v.optional(snippetFilesValidator),
     dependencies: v.optional(v.array(v.string())),
     registryDependencies: v.optional(v.array(v.string())),
     isPublic: v.optional(v.boolean()),
@@ -273,42 +273,42 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const user = await requireCurrentUser(ctx);
 
-    const component = await ctx.db.get(args.id);
-    if (!component) {
-      throw new ConvexError("Component not found");
+    const snippet = await ctx.db.get(args.id);
+    if (!snippet) {
+      throw new ConvexError("Snippet not found");
     }
 
-    const hasPermission = await canEditComponent(ctx, component, user._id);
+    const hasPermission = await canEditSnippet(ctx, snippet, user._id);
     if (!hasPermission) {
-      throw new ConvexError("You don't have permission to edit this component");
+      throw new ConvexError("You don't have permission to edit this snippet");
     }
 
     // Check name conflict if name is being updated
-    if (args.name && args.name !== component.name) {
-      if (component.userId) {
-        // Personal component - check user's components
-        const existingComponent = await ctx.db
-          .query("components")
+    if (args.name && args.name !== snippet.name) {
+      if (snippet.userId) {
+        // Personal snippet - check user's snippets
+        const existingSnippet = await ctx.db
+          .query("snippets")
           .withIndex("by_userId_name", (q) =>
-            q.eq("userId", component.userId!).eq("name", args.name!),
+            q.eq("userId", snippet.userId!).eq("name", args.name!),
           )
           .unique();
 
-        if (existingComponent && existingComponent._id !== component._id) {
-          throw new ConvexError("You already have a component with this name");
+        if (existingSnippet && existingSnippet._id !== snippet._id) {
+          throw new ConvexError("You already have a snippet with this name");
         }
-      } else if (component.orgId) {
-        // Org component - check org's components
-        const existingComponent = await ctx.db
-          .query("components")
+      } else if (snippet.orgId) {
+        // Org snippet - check org's snippets
+        const existingSnippet = await ctx.db
+          .query("snippets")
           .withIndex("by_orgId_name", (q) =>
-            q.eq("orgId", component.orgId!).eq("name", args.name!),
+            q.eq("orgId", snippet.orgId!).eq("name", args.name!),
           )
           .unique();
 
-        if (existingComponent && existingComponent._id !== component._id) {
+        if (existingSnippet && existingSnippet._id !== snippet._id) {
           throw new ConvexError(
-            "A component with this name already exists in the organization",
+            "A snippet with this name already exists in the organization",
           );
         }
       }
@@ -320,9 +320,9 @@ export const update = mutation({
     );
 
     // Update searchText if name, title, or description changed
-    const newName = args.name ?? component.name;
-    const newTitle = args.title ?? component.title;
-    const newDescription = args.description ?? component.description;
+    const newName = args.name ?? snippet.name;
+    const newTitle = args.title ?? snippet.title;
+    const newDescription = args.description ?? snippet.description;
     const searchText = `${newName} ${newTitle} ${newDescription}`;
 
     await ctx.db.patch(id, { ...filtered, searchText, updatedAt: Date.now() });
@@ -345,30 +345,30 @@ function extractR2Key(url: string): string | null {
 }
 
 /**
- * Delete a component.
+ * Delete a snippet.
  * Requires edit permission.
  * Also cleans up any associated R2 media.
  */
 export const remove = mutation({
-  args: { id: v.id("components") },
+  args: { id: v.id("snippets") },
   handler: async (ctx, args) => {
     const user = await requireCurrentUser(ctx);
 
-    const component = await ctx.db.get(args.id);
-    if (!component) {
-      throw new ConvexError("Component not found");
+    const snippet = await ctx.db.get(args.id);
+    if (!snippet) {
+      throw new ConvexError("Snippet not found");
     }
 
-    const hasPermission = await canEditComponent(ctx, component, user._id);
+    const hasPermission = await canEditSnippet(ctx, snippet, user._id);
     if (!hasPermission) {
       throw new ConvexError(
-        "You don't have permission to delete this component",
+        "You don't have permission to delete this snippet",
       );
     }
 
     // Delete R2 media if it exists
-    if (component.previewMediaUrl) {
-      const key = extractR2Key(component.previewMediaUrl);
+    if (snippet.previewMediaUrl) {
+      const key = extractR2Key(snippet.previewMediaUrl);
       if (key) {
         await r2Client.deleteObject(ctx, key);
       }
@@ -379,24 +379,24 @@ export const remove = mutation({
 });
 
 /**
- * Transfer a personal component to an organization.
+ * Transfer a personal snippet to an organization.
  */
 export const transfer = mutation({
   args: {
-    id: v.id("components"),
+    id: v.id("snippets"),
     targetOrgId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await requireCurrentUser(ctx);
 
-    const component = await ctx.db.get(args.id);
-    if (!component) {
-      throw new ConvexError("Component not found");
+    const snippet = await ctx.db.get(args.id);
+    if (!snippet) {
+      throw new ConvexError("Snippet not found");
     }
 
-    const { allowed, reason } = await canTransferComponent(
+    const { allowed, reason } = await canTransferSnippet(
       ctx,
-      component,
+      snippet,
       user._id,
       args.targetOrgId,
     );
@@ -405,7 +405,7 @@ export const transfer = mutation({
       throw new ConvexError(reason ?? "Transfer not allowed");
     }
 
-    // Transfer the component: remove userId, add orgId
+    // Transfer the snippet: remove userId, add orgId
     await ctx.db.patch(args.id, {
       userId: undefined,
       orgId: args.targetOrgId,
@@ -417,12 +417,12 @@ export const transfer = mutation({
 });
 
 /**
- * Get components filtered by context (personal or org).
- * If context is "personal", returns only personal components.
- * If context is an org ID, returns only that org's components.
- * If no context, returns all components (personal + orgs).
+ * Get snippets filtered by context (personal or org).
+ * If context is "personal", returns only personal snippets.
+ * If context is an org ID, returns only that org's snippets.
+ * If no context, returns all snippets (personal + orgs).
  */
-export const getMyComponentsFiltered = query({
+export const getMySnippetsFiltered = query({
   args: {
     context: v.optional(v.union(v.literal("personal"), v.id("organizations"))),
   },
@@ -432,16 +432,16 @@ export const getMyComponentsFiltered = query({
       return [];
     }
 
-    // If context is "personal", only return personal components
+    // If context is "personal", only return personal snippets
     if (args.context === "personal") {
-      const personalComponents = await ctx.db
-        .query("components")
+      const personalSnippets = await ctx.db
+        .query("snippets")
         .withIndex("by_userId", (q) => q.eq("userId", user._id))
         .collect();
-      return personalComponents.sort((a, b) => b.updatedAt - a.updatedAt);
+      return personalSnippets.sort((a, b) => b.updatedAt - a.updatedAt);
     }
 
-    // If context is an org ID, only return that org's components
+    // If context is an org ID, only return that org's snippets
     if (args.context) {
       // Verify user is a member of this org
       const membership = await ctx.db
@@ -457,18 +457,18 @@ export const getMyComponentsFiltered = query({
         return [];
       }
 
-      const orgComponents = await ctx.db
-        .query("components")
+      const orgSnippets = await ctx.db
+        .query("snippets")
         .withIndex("by_orgId", (q) =>
           q.eq("orgId", args.context as Id<"organizations">),
         )
         .collect();
-      return orgComponents.sort((a, b) => b.updatedAt - a.updatedAt);
+      return orgSnippets.sort((a, b) => b.updatedAt - a.updatedAt);
     }
 
-    // No context specified - return all components (personal + orgs)
-    const personalComponents = await ctx.db
-      .query("components")
+    // No context specified - return all snippets (personal + orgs)
+    const personalSnippets = await ctx.db
+      .query("snippets")
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .collect();
 
@@ -479,25 +479,25 @@ export const getMyComponentsFiltered = query({
 
     const orgIds = memberships.map((m) => m.orgId);
 
-    const orgComponents = await Promise.all(
+    const orgSnippets = await Promise.all(
       orgIds.map((orgId) =>
         ctx.db
-          .query("components")
+          .query("snippets")
           .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
           .collect(),
       ),
     );
 
-    const allComponents = [...personalComponents, ...orgComponents.flat()];
-    return allComponents.sort((a, b) => b.updatedAt - a.updatedAt);
+    const allSnippets = [...personalSnippets, ...orgSnippets.flat()];
+    return allSnippets.sort((a, b) => b.updatedAt - a.updatedAt);
   },
 });
 
 /**
- * Paginated version of getMyComponentsFiltered.
- * Returns components with cursor-based pagination.
+ * Paginated version of getMySnippetsFiltered.
+ * Returns snippets with cursor-based pagination.
  */
-export const getMyComponentsPaginated = query({
+export const getMySnippetsPaginated = query({
   args: {
     context: v.union(v.literal("personal"), v.id("organizations")),
     paginationOpts: paginationOptsValidator,
@@ -508,16 +508,16 @@ export const getMyComponentsPaginated = query({
       return { page: [], isDone: true, continueCursor: "" };
     }
 
-    // Personal components
+    // Personal snippets
     if (args.context === "personal") {
       return await ctx.db
-        .query("components")
+        .query("snippets")
         .withIndex("by_userId", (q) => q.eq("userId", user._id))
         .order("desc")
         .paginate(args.paginationOpts);
     }
 
-    // Org components - verify membership first
+    // Org snippets - verify membership first
     const membership = await ctx.db
       .query("orgMembers")
       .withIndex("by_orgId_userId", (q) =>
@@ -532,7 +532,7 @@ export const getMyComponentsPaginated = query({
     }
 
     return await ctx.db
-      .query("components")
+      .query("snippets")
       .withIndex("by_orgId", (q) =>
         q.eq("orgId", args.context as Id<"organizations">),
       )
@@ -542,27 +542,27 @@ export const getMyComponentsPaginated = query({
 });
 
 /**
- * Get public components for a specific user.
+ * Get public snippets for a specific user.
  * Used on public profile pages.
  */
 export const getPublicByUserId = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const components = await ctx.db
-      .query("components")
+    const snippets = await ctx.db
+      .query("snippets")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .collect();
 
-    // Filter to only public components and sort by updatedAt desc
-    return components
-      .filter((c) => c.isPublic)
+    // Filter to only public snippets and sort by updatedAt desc
+    return snippets
+      .filter((s) => s.isPublic)
       .sort((a, b) => b.updatedAt - a.updatedAt);
   },
 });
 
 /**
- * Get a public component by namespace and name.
- * Used on component detail pages.
+ * Get a public snippet by namespace and name.
+ * Used on snippet detail pages.
  * Returns null if not found or private.
  */
 export const getByNamespaceAndName = query({
@@ -577,29 +577,29 @@ export const getByNamespaceAndName = query({
       return null;
     }
 
-    let component = null;
+    let snippet = null;
 
     if (owner.type === "user") {
-      component = await ctx.db
-        .query("components")
+      snippet = await ctx.db
+        .query("snippets")
         .withIndex("by_userId_name", (q) =>
           q.eq("userId", owner.user._id).eq("name", args.name),
         )
         .unique();
     } else {
-      component = await ctx.db
-        .query("components")
+      snippet = await ctx.db
+        .query("snippets")
         .withIndex("by_orgId_name", (q) =>
           q.eq("orgId", owner.org._id).eq("name", args.name),
         )
         .unique();
     }
 
-    // Only return public components
-    if (!component || !component.isPublic) {
+    // Only return public snippets
+    if (!snippet || !snippet.isPublic) {
       return null;
     }
 
-    return component;
+    return snippet;
   },
 });

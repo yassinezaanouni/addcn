@@ -50,9 +50,9 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
 import { toast } from "sonner";
-import { DeleteComponentButton } from "./delete-component-button";
+import { DeleteSnippetButton } from "./delete-snippet-button";
 
-function ComponentCardSkeleton() {
+function SnippetCardSkeleton() {
   return (
     <Card className="group overflow-hidden border-border/50 bg-card/50 pt-0 transition-all hover:border-border hover:bg-card">
       <Skeleton className="aspect-video w-full" />
@@ -68,17 +68,17 @@ function ComponentCardSkeleton() {
   );
 }
 
-function ComponentListSkeleton() {
+function SnippetListSkeleton() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 [@media(min-width:2200px)]:grid-cols-5">
       {Array.from({ length: 6 }).map((_, i) => (
-        <ComponentCardSkeleton key={i} />
+        <SnippetCardSkeleton key={i} />
       ))}
     </div>
   );
 }
 
-function LivePreview({ files }: { files: Doc<"components">["files"] }) {
+function LivePreview({ files }: { files: Doc<"snippets">["files"] }) {
   const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -121,9 +121,9 @@ function LivePreview({ files }: { files: Doc<"components">["files"] }) {
       .join("\n\n");
 
     try {
-      const componentFiles = collectAllFiles(mainFile, files);
+      const snippetFiles = collectAllFiles(mainFile, files);
       return generateIframeHtml(
-        componentFiles,
+        snippetFiles,
         mainFile.path,
         transformCss(cssContent),
         resolvedTheme || "light",
@@ -171,30 +171,30 @@ function LivePreview({ files }: { files: Doc<"components">["files"] }) {
         srcDoc={iframeHtml}
         className="h-full w-full border-0"
         sandbox="allow-scripts"
-        title="Component preview"
+        title="Snippet preview"
       />
     </div>
   );
 }
 
-function ComponentCard({
-  component,
+function SnippetCard({
+  snippet,
   namespace,
   registryToken,
 }: {
-  component: Doc<"components">;
+  snippet: Doc<"snippets">;
   namespace: string | undefined;
   registryToken: string | null;
 }) {
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const queryClient = useQueryClient();
 
-  const updateMutationFn = useConvexMutation(api.components.update);
+  const updateMutationFn = useConvexMutation(api.snippets.update);
   const updateMutation = useMutation({
     mutationFn: updateMutationFn,
     onSuccess: () => {
-      // Invalidate component queries to refetch updated data
-      queryClient.invalidateQueries({ queryKey: ["components"] });
+      // Invalidate snippet queries to refetch updated data
+      queryClient.invalidateQueries({ queryKey: ["snippets"] });
     },
     onError: (error) => {
       toast.error("Failed to update visibility", {
@@ -205,17 +205,17 @@ function ComponentCard({
   });
 
   const handleVisibilityToggle = () => {
-    if (!component.isPublic) {
+    if (!snippet.isPublic) {
       // Show confirmation dialog when publishing
       setShowPublishDialog(true);
     } else {
       // Directly unpublish without confirmation
       updateMutation.mutate(
-        { id: component._id, isPublic: false },
+        { id: snippet._id, isPublic: false },
         {
           onSuccess: () => {
-            toast.success("Component unpublished", {
-              description: "Your component is now private.",
+            toast.success("Snippet unpublished", {
+              description: "Your snippet is now private.",
             });
           },
         },
@@ -225,11 +225,11 @@ function ComponentCard({
 
   const handleConfirmPublish = () => {
     updateMutation.mutate(
-      { id: component._id, isPublic: true },
+      { id: snippet._id, isPublic: true },
       {
         onSuccess: () => {
-          toast.success("Component published", {
-            description: "Your component is now publicly accessible.",
+          toast.success("Snippet published", {
+            description: "Your snippet is now publicly accessible.",
           });
           setShowPublishDialog(false);
         },
@@ -237,14 +237,14 @@ function ComponentCard({
     );
   };
 
-  // Build the registry URL for the component
-  // Add token for private components
+  // Build the registry URL for the snippet
+  // Add token for private snippets
   const baseUrl = namespace
-    ? `${process.env.NEXT_PUBLIC_SITE_URL}/r/${namespace}/${component.name}.json`
+    ? `${process.env.NEXT_PUBLIC_SITE_URL}/r/${namespace}/${snippet.name}.json`
     : null;
 
   const registryUrl =
-    baseUrl && !component.isPublic && registryToken
+    baseUrl && !snippet.isPublic && registryToken
       ? `${baseUrl}?token=${registryToken}`
       : baseUrl;
 
@@ -253,10 +253,10 @@ function ComponentCard({
       <Card className="overflow-hidden justify-between border-border/50 bg-card/50 pt-0">
         {/* Preview: static media or live iframe */}
         <div className="relative aspect-video w-full overflow-hidden bg-muted/50">
-          {component.previewMediaUrl ? (
-            component.previewMediaType === "video" ? (
+          {snippet.previewMediaUrl ? (
+            snippet.previewMediaType === "video" ? (
               <video
-                src={component.previewMediaUrl}
+                src={snippet.previewMediaUrl}
                 className="h-full w-full object-cover"
                 autoPlay
                 muted
@@ -266,13 +266,13 @@ function ComponentCard({
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={component.previewMediaUrl}
-                alt={component.title || component.name}
+                src={snippet.previewMediaUrl}
+                alt={snippet.title || snippet.name}
                 className="h-full w-full object-contain"
               />
             )
-          ) : component.previewEnabled ? (
-            <LivePreview files={component.files} />
+          ) : snippet.previewEnabled ? (
+            <LivePreview files={snippet.files} />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 bg-muted/50">
               <IconPackage className="size-8 text-muted-foreground/40" />
@@ -284,42 +284,42 @@ function ComponentCard({
         </div>
         <div className="space-y-4">
           <CardHeader>
-            <CardTitle>{component.title || component.name}</CardTitle>
-            {component.description && (
+            <CardTitle>{snippet.title || snippet.name}</CardTitle>
+            {snippet.description && (
               <CardDescription className="line-clamp-2">
-                {component.description}
+                {snippet.description}
               </CardDescription>
             )}
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Badge variant={component.isPublic ? "default" : "secondary"}>
-                  {component.isPublic ? "Public" : "Private"}
+                <Badge variant={snippet.isPublic ? "default" : "secondary"}>
+                  {snippet.isPublic ? "Public" : "Private"}
                 </Badge>
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <IconDownload className="size-3" />
-                  {component.downloads ?? 0}
+                  {snippet.downloads ?? 0}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
                   <Switch
-                    checked={component.isPublic}
+                    checked={snippet.isPublic}
                     onCheckedChange={handleVisibilityToggle}
                     disabled={updateMutation.isPending}
                     size="sm"
                   />
                   Public
                 </label>
-                <Link href={`/dashboard/editor/${component._id}`}>
-                  <Button variant="ghost" size="icon-sm" title="Edit component">
+                <Link href={`/dashboard/editor/${snippet._id}`}>
+                  <Button variant="ghost" size="icon-sm" title="Edit snippet">
                     <IconPencil className="size-4" />
                   </Button>
                 </Link>
-                <DeleteComponentButton
-                  componentId={component._id}
-                  componentName={component.title || component.name}
+                <DeleteSnippetButton
+                  snippetId={snippet._id}
+                  snippetName={snippet.title || snippet.name}
                 />
               </div>
             </div>
@@ -333,9 +333,9 @@ function ComponentCard({
       <Dialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Publish Component</DialogTitle>
+            <DialogTitle>Publish Snippet</DialogTitle>
             <DialogDescription>
-              Publishing this component will make it publicly accessible. Anyone
+              Publishing this snippet will make it publicly accessible. Anyone
               with the link will be able to install it using the shadcn CLI.
             </DialogDescription>
           </DialogHeader>
@@ -349,7 +349,7 @@ function ComponentCard({
               onClick={handleConfirmPublish}
               disabled={updateMutation.isPending}
             >
-              {updateMutation.isPending ? "Publishing..." : "Publish Component"}
+              {updateMutation.isPending ? "Publishing..." : "Publish Snippet"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -376,7 +376,7 @@ function SearchInput({
       </div>
       <Input
         type="text"
-        placeholder="Search components..."
+        placeholder="Search snippets..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="h-10 border-border/50 bg-background/50 pl-9 pr-9 font-mono text-sm transition-colors focus:border-primary/50 focus:bg-background"
@@ -394,7 +394,7 @@ function SearchInput({
   );
 }
 
-export function ComponentList() {
+export function SnippetList() {
   const context = useOrgContext();
   const convex = useConvex();
   const { token: registryToken } = useRegistryToken();
@@ -417,7 +417,7 @@ export function ComponentList() {
   const { data: user } = useQuery(convexQuery(api.users.getMe, {}));
   const { data: orgs } = useQuery(convexQuery(api.organizations.getMyOrgs, {}));
 
-  // Infinite query for paginated components (when not searching)
+  // Infinite query for paginated snippets (when not searching)
   const {
     data,
     fetchNextPage,
@@ -425,9 +425,9 @@ export function ComponentList() {
     isFetchingNextPage,
     isLoading: isPaginatedLoading,
   } = useInfiniteQuery({
-    queryKey: ["components", queryContext],
+    queryKey: ["snippets", queryContext],
     queryFn: async ({ pageParam }) => {
-      return await convex.query(api.components.getMyComponentsPaginated, {
+      return await convex.query(api.snippets.getMySnippetsPaginated, {
         context: queryContext,
         paginationOpts: { numItems: PAGE_SIZE, cursor: pageParam ?? null },
       });
@@ -440,7 +440,7 @@ export function ComponentList() {
 
   // Search query (when searching)
   const { data: searchResults, isLoading: isSearchLoading } = useQuery({
-    ...convexQuery(api.components.search, { query: debouncedSearch }),
+    ...convexQuery(api.snippets.search, { query: debouncedSearch }),
     enabled: !!debouncedSearch,
   });
 
@@ -449,12 +449,12 @@ export function ComponentList() {
     if (!searchResults || !debouncedSearch) return [];
 
     return searchResults.filter(
-      (component): component is NonNullable<typeof component> => {
-        if (!component) return false;
+      (snippet): snippet is NonNullable<typeof snippet> => {
+        if (!snippet) return false;
         if (queryContext === "personal") {
-          return !!component.userId;
+          return !!snippet.userId;
         }
-        return component.orgId === queryContext;
+        return snippet.orgId === queryContext;
       },
     );
   }, [searchResults, debouncedSearch, queryContext]);
@@ -479,25 +479,25 @@ export function ComponentList() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Memoized helper to get namespace for a component
+  // Memoized helper to get namespace for a snippet
   const getNamespace = useCallback(
-    (component: Doc<"components">): string | undefined => {
-      if (component.userId) return user?.username;
-      if (component.orgId && orgs) {
-        return orgs.find((o) => o._id === component.orgId)?.slug;
+    (snippet: Doc<"snippets">): string | undefined => {
+      if (snippet.userId) return user?.username;
+      if (snippet.orgId && orgs) {
+        return orgs.find((o) => o._id === snippet.orgId)?.slug;
       }
       return undefined;
     },
     [user?.username, orgs],
   );
 
-  // Get components to display based on search state
-  const allComponents = debouncedSearch
+  // Get snippets to display based on search state
+  const allSnippets = debouncedSearch
     ? filteredSearchResults
     : (data?.pages.flatMap((page) => page.page) ?? []);
 
   // Show skeleton only on initial load (not when searching with existing data)
-  if (isLoading && allComponents.length === 0) {
+  if (isLoading && allSnippets.length === 0) {
     return (
       <div className="space-y-4">
         <SearchInput
@@ -505,29 +505,29 @@ export function ComponentList() {
           onChange={setSearchQuery}
           onClear={() => setSearchQuery("")}
         />
-        <ComponentListSkeleton />
+        <SnippetListSkeleton />
       </div>
     );
   }
 
-  // Empty state when no components exist at all
-  if (allComponents.length === 0 && !debouncedSearch) {
+  // Empty state when no snippets exist at all
+  if (allSnippets.length === 0 && !debouncedSearch) {
     return (
       <div className="flex min-h-[400px] flex-1 flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/20 p-8">
         <div className="flex size-16 items-center justify-center rounded-full border border-border/50 bg-card">
           <IconPackage className="size-8 text-muted-foreground" />
         </div>
         <h3 className="mt-6 font-mono text-lg font-medium">
-          No components yet
+          No snippets yet
         </h3>
         <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">
-          Create your first component to get started with your personal
+          Create your first snippet to get started with your personal
           registry.
         </p>
         <Link href="/dashboard/editor" className="mt-6">
           <Button className="gap-2 font-mono">
             <IconPlus className="size-4" />
-            Create Component
+            Create Snippet
           </Button>
         </Link>
       </div>
@@ -543,7 +543,7 @@ export function ComponentList() {
       />
 
       {/* No results for search */}
-      {allComponents.length === 0 && debouncedSearch && (
+      {allSnippets.length === 0 && debouncedSearch && (
         <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/20 p-8">
           <div className="flex size-12 items-center justify-center rounded-full border border-border/50 bg-card">
             <IconSearch className="size-5 text-muted-foreground" />
@@ -552,7 +552,7 @@ export function ComponentList() {
             No results found
           </h3>
           <p className="mt-1.5 text-center text-sm text-muted-foreground">
-            No components match &quot;{debouncedSearch}&quot;
+            No snippets match &quot;{debouncedSearch}&quot;
           </p>
           <Button
             variant="outline"
@@ -565,14 +565,14 @@ export function ComponentList() {
         </div>
       )}
 
-      {/* Component grid */}
-      {allComponents.length > 0 && (
+      {/* Snippet grid */}
+      {allSnippets.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 [@media(min-width:2200px)]:grid-cols-5">
-          {allComponents.map((component) => (
-            <ComponentCard
-              key={component._id}
-              component={component}
-              namespace={getNamespace(component)}
+          {allSnippets.map((snippet) => (
+            <SnippetCard
+              key={snippet._id}
+              snippet={snippet}
+              namespace={getNamespace(snippet)}
               registryToken={registryToken}
             />
           ))}

@@ -2,7 +2,7 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { authComponent, createAuth } from "./auth";
-import { componentToRegistryJson } from "./registry";
+import { snippetToRegistryJson } from "./registry";
 
 const http = httpRouter();
 
@@ -63,9 +63,9 @@ http.route({
       });
     }
 
-    // Fetch component with auth context
-    const component = await ctx.runQuery(
-      internal.registry.getComponentWithAuth,
+    // Fetch snippet with auth context
+    const snippet = await ctx.runQuery(
+      internal.registry.getSnippetWithAuth,
       {
         namespace,
         name,
@@ -73,11 +73,11 @@ http.route({
       },
     );
 
-    if (!component) {
+    if (!snippet) {
       return new Response(
         JSON.stringify({
-          error: "Component not found",
-          message: `No component found at ${namespace}/${name}`,
+          error: "Snippet not found",
+          message: `No snippet found at ${namespace}/${name}`,
         }),
         {
           status: 404,
@@ -89,12 +89,12 @@ http.route({
     // Increment download count with IP fingerprint for deduplication
     const fingerprint = request.headers.get("x-forwarded-for") || "unknown";
     await ctx.runMutation(internal.registry.incrementDownloads, {
-      componentId: component._id,
+      snippetId: snippet._id,
       fingerprint,
     });
 
     // Convert to registry JSON and return
-    const registryJson = componentToRegistryJson(component);
+    const registryJson = snippetToRegistryJson(snippet);
 
     return new Response(JSON.stringify(registryJson, null, 2), {
       status: 200,
