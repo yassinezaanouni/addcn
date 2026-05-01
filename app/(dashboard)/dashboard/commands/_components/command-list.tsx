@@ -33,12 +33,12 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 function CommandCardSkeleton() {
   return (
     <Card className="border-border/50 bg-card/50">
-      <CardHeader className="px-3 py-2">
-        <Skeleton className="h-4 w-32" />
+      <CardHeader>
+        <Skeleton className="h-5 w-40" />
       </CardHeader>
-      <CardContent className="space-y-1.5 px-3 pb-2.5">
-        <Skeleton className="h-5 w-full" />
-        <Skeleton className="h-6 w-full" />
+      <CardContent className="space-y-2">
+        <Skeleton className="h-7 w-full" />
+        <Skeleton className="h-9 w-full rounded-md" />
       </CardContent>
     </Card>
   );
@@ -59,35 +59,36 @@ function CommandCard({
 
   return (
     <Card className="group overflow-hidden border-border/50 bg-card/50 transition-colors hover:border-border">
-      <CardHeader className="px-3 py-2">
-        <CardTitle className="flex items-center gap-1.5 font-mono text-sm">
-          <IconTerminal2 className="size-3.5 text-emerald-500" />
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 font-mono">
+          <IconTerminal2 className="size-4 text-emerald-500" />
           <span className="min-w-0 flex-1 truncate">{command.name}</span>
-          <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] font-normal text-muted-foreground">
+          <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 font-mono text-[11px] font-normal text-muted-foreground">
             {command.steps.length} step{command.steps.length !== 1 ? "s" : ""}
           </span>
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-1.5 px-3 pb-2.5">
-        {/* Tags + actions on a single row to save vertical space */}
+      <CardContent className="space-y-2">
+        {/* Tags + actions share a row, mirroring the snippet card's
+            [meta on left | actions on right] structure. */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-wrap gap-1">
             {command.tags?.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="rounded bg-emerald-500/10 px-1 py-0.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400"
+                className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400"
               >
                 #{tag}
               </span>
             ))}
             {command.tags && command.tags.length > 3 && (
-              <span className="rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
+              <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                 +{command.tags.length - 3}
               </span>
             )}
           </div>
-          <div className="flex shrink-0 items-center">
+          <div className="flex shrink-0 items-center gap-1">
             <CopyCommandButton text={joined} />
             <Button
               variant="ghost"
@@ -95,7 +96,7 @@ function CommandCard({
               title="Edit command"
               onClick={() => open(command._id)}
             >
-              <IconPencil className="size-3.5" />
+              <IconPencil className="size-4" />
             </Button>
             <DeleteCommandButton
               commandId={command._id}
@@ -105,8 +106,8 @@ function CommandCard({
         </div>
 
         {/* Joined command — same visual role as snippet's install bar */}
-        <div className="rounded border border-border/50 bg-muted/30 px-2 py-1">
-          <code className="block truncate font-mono text-[11px] leading-tight text-foreground/90">
+        <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2">
+          <code className="block truncate font-mono text-xs text-foreground/90">
             {joined || (
               <span className="text-muted-foreground/60">(empty)</span>
             )}
