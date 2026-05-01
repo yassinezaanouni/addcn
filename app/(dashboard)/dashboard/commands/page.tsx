@@ -27,15 +27,9 @@ export default function CommandsPage() {
     <CommandEditorProvider>
       <div className="flex h-full flex-col gap-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <h1 className="font-mono text-xl font-semibold tracking-tight">
-              Commands
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Save CLI commands and chain them into workflows with shell
-              operators
-            </p>
-          </div>
+          <h1 className="font-mono text-xl font-semibold tracking-tight">
+            Commands
+          </h1>
           <NewCommandButton />
         </div>
 

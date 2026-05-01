@@ -63,7 +63,10 @@ function CommandCard({
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 font-mono text-sm">
           <IconTerminal2 className="size-3.5 text-emerald-500" />
-          {command.name}
+          <span className="min-w-0 flex-1 truncate">{command.name}</span>
+          <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] font-normal text-muted-foreground">
+            {command.steps.length} step{command.steps.length !== 1 ? "s" : ""}
+          </span>
         </CardTitle>
       </CardHeader>
 
@@ -86,26 +89,20 @@ function CommandCard({
           </div>
         )}
 
-        {/* Status row mirrors snippet card: [meta on left] [actions on right] */}
-        <div className="flex items-center justify-between">
-          <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-            {command.steps.length} step{command.steps.length !== 1 ? "s" : ""}
-          </span>
-          <div className="flex items-center gap-1">
-            <CopyCommandButton text={joined} />
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              title="Edit command"
-              onClick={() => open(command._id)}
-            >
-              <IconPencil className="size-4" />
-            </Button>
-            <DeleteCommandButton
-              commandId={command._id}
-              commandName={command.name}
-            />
-          </div>
+        <div className="flex items-center justify-end gap-1">
+          <CopyCommandButton text={joined} />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title="Edit command"
+            onClick={() => open(command._id)}
+          >
+            <IconPencil className="size-4" />
+          </Button>
+          <DeleteCommandButton
+            commandId={command._id}
+            commandName={command.name}
+          />
         </div>
 
         {/* Joined command at the bottom — same visual role as the install
