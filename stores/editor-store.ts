@@ -20,14 +20,12 @@ interface EditorState {
   // Files
   files: SnippetFile[];
   activeFileId: string | null;
-  previewFileId: string | null;
 
   // Dependencies
   dependencies: string[];
   registryDependencies: string[];
 
-  // Preview settings
-  previewEnabled: boolean;
+  // Preview media (static image/video shown on the snippet card)
   previewMediaUrl: string | null; // R2 URL (after save)
   previewMediaType: "image" | "video" | null;
 
@@ -48,7 +46,6 @@ interface EditorState {
     description?: string;
   }) => void;
   setActiveFile: (fileId: string | null) => void;
-  setPreviewFile: (fileId: string | null) => void;
   updateFileContent: (fileId: string, content: string) => void;
   addFile: (path: string) => void;
   removeFile: (fileId: string) => void;
@@ -58,7 +55,6 @@ interface EditorState {
   addRegistryDependency: (dep: string) => void;
   removeRegistryDependency: (dep: string) => void;
   setIsDirty: (dirty: boolean) => void;
-  setPreviewEnabled: (enabled: boolean) => void;
   setPreviewMedia: (url: string | null, type: "image" | "video" | null) => void;
   setPendingMedia: (file: File | null) => void;
   clearPendingMedia: () => void;
@@ -72,7 +68,6 @@ interface EditorState {
     files: SnippetFile[];
     dependencies: string[];
     registryDependencies: string[];
-    previewEnabled?: boolean;
     previewMediaUrl?: string;
     previewMediaType?: "image" | "video";
   }) => void;
@@ -117,10 +112,8 @@ const initialState = {
   description: "",
   files: defaultFiles,
   activeFileId: defaultFiles[0].id,
-  previewFileId: defaultFiles[0].id,
   dependencies: [],
   registryDependencies: [],
-  previewEnabled: false,
   previewMediaUrl: null,
   previewMediaType: null,
   pendingMediaFile: null,
@@ -132,7 +125,6 @@ const initialState = {
 export const useEditorStore = create<EditorState>()((set) => ({
   ...initialState,
   activeFileId: initialState.files[0].id,
-  previewFileId: initialState.files[0].id,
 
   setConvexId: (id) => set({ convexId: id }),
 
@@ -143,8 +135,6 @@ export const useEditorStore = create<EditorState>()((set) => ({
     })),
 
   setActiveFile: (fileId) => set({ activeFileId: fileId }),
-
-  setPreviewFile: (fileId) => set({ previewFileId: fileId }),
 
   updateFileContent: (fileId, content) =>
     set((state) => ({
@@ -186,14 +176,9 @@ export const useEditorStore = create<EditorState>()((set) => ({
         state.activeFileId === fileId
           ? (newFiles[0]?.id ?? null)
           : state.activeFileId;
-      const newPreviewId =
-        state.previewFileId === fileId
-          ? (newFiles.find((f) => f.path.endsWith(".tsx"))?.id ?? null)
-          : state.previewFileId;
       return {
         files: newFiles,
         activeFileId: newActiveId,
-        previewFileId: newPreviewId,
         isDirty: true,
       };
     }),
@@ -244,12 +229,6 @@ export const useEditorStore = create<EditorState>()((set) => ({
   setIsDirty: (dirty) => set({ isDirty: dirty }),
 
   setValidationDialogOpen: (open) => set({ validationDialogOpen: open }),
-
-  setPreviewEnabled: (enabled) =>
-    set(() => ({
-      previewEnabled: enabled,
-      isDirty: true,
-    })),
 
   setPreviewMedia: (url, type) =>
     set(() => ({
@@ -324,15 +303,12 @@ export const useEditorStore = create<EditorState>()((set) => ({
         ...initialState,
         files,
         activeFileId: files[0].id,
-        previewFileId: files[0].id,
       };
     });
   },
 
   loadSnippet: (snippet) => {
-    const firstTsxFile = snippet.files.find((f) => f.path.endsWith(".tsx"));
     const activeFileId = snippet.files[0]?.id ?? null;
-    const previewFileId = firstTsxFile?.id ?? activeFileId;
     set((state) => {
       // Cleanup blob URL
       if (state.pendingMediaLocalUrl) {
@@ -345,10 +321,8 @@ export const useEditorStore = create<EditorState>()((set) => ({
         description: snippet.description,
         files: snippet.files,
         activeFileId,
-        previewFileId,
         dependencies: snippet.dependencies,
         registryDependencies: snippet.registryDependencies,
-        previewEnabled: snippet.previewEnabled ?? false,
         previewMediaUrl: snippet.previewMediaUrl ?? null,
         previewMediaType: snippet.previewMediaType ?? null,
         pendingMediaFile: null,

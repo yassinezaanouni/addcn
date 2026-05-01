@@ -50,7 +50,6 @@ export function Toolbar() {
     files,
     dependencies,
     registryDependencies,
-    previewEnabled,
     previewMediaUrl,
     previewMediaType,
     pendingMediaFile,
@@ -79,7 +78,6 @@ export function Toolbar() {
         files_count: files.length,
         dependencies_count: dependencies.length,
         registry_dependencies_count: registryDependencies.length,
-        preview_enabled: previewEnabled,
         namespace,
         is_org_snippet: context !== "personal",
       });
@@ -106,7 +104,6 @@ export function Toolbar() {
         files_count: files.length,
         dependencies_count: dependencies.length,
         registry_dependencies_count: registryDependencies.length,
-        preview_enabled: previewEnabled,
         namespace,
         is_org_snippet: context !== "personal",
       });
@@ -165,7 +162,6 @@ export function Toolbar() {
         registryDependencies,
         orgId: context === "personal" ? undefined : context,
         isPublic: false,
-        previewEnabled,
         previewMediaUrl: finalMediaUrl ?? undefined,
         previewMediaType: finalMediaType ?? undefined,
       });
@@ -178,7 +174,6 @@ export function Toolbar() {
         files,
         dependencies,
         registryDependencies,
-        previewEnabled,
         previewMediaUrl: finalMediaUrl ?? undefined,
         previewMediaType: finalMediaType ?? undefined,
       });

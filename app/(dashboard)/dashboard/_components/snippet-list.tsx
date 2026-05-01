@@ -9,16 +9,10 @@ import {
 } from "@tanstack/react-query";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useConvex } from "convex/react";
-import { useTheme } from "next-themes";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { useOrgContext } from "@/components/org-switcher";
 import { useRegistryToken } from "@/hooks/use-registry-token";
-import {
-  collectAllFiles,
-  transformCss,
-  generateIframeHtml,
-} from "@/lib/preview";
 import { InstallCommand } from "./install-command";
 import {
   Card,
@@ -74,105 +68,6 @@ function SnippetListSkeleton() {
       {Array.from({ length: 6 }).map((_, i) => (
         <SnippetCardSkeleton key={i} />
       ))}
-    </div>
-  );
-}
-
-function LivePreview({ files }: { files: Doc<"snippets">["files"] }) {
-  const { resolvedTheme } = useTheme();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  // Only render iframe when visible (lazy loading)
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect(); // Once visible, stop observing
-        }
-      },
-      { rootMargin: "100px" }, // Start loading slightly before visible
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  // Find main file - try .tsx first, then .jsx, then .ts, then .js
-  const mainFile = useMemo(() => {
-    const extensions = [".tsx", ".jsx", ".ts", ".js"];
-    for (const ext of extensions) {
-      const file = files.find((f) => f.path.endsWith(ext));
-      if (file) return file;
-    }
-    return null;
-  }, [files]);
-
-  const iframeHtml = useMemo(() => {
-    if (!isVisible || !mainFile) return null;
-
-    const cssContent = files
-      .filter((f) => f.type === "style" || f.path.endsWith(".css"))
-      .map((f) => f.content)
-      .join("\n\n");
-
-    try {
-      const snippetFiles = collectAllFiles(mainFile, files);
-      return generateIframeHtml(
-        snippetFiles,
-        mainFile.path,
-        transformCss(cssContent),
-        resolvedTheme || "light",
-      );
-    } catch {
-      return null;
-    }
-  }, [files, mainFile, resolvedTheme, isVisible]);
-
-  // No main file found - show placeholder
-  if (!mainFile) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 bg-muted/50">
-        <IconPackage className="size-8 text-muted-foreground/40" />
-        <span className="text-xs text-muted-foreground/60">No preview</span>
-      </div>
-    );
-  }
-
-  // Still loading (not visible yet)
-  if (!isVisible) {
-    return (
-      <div
-        ref={containerRef}
-        className="flex h-full w-full items-center justify-center"
-      >
-        <Skeleton className="h-8 w-8 rounded-full" />
-      </div>
-    );
-  }
-
-  // Error generating preview
-  if (!iframeHtml) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 bg-muted/50">
-        <IconPackage className="size-8 text-muted-foreground/40" />
-        <span className="text-xs text-muted-foreground/60">No preview</span>
-      </div>
-    );
-  }
-
-  return (
-    <div ref={containerRef} className="h-full w-full">
-      <iframe
-        srcDoc={iframeHtml}
-        className="h-full w-full border-0"
-        sandbox="allow-scripts"
-        title="Snippet preview"
-      />
     </div>
   );
 }
@@ -271,8 +166,6 @@ function SnippetCard({
                 className="h-full w-full object-contain"
               />
             )
-          ) : snippet.previewEnabled ? (
-            <LivePreview files={snippet.files} />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 bg-muted/50">
               <IconPackage className="size-8 text-muted-foreground/40" />

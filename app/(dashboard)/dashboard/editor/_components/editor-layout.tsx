@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 import { Toolbar } from "./toolbar";
 import { FileTree } from "./file-tree";
 import { MonacoEditor } from "./monaco-editor";
-import { PreviewPanel } from "./preview-panel";
 import { SnippetMetaForm } from "./snippet-meta-form";
 import { DependencyManager } from "./dependency-manager";
+import { PreviewMediaSection } from "./preview-media-section";
 
 // Shared panel styles
 const PANEL_BASE =
@@ -34,21 +34,13 @@ export function EditorLayout() {
             <FileTree />
           </div>
 
-          {/* Editor + Preview wrapper - they wrap together */}
-          <div className="flex flex-1 flex-col gap-2 @6xl:flex-row">
-            {/* Monaco Editor */}
-            <div className={cn(PANEL_BASE, PANEL_SOLID, "min-h-32 flex-1")}>
-              <MonacoEditor />
-            </div>
-
-            {/* Preview Panel */}
-            <div className={cn(PANEL_BASE, PANEL_SOLID, "min-h-32 flex-1")}>
-              <PreviewPanel />
-            </div>
+          {/* Monaco Editor */}
+          <div className={cn(PANEL_BASE, PANEL_SOLID, "min-h-32 flex-1")}>
+            <MonacoEditor />
           </div>
 
           {/* Right Sidebar */}
-          <div className="flex shrink-0 flex-col gap-3 @4xl:w-[min(100%,20rem)]">
+          <div className="flex shrink-0 flex-col gap-3 overflow-y-auto @4xl:w-[min(100%,20rem)]">
             {/* Snippet Info Section */}
             <div className={cn(PANEL_BASE, PANEL_BG)}>
               <div className="flex items-center gap-2 px-4 py-3">
@@ -60,8 +52,19 @@ export function EditorLayout() {
               <SnippetMetaForm />
             </div>
 
+            {/* Preview Media Section */}
+            <div className={cn(PANEL_BASE, PANEL_BG)}>
+              <div className="flex items-center gap-2 px-4 py-3">
+                <div className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Preview
+                </span>
+              </div>
+              <PreviewMediaSection />
+            </div>
+
             {/* Dependencies Section */}
-            <div className={cn(PANEL_BASE, PANEL_BG, "flex-1 overflow-auto")}>
+            <div className={cn(PANEL_BASE, PANEL_BG, "flex-1")}>
               <div className="flex items-center gap-2 px-4 py-3">
                 <div className="h-1.5 w-1.5 rounded-full bg-chart-2" />
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">

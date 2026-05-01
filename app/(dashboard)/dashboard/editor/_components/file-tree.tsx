@@ -17,7 +17,6 @@ import {
 import {
   IconChevronDown,
   IconChevronRight,
-  IconEye,
   IconFile,
   IconFileTypeCss,
   IconFileTypeTs,
@@ -73,9 +72,7 @@ interface FileNodeProps {
   onToggleFolder: (path: string) => void;
   onExpandFolder: (path: string) => void;
   activeFileId: string | null;
-  previewFileId: string | null;
   onSelectFile: (fileId: string) => void;
-  onSetPreviewFile: (fileId: string) => void;
   onRenameFile: (fileId: string, newPath: string) => void;
   onDeleteFile: (fileId: string) => void;
   canDelete: boolean;
@@ -99,9 +96,7 @@ function FileNode({
   onToggleFolder,
   onExpandFolder,
   activeFileId,
-  previewFileId,
   onSelectFile,
-  onSetPreviewFile,
   onRenameFile,
   onDeleteFile,
   canDelete,
@@ -120,8 +115,6 @@ function FileNode({
   const isFolder = !node.file;
   const isExpanded = expandedFolders.has(node.path);
   const isActive = node.file?.id === activeFileId;
-  const isPreview = node.file?.id === previewFileId;
-  const canPreview = node.file?.path.endsWith(".tsx");
   const isDragging = dragState.draggedFileId === node.file?.id;
 
   // Check if this node is a valid drop target
@@ -318,22 +311,7 @@ function FileNode({
               onClick={() => node.file && onSelectFile(node.file.id)}
               className="flex flex-1 items-center gap-2 pl-7"
             >
-              <span className="relative">
-                {getFileIcon(node.path)}
-                {isPreview && (
-                  <Tooltip>
-                    <TooltipTrigger
-                      className="absolute -bottom-1 -right-1 flex size-3 items-center justify-center rounded-full bg-primary"
-                      render={<span />}
-                    >
-                      <IconEye className="size-2 text-primary-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      Rendered in preview panel
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </span>
+              <span className="relative">{getFileIcon(node.path)}</span>
               <span
                 className={cn(
                   "truncate font-mono text-[13px]",
@@ -347,22 +325,6 @@ function FileNode({
 
           {node.file && (
             <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-              {canPreview && !isPreview && (
-                <Tooltip>
-                  <TooltipTrigger
-                    className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSetPreviewFile(node.file!.id);
-                    }}
-                  >
-                    <IconEye className="size-3.5" />
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    Render in preview panel
-                  </TooltipContent>
-                </Tooltip>
-              )}
               <Tooltip>
                 <TooltipTrigger
                   className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
@@ -420,9 +382,7 @@ function FileNode({
                 onToggleFolder={onToggleFolder}
                 onExpandFolder={onExpandFolder}
                 activeFileId={activeFileId}
-                previewFileId={previewFileId}
                 onSelectFile={onSelectFile}
-                onSetPreviewFile={onSetPreviewFile}
                 onRenameFile={onRenameFile}
                 onDeleteFile={onDeleteFile}
                 canDelete={canDelete}
@@ -446,9 +406,7 @@ export function FileTree() {
   const {
     files,
     activeFileId,
-    previewFileId,
     setActiveFile,
-    setPreviewFile,
     addFile,
     removeFile,
     renamePath,
@@ -467,7 +425,7 @@ export function FileTree() {
   });
 
   const tree = buildFolderTree(files);
-  const canDelete = files.length > 1;
+  const canDelete = files.length > 0;
 
   const toggleFolder = (path: string) => {
     setExpandedFolders((prev) => {
@@ -653,9 +611,7 @@ export function FileTree() {
             onToggleFolder={toggleFolder}
             onExpandFolder={expandFolder}
             activeFileId={activeFileId}
-            previewFileId={previewFileId}
             onSelectFile={setActiveFile}
-            onSetPreviewFile={setPreviewFile}
             onRenameFile={renamePath}
             onDeleteFile={removeFile}
             canDelete={canDelete}
