@@ -111,7 +111,7 @@ export function TagInput() {
   };
 
   return (
-    <div className="relative space-y-1.5">
+    <div className="space-y-1.5">
       {/* Combobox: pills + input on one line */}
       <div
         onClick={() => inputRef.current?.focus()}
@@ -195,7 +195,7 @@ export function TagInput() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 space-y-0.5 overflow-y-auto rounded-md border border-border/50 bg-popover p-1 shadow-lg ring-1 ring-foreground/5"
+            className="max-h-48 space-y-0.5 overflow-y-auto rounded-md border border-border/50 bg-popover/60 p-1"
           >
             {suggestions.map((tag, i) => (
               <li
