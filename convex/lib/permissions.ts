@@ -100,6 +100,48 @@ export async function canPublishSnippet(
 }
 
 /**
+ * Check if a user can access a command (view it).
+ * Mirrors canAccessSnippet — public, owner, or org member.
+ */
+export async function canAccessCommand(
+  ctx: QueryCtx,
+  command: Doc<"commands">,
+  userId: Id<"users"> | null,
+): Promise<boolean> {
+  if (command.isPublic) return true;
+  if (!userId) return false;
+
+  if (command.userId) return command.userId === userId;
+
+  if (command.orgId) {
+    const membership = await getOrgMembership(ctx, command.orgId, userId);
+    return membership !== null;
+  }
+
+  return false;
+}
+
+/**
+ * Check if a user can edit a command.
+ * Personal: owner only. Org: admin or owner.
+ */
+export async function canEditCommand(
+  ctx: QueryCtx,
+  command: Doc<"commands">,
+  userId: Id<"users">,
+): Promise<boolean> {
+  if (command.userId) return command.userId === userId;
+
+  if (command.orgId) {
+    const membership = await getOrgMembership(ctx, command.orgId, userId);
+    if (!membership) return false;
+    return membership.role === "owner" || membership.role === "admin";
+  }
+
+  return false;
+}
+
+/**
  * Check if a user can transfer a snippet to an organization
  *
  * Transfer is allowed if:

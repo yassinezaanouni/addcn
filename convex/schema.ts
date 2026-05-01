@@ -93,4 +93,46 @@ export default defineSchema({
     fingerprint: v.string(), // IP address
     timestamp: v.number(),
   }).index("by_snippet_fingerprint", ["snippetId", "fingerprint"]),
+
+  // Saved CLI commands and command workflows. A command with one step is a
+  // single CLI line; a command with multiple steps is a workflow joined by
+  // shell operators. Steps reference inline text, another saved command, or
+  // a snippet (which expands to its install command).
+  commands: defineTable({
+    name: v.string(),
+    description: v.string(),
+    steps: v.array(
+      v.object({
+        // Exactly one of inlineCommand / refCommandId / refSnippetId is set.
+        inlineCommand: v.optional(v.string()),
+        refCommandId: v.optional(v.id("commands")),
+        refSnippetId: v.optional(v.id("snippets")),
+        operator: v.optional(
+          v.union(
+            v.literal("&&"),
+            v.literal("||"),
+            v.literal(";"),
+            v.literal("|"),
+            v.literal("\n"),
+          ),
+        ),
+      }),
+    ),
+    userId: v.optional(v.id("users")), // Owner if personal command
+    orgId: v.optional(v.id("organizations")), // Owner if org command
+    createdBy: v.id("users"),
+    isPublic: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    tags: v.optional(v.array(v.string())),
+    searchText: v.string(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_orgId", ["orgId"])
+    .index("by_userId_name", ["userId", "name"])
+    .index("by_orgId_name", ["orgId", "name"])
+    .searchIndex("search_commands", {
+      searchField: "searchText",
+      filterFields: ["name"],
+    }),
 });

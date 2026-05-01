@@ -2,6 +2,7 @@ import {
   IconLayoutDashboard,
   IconBuilding,
   IconSettings,
+  IconTerminal2,
 } from "@tabler/icons-react";
 
 export const DASHBOARD_NAV_ITEMS = [
@@ -9,6 +10,11 @@ export const DASHBOARD_NAV_ITEMS = [
     title: "Dashboard",
     url: "/dashboard",
     icon: IconLayoutDashboard,
+  },
+  {
+    title: "Commands",
+    url: "/dashboard/commands",
+    icon: IconTerminal2,
   },
   {
     title: "Organizations",

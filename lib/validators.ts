@@ -77,6 +77,15 @@ export const TAG_RULES = {
 
 export const MAX_TAGS_PER_SNIPPET = 8;
 
+// Command / workflow limits.
+export const MAX_STEPS_PER_COMMAND = 20;
+export const MAX_COMMAND_LENGTH = 500;
+export const COMMAND_NAME_RULES = {
+  minLength: 1,
+  maxLength: 50,
+} as const;
+export const COMMAND_DESCRIPTION_MAX_LENGTH = 200;
+
 /**
  * Normalize a raw tag input to a valid snippet tag, or return null if it
  * cannot be coerced (empty, too long, invalid characters).
