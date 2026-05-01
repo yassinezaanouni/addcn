@@ -66,8 +66,7 @@ export default defineSchema({
     downloads: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),
-    // Preview settings
-    previewEnabled: v.optional(v.boolean()), // default: false (live preview disabled)
+    // Preview media (static image/video shown on the snippet card)
     previewMediaUrl: v.optional(v.string()), // R2 URL for fallback image/video
     previewMediaType: v.optional(
       v.union(v.literal("image"), v.literal("video")),
