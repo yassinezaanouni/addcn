@@ -54,10 +54,15 @@ export function EditorLayout() {
 
             {/* Preview Media Section */}
             <div className={cn(PANEL_BASE, PANEL_BG)}>
-              <div className="flex items-center gap-2 px-4 py-3">
-                <div className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Preview
+              <div className="flex items-center justify-between gap-2 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Preview
+                  </span>
+                </div>
+                <span className="rounded-full border border-border/50 bg-muted/40 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  Optional
                 </span>
               </div>
               <PreviewMediaSection />

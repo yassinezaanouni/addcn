@@ -58,7 +58,7 @@ export function PreviewMediaSection() {
   }, [setPendingMedia, setPreviewMedia]);
 
   return (
-    <div className="px-4 pb-4">
+    <div className="space-y-2 px-4 pb-4">
       {displayMediaUrl ? (
         <PreviewMediaDisplay
           mediaUrl={displayMediaUrl}
@@ -67,7 +67,12 @@ export function PreviewMediaSection() {
           onRemove={handleRemoveMedia}
         />
       ) : (
-        <PreviewDropzone onFileAccepted={handleMediaFile} />
+        <>
+          <PreviewDropzone onFileAccepted={handleMediaFile} />
+          <p className="text-center text-[10px] leading-snug text-muted-foreground/70">
+            Optional. Shown on your snippet card. Skip to save without one.
+          </p>
+        </>
       )}
     </div>
   );
