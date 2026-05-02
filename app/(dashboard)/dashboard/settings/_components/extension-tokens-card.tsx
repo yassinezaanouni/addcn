@@ -1,13 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Card,
   CardContent,
@@ -33,6 +43,12 @@ import {
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 
+const generateTokenSchema = z.object({
+  name: z.string().trim().min(1, "Required").max(60, "Max 60 characters"),
+});
+
+type GenerateTokenForm = z.infer<typeof generateTokenSchema>;
+
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString("en-US", {
     year: "numeric",
@@ -48,8 +64,12 @@ export function ExtensionTokensCard() {
   );
 
   const [showCreate, setShowCreate] = useState(false);
-  const [name, setName] = useState("");
   const [newToken, setNewToken] = useState<string | null>(null);
+
+  const form = useForm<GenerateTokenForm>({
+    resolver: zodResolver(generateTokenSchema),
+    defaultValues: { name: "" },
+  });
 
   const generateMutationFn = useConvexMutation(
     api.extensionTokens.generateToken,
@@ -58,7 +78,7 @@ export function ExtensionTokensCard() {
     mutationFn: generateMutationFn,
     onSuccess: (result) => {
       setNewToken(result.token);
-      setName("");
+      form.reset();
       setShowCreate(false);
       queryClient.invalidateQueries({ queryKey: ["extensionTokens"] });
     },
@@ -67,6 +87,14 @@ export function ExtensionTokensCard() {
         description: err instanceof Error ? err.message : "An error occurred",
       });
     },
+  });
+
+  // Native form submit. Pressing Enter in any input fires this — no extra
+  // keydown handlers needed. Disabled-state is gated on the form's own
+  // validity + the mutation's pending flag, both of which RHF / TanStack
+  // Query update for us.
+  const onSubmit = form.handleSubmit((values) => {
+    generate.mutate({ name: values.name });
   });
 
   const revokeMutationFn = useConvexMutation(api.extensionTokens.revokeToken);
@@ -167,7 +195,7 @@ export function ExtensionTokensCard() {
         onOpenChange={(open) => {
           if (!open) {
             setShowCreate(false);
-            setName("");
+            form.reset();
           }
         }}
       >
@@ -178,25 +206,33 @@ export function ExtensionTokensCard() {
               Give it a recognisable name so you can revoke it later.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-2">
-            <Label htmlFor="token-name">Name</Label>
-            <Input
-              id="token-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="My laptop"
-              maxLength={60}
-              autoFocus
-            />
-          </div>
-          <DialogFooter showCloseButton>
-            <Button
-              onClick={() => generate.mutate({ name: name.trim() })}
-              disabled={!name.trim() || generate.isPending}
-            >
-              {generate.isPending ? "Generating…" : "Generate"}
-            </Button>
-          </DialogFooter>
+          <Form {...form}>
+            <form onSubmit={onSubmit} className="space-y-4 py-2">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="My laptop"
+                        maxLength={60}
+                        autoFocus
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter showCloseButton>
+                <Button type="submit" disabled={generate.isPending}>
+                  {generate.isPending ? "Generating…" : "Generate"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
