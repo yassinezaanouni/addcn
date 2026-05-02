@@ -151,6 +151,16 @@ async function authedUser(ctx: Parameters<Parameters<typeof httpAction>[0]>[0], 
   });
 }
 
+/**
+ * Public addcn host the extension is calling. Set by the Next.js proxy in
+ * app/api/extension/[...path]/route.ts so the registry install URLs we
+ * mint reflect the user's deployment (addcn.dev, localhost:3000, etc.) —
+ * the Convex runtime doesn't share NEXT_PUBLIC_* env vars.
+ */
+function siteUrl(req: Request): string {
+  return req.headers.get("x-addcn-site-url") ?? "";
+}
+
 // Preflight for the whole extension surface.
 http.route({
   pathPrefix: "/api/extension/",
@@ -197,7 +207,7 @@ http.route({
     const context = url.searchParams.get("context") ?? "personal";
     const snippets = await ctx.runQuery(
       internal.extensionInternal.listSnippets,
-      { userId: user.userId, context },
+      { userId: user.userId, context, siteUrl: siteUrl(req) },
     );
     return extJson({ snippets });
   }),
@@ -299,7 +309,7 @@ http.route({
     const q = url.searchParams.get("q") ?? "";
     const snippets = await ctx.runQuery(
       internal.extensionInternal.searchPublicSnippets,
-      { query: q },
+      { query: q, siteUrl: siteUrl(req) },
     );
     return extJson({ snippets });
   }),
@@ -316,7 +326,7 @@ http.route({
     const context = url.searchParams.get("context") ?? "personal";
     const commands = await ctx.runQuery(
       internal.extensionInternal.listCommands,
-      { userId: user.userId, context },
+      { userId: user.userId, context, siteUrl: siteUrl(req) },
     );
     return extJson({ commands });
   }),

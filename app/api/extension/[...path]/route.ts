@@ -29,10 +29,19 @@ async function forward(req: NextRequest, pathParts: string[]) {
   const target = `${CONVEX_SITE}/api/extension/${pathParts.join("/")}${search}`;
   const auth = req.headers.get("authorization") ?? undefined;
 
+  // Derive the public site URL the extension is calling so Convex can build
+  // installUrls against it. We send the canonical app URL when present
+  // (Vercel sets NEXT_PUBLIC_SITE_URL), falling back to the request's own
+  // origin which is correct for localhost dev.
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    req.nextUrl.origin;
+
   const init: RequestInit = {
     method: req.method,
     headers: {
       "Content-Type": "application/json",
+      "X-Addcn-Site-Url": siteUrl,
       ...(auth ? { Authorization: auth } : {}),
     },
   };

@@ -9,14 +9,16 @@ import { internalMutation, internalQuery } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { snippetFilesValidator } from "./validators";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-
 /* -------------------------------------------------------------------------- */
 /* Snippets                                                                   */
 /* -------------------------------------------------------------------------- */
 
 export const listSnippets = internalQuery({
-  args: { userId: v.id("users"), context: v.string() },
+  args: {
+    userId: v.id("users"),
+    context: v.string(),
+    siteUrl: v.string(),
+  },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) return [];
@@ -60,7 +62,7 @@ export const listSnippets = internalQuery({
       downloads: s.downloads,
       tags: s.tags ?? [],
       updatedAt: s.updatedAt,
-      installUrl: `${SITE_URL}/r/${namespace}/${s.name}.json`,
+      installUrl: `${args.siteUrl}/r/${namespace}/${s.name}.json`,
       namespace,
       context: resultContext,
     }));
@@ -68,7 +70,7 @@ export const listSnippets = internalQuery({
 });
 
 export const searchPublicSnippets = internalQuery({
-  args: { query: v.string() },
+  args: { query: v.string(), siteUrl: v.string() },
   handler: async (ctx, args) => {
     const trimmed = args.query.trim();
     let candidates: Doc<"snippets">[];
@@ -112,7 +114,7 @@ export const searchPublicSnippets = internalQuery({
         tags: s.tags ?? [],
         updatedAt: s.updatedAt,
         namespace,
-        installUrl: `${SITE_URL}/r/${namespace}/${s.name}.json`,
+        installUrl: `${args.siteUrl}/r/${namespace}/${s.name}.json`,
       };
     });
   },
@@ -257,7 +259,11 @@ function renderStep(
 }
 
 export const listCommands = internalQuery({
-  args: { userId: v.id("users"), context: v.string() },
+  args: {
+    userId: v.id("users"),
+    context: v.string(),
+    siteUrl: v.string(),
+  },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) return [];
@@ -324,7 +330,7 @@ export const listCommands = internalQuery({
         : s.orgId
           ? (orgMap.get(s.orgId) ?? "")
           : "";
-      return `pnpm dlx shadcn@latest add ${SITE_URL}/r/${ns}/${s.name}.json`;
+      return `pnpm dlx shadcn@latest add ${args.siteUrl}/r/${ns}/${s.name}.json`;
     };
 
     return commands.map((c) => ({
